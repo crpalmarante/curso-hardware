@@ -112,6 +112,40 @@ const VOLUMES = {
 };
 const METODOLOGIA = "15 min revisão · 35 min teoria · 60 min prática · 10 min revisão final";
 
+/* ===== AULAS EXTRAS — APÊNDICES (armazenamento) =====
+   Páginas de plano de aula para os 2 apêndices do livro.
+   São aulas suplementares: vêm depois das 43 aulas regulares. */
+const APENDICES = [
+  {
+    ap: "A", titulo: "Apêndice A — Adicionando um novo disco no Windows (Diskpart)",
+    obj: "Particionar, formatar e atribuir letra a um disco novo no Windows usando o Diskpart, sem apagar dados por engano.",
+    conteudo: [
+      "O que é o Diskpart e como abri-lo como administrador",
+      "list disk e select disk — identificando o disco certo",
+      "clean, create partition primary, format fs=ntfs quick e assign",
+      "Conversão para GPT em discos acima de 2 TB (convert gpt)",
+      "Erros comuns e boas práticas de segurança"
+    ],
+    pratica: "Em um computador de teste ou máquina virtual, adicione um disco virtual vazio e faça o procedimento completo no Diskpart: listar, selecionar, limpar, criar partição, formatar em NTFS e atribuir a letra E. Depois repita em um disco pequeno convertendo para GPT.",
+    exercicios: "Quiz interativo (9 objetivas + 1 dissertativa) na página de Exercícios dos Apêndices + questões do Apêndice A do livro (seção 7)",
+    materiais: "Computador de teste / VM com disco extra vazio · Windows · acesso ao Diskpart · apostila (Apêndice A)"
+  },
+  {
+    ap: "B", titulo: "Apêndice B — Adicionando um novo disco no Linux (GParted e Fdisk)",
+    obj: "Particionar, formatar e montar um disco novo no Linux pela linha de comando (fdisk) e pela interface gráfica (GParted), com montagem permanente no /etc/fstab.",
+    conteudo: [
+      "Identificando o disco no Linux: lsblk, fdisk -l e /dev/sdX",
+      "Particionando com o fdisk: g, n, w — tabela GPT e partição",
+      "Formatando: mkfs.ext4, mkfs.ntfs e mkfs.exfat",
+      "Particionando com o GParted (gráfico): criar tabela, nova partição, aplicar",
+      "Montagem manual (mount) e permanente no /etc/fstab com UUID"
+    ],
+    pratica: "Em uma máquina virtual Linux, adicione um disco virtual de 2 GB e repita o procedimento com o fdisk (GPT + ext4) e com o GParted (NTFS). Monte em /mnt/disco2, crie um arquivo de teste, configure o fstab com o UUID e reinicie para confirmar a montagem automática.",
+    exercicios: "Quiz interativo (11 objetivas + 1 dissertativa) na página de Exercícios dos Apêndices + questões do Apêndice B do livro (seção 7)",
+    materiais: "Máquina virtual Linux com disco extra vazio · pacotes fdisk e gparted · terminal · apostila (Apêndice B)"
+  }
+];
+
 function esc(s){ return String(s||"").replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
 function badge(tipo){
   const nomes = { teoria:"Teoria", mista:"Mista", pratica:"Prática" };
@@ -200,6 +234,77 @@ function planoAula(m, a, semanaGlobal){
     </div>
   </div>`;
 }
+function planoApendice(apd, semanaGlobal){
+  return `
+  <div class="page">
+    <div class="page-print-head">
+      <h2>PLANO DE AULA</h2>
+      <div class="sub">Curso de Montagem e Manutenção de Computadores · Aula extra (apêndice)</div>
+    </div>
+
+    <div class="plano-head">
+      <div style="font-size:16px;font-weight:800;color:var(--ink)">📎 ${esc(apd.titulo)}</div>
+      <div style="font-size:13px;font-weight:700;color:var(--prim)">Aula extra de armazenamento</div>
+    </div>
+
+    <div class="info-grid">
+      <div class="info-box"><div class="lab">Semana</div><div class="val">${semanaGlobal}ª</div></div>
+      <div class="info-box"><div class="lab">Tipo</div><div class="val">${badge("pratica")}</div></div>
+      <div class="info-box"><div class="lab">Carga</div><div class="val">2 horas</div></div>
+      <div class="info-box"><div class="lab">Livro</div><div class="val" style="font-size:11px">Apêndice ${apd.ap}</div></div>
+    </div>
+
+    <div class="secao">
+      <h4>🎯 Objetivo</h4>
+      <p><b>${esc(apd.obj)}</b></p>
+    </div>
+
+    <div class="secao">
+      <h4>📘 Conteúdo</h4>
+      <ul>${apd.conteudo.map(c=>`<li>${esc(c)}</li>`).join("")}</ul>
+    </div>
+
+    <div class="secao">
+      <h4>🔧 Atividade prática</h4>
+      <p>${esc(apd.pratica)}</p>
+    </div>
+
+    <div class="secao">
+      <h4>✅ Exercícios / avaliação da aula</h4>
+      <p>${esc(apd.exercicios)}</p>
+    </div>
+
+    <div class="secao">
+      <h4>⏱️ Desenvolvimento (metodologia)</h4>
+      <p style="font-size:12px"><b>${METODOLOGIA}</b></p>
+      <div class="row2" style="margin-top:2mm">
+        <div class="campo altura" style="font-weight:600">1. Abertura / revisão da aula anterior</div>
+        <div class="campo altura" style="font-weight:600">2. Teoria (exposição dialogada)</div>
+        <div class="campo altura" style="font-weight:600">3. Demonstração / prática guiada</div>
+        <div class="campo altura" style="font-weight:600">4. Prática dos alunos + checkout</div>
+        <div class="campo altura" style="font-weight:600">5. Correção / fechamento</div>
+        <div class="campo altura" style="font-weight:600">6. Registro de presença e encaminhamentos</div>
+      </div>
+    </div>
+
+    <div class="secao">
+      <h4>🧰 Materiais e equipamentos</h4>
+      <p style="font-size:12px">${esc(apd.materiais)}</p>
+    </div>
+
+    <div class="secao">
+      <h4>📝 Observações do instrutor</h4>
+      <div class="campo-grande campo"></div>
+    </div>
+
+    <div class="rodape">
+      <div style="font-size:10px">
+        <b>${esc(apd.titulo)}</b> · Semana ${semanaGlobal} · Aula extra
+      </div>
+      <div class="ass"><span>Assinatura do instrutor</span></div>
+    </div>
+  </div>`;
+}
 function render(){
   const filtro = document.getElementById("filtro-mod").value;
   const container = document.getElementById("conteudo");
@@ -210,6 +315,17 @@ function render(){
     for (const a of m.aulas){
       semanaGlobal++;
       pages.push(planoAula(m, a, semanaGlobal));
+    }
+  }
+  // aulas extras (apêndices) — depois das aulas regulares, mantendo as semanas reais do curso
+  if (!filtro || filtro === "AP"){
+    if (filtro === "AP"){
+      // no filtro isolado dos apêndices, continua da semana 44 (43 aulas + 1)
+      semanaGlobal = CURSO.reduce((n, m) => n + m.aulas.length, 0);
+    }
+    for (const apd of APENDICES){
+      semanaGlobal++;
+      pages.push(planoApendice(apd, semanaGlobal));
     }
   }
   container.innerHTML = pages.join("");
@@ -223,6 +339,10 @@ function preencherModulos(){
     opt.textContent = "Módulo " + m.num + " — " + m.titulo;
     sel.appendChild(opt);
   }
+  const optAp = document.createElement("option");
+  optAp.value = "AP";
+  optAp.textContent = "📎 Apêndices (aulas extras de armazenamento)";
+  sel.appendChild(optAp);
 }
 function imprimir(){
   window.print();
