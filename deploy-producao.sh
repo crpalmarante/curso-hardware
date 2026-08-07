@@ -14,7 +14,12 @@
 #    4. Reinicia o serviço curso-hardware.
 #    5. Roda o teste de permissões localmente (antes do envio).
 #
-#  Requisitos: ssh/scp com chave configurada para o servidor.
+#  Requisitos:
+#    - ssh/scp com chave configurada para o servidor;
+#    - sudo SEM senha (NOPASSWD) para o usuário do servidor
+#      (usado no tar/chown/restart);
+#    - repositório com as mudanças commitadas (o pacote usa os
+#      arquivos versionados — o script avisa se houver pendências).
 #  Se o serviço se chamar diferente, ajuste NOME_SERVICO abaixo.
 # ============================================================
 set -euo pipefail
@@ -29,8 +34,19 @@ if [ -z "$ALVO" ]; then
   read -rp "Usuário do servidor (ex.: usuario@177.190.69.20): " ALVO
 fi
 
-echo "==> [1/5] Validando sintaxe e permissões (local)..."
 cd "$BASE"
+
+# mudanças não commitadas ficam de fora do pacote (git ls-files) — avisa
+if [ -n "$(git status --porcelain)" ]; then
+  echo "!! Há mudanças NÃO commitadas que não entrarão no pacote (o pacote usa os arquivos versionados)."
+  read -rp "    Commit antes? [s/N] " ok
+  [ "$ok" = "s" ] || { echo "    Envio cancelado — rode 'git add -A && git commit' primeiro."; exit 1; }
+fi
+
+# o teste de permissões precisa do serviço instalado localmente (ou roda em /tmp)
+# — mas como sobe um servidor próprio na porta 8137, basta ter o Python
+
+echo "==> [1/5] Validando sintaxe e permissões (local)..."
 python3 -m py_compile servidor.py setup.py
 python3 teste-permissoes.py > /tmp/deploy-teste.txt 2>&1 || {
   echo "!! Teste de permissões falhou — envio cancelado:"
@@ -45,11 +61,16 @@ git ls-files | grep -v '^\.github/' | tar -czf "$PACOTE" -T -
 echo "    $(tar -tzf "$PACOTE" | wc -l) arquivos, $(du -h "$PACOTE" | cut -f1)"
 
 echo "==> [3/5] Backup do banco de produção..."
-ssh "$ALVO" "cp $DESTINO_REMOTO/dados/curso.db ~/backup-$(date +%Y%m%d-%H%M%S).db 2>/dev/null || echo '(sem banco ainda — primeira instalação)'"
+if ssh "$ALVO" "test -f $DESTINO_REMOTO/dados/curso.db"; then
+  ssh "$ALVO" "cp $DESTINO_REMOTO/dados/curso.db ~/backup-$(date +%Y%m%d-%H%M%S).db" \
+    && echo "    backup em ~/backup-*.db no servidor"
+else
+  echo "    (sem banco ainda — primeira instalação)"
+fi
 
 echo "==> [4/5] Enviando e extraindo..."
 scp "$PACOTE" "$ALVO:/tmp/"
-ssh "$ALVO" "cd $DESTINO_REMOTO && sudo tar -xzf /tmp/$PACOTE && rm /tmp/$PACOTE"
+ssh "$ALVO" "cd $DESTINO_REMOTO && sudo tar -xzf /tmp/$PACOTE && sudo chown -R www-data:www-data $DESTINO_REMOTO && rm /tmp/$PACOTE"
 
 echo "==> [5/5] Reiniciando o serviço..."
 ssh "$ALVO" "sudo systemctl restart $NOME_SERVICO && sleep 2 && curl -fsS http://localhost:8080/api/config && echo && echo 'Deploy concluído!'"
