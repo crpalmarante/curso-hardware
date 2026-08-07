@@ -1137,7 +1137,7 @@ async function turmaModulosFracos(){
 }
 
 /* ===== BOLETIM (impressão/PDF) ===== */
-function boletimAluno(){
+async function boletimAluno(){
   const a = alunoAtual();
   if (!a) return;
   const nf = notaFinal(a);
@@ -1146,6 +1146,30 @@ function boletimAluno(){
   const sit = situacao(a);
   const n = a.notas;
   const comp = a.comprometimento;
+  // Apêndices (Diskpart/GParted): aproveitamento das objetivas e nota das
+  // dissertativas avaliadas pelo instrutor, quando houver respostas.
+  let apSecao = "";
+  try {
+    const ex = await exerciciosDoAluno(a.nome);
+    const apAulas = Object.entries(ex.aulas || {}).filter(([id])=>id.indexOf("AP|")===0);
+    if (apAulas.length){
+      const linhas = apAulas.map(([id, rs])=>{
+        const titulo = id.replace(/^AP\|/, "");
+        const objs = rs.filter(r=>r.tipo==="obj");
+        const certas = objs.filter(r=>r.correta).length;
+        const disc = rs.find(r=>r.tipo==="disc");
+        let discTxt = "—";
+        if (disc) discTxt = disc.nota != null ? "Nota: " + esc(String(disc.nota)) : "Entregue — aguardando nota";
+        return `<tr><td>${esc(titulo)}</td><td>${objs.length? certas+"/"+objs.length+" certas" : "—"}</td><td>${discTxt}</td></tr>`;
+      }).join("");
+      apSecao = `
+  <h2>Apêndices — exercícios extras</h2>
+  <table>
+    <tr><th>Apêndice</th><th>Objetivas</th><th>Dissertativa</th></tr>
+    ${linhas}
+  </table>`;
+    }
+  } catch(e){}
   const w = window.open("", "_blank", "width=820,height=900");
   w.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Boletim — ${esc(a.nome)}</title>
   <style>
@@ -1197,6 +1221,7 @@ function boletimAluno(){
     ${a.atividades.length===0? '<tr><td colspan="3">Nenhuma atividade registrada.</td></tr>' :
       a.atividades.slice().reverse().map(at=>`<tr><td>${fmt(new Date(at.data))}</td><td>${esc(at.titulo)}</td><td>${at.nota!=null?at.nota:"—"}</td></tr>`).join("")}
   </table>
+  ${apSecao}
   <div class="footer">Emitido pelo Registro de Alunos do Curso de Montagem e Manutenção de Computadores.<br>Documento informativo — assinatura e selo quando houver certificação oficial.</div>
   <script>window.onload=function(){ window.print(); }<\/script>
   </body></html>`);

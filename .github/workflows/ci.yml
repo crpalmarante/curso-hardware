@@ -58,5 +58,8 @@ jobs:
       - name: Selo de pendências dos apêndices (render real de alunos.html e secretaria.html)
         run: node teste-selo-apendices.js
 
+      - name: Boletim impresso com apêndices (render real do boletimAluno)
+        run: node teste-boletim-apendices.js
+
       - name: Aulas extras dos apêndices no plano de aulas (render real do plano-de-aulas.html)
         run: node teste-plano-apendices.js
