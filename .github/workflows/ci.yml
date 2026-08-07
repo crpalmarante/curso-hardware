@@ -24,8 +24,16 @@ jobs:
         run: |
           python servidor.py 8124 > /tmp/servidor.log 2>&1 &
           SRV=$!
-          sleep 2
-          curl -fsS -o /dev/null http://localhost:8124/
+          # aguarda o servidor aceitar conexões (primeira execução cria o banco)
+          for i in $(seq 1 30); do
+            if curl -fsS -o /dev/null http://localhost:8124/ 2>/dev/null; then
+              break
+            fi
+            if ! kill -0 $SRV 2>/dev/null; then
+              echo "servidor encerrou prematuramente"; cat /tmp/servidor.log; exit 1
+            fi
+            sleep 1
+          done
           curl -fsS http://localhost:8124/api/config
           kill $SRV
 
