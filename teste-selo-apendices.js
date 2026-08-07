@@ -3,10 +3,13 @@
 const fs = require('fs');
 const elements = {};
 function makeEl(id){
+  const attrs = {}; const classes = new Set();
   return {
     id, textContent:'', innerHTML:'', value:'', style:{}, checked:false,
     addEventListener(){}, querySelector(){ return null; },
-    classList:{ add(){}, remove(){}, toggle(){} },
+    classList:{ add(c){ classes.add(c); }, remove(c){ classes.delete(c); }, toggle(c,f){ if(f===undefined ? !classes.has(c) : f) classes.add(c); else classes.delete(c); }, contains(c){ return classes.has(c); } },
+    setAttribute(k,v){ attrs[k] = String(v); },
+    getAttribute(k){ return attrs[k] === undefined ? null : attrs[k]; },
   };
 }
 global.document = {
@@ -55,6 +58,36 @@ function testesLista(rotulo){
   renderLista();
   const comQk = elements['aluno-list'].innerHTML;
   ok('${rotulo}: selo de pendência convive com badge 🔒 quiosque', comQk.includes('🔒 quiosque') && comQk.includes('📝 2 p/ avaliar'));
+
+  // ===== filtro '📝 Com pendências' =====
+  filtroAp = true;
+  renderLista();
+  const comFiltro = elements['aluno-list'].innerHTML;
+  ok('${rotulo}: filtro mostra só alunos com pendência', comFiltro.includes('Aluno Apendice Pendente') && !comFiltro.includes('Aluno Apendice Ok') && !comFiltro.includes('Aluno Sem Campo'));
+  filtroAp = false;
+  renderLista();
+  const semFiltro = elements['aluno-list'].innerHTML;
+  ok('${rotulo}: filtro desativado volta a mostrar todos', semFiltro.includes('Aluno Apendice Pendente') && semFiltro.includes('Aluno Apendice Ok'));
+
+  // toggle real pelo botão (aria-pressed + active)
+  toggleFiltroAp();
+  const aposClique = elements['aluno-list'].innerHTML;
+  ok('${rotulo}: clique ativa o filtro (aria-pressed=true e só pendentes)', elements['btn-filtro-ap'].getAttribute('aria-pressed') === 'true' && elements['btn-filtro-ap'].classList.contains('active') && aposClique.includes('Aluno Apendice Pendente') && !aposClique.includes('Aluno Apendice Ok'));
+  toggleFiltroAp();
+  ok('${rotulo}: 2º clique desativa o filtro', elements['btn-filtro-ap'].getAttribute('aria-pressed') === 'false' && !elements['btn-filtro-ap'].classList.contains('active'));
+
+  // combinação com o filtro de travados (interseção)
+  filtroAp = true;
+  filtroQk = true;
+  DB.alunos[0].quiosque = true;   // Pendente + travado
+  DB.alunos[1].quiosque = true;   // Ok + travado → sai pelo filtro de pendências
+  renderLista();
+  const combinado = elements['aluno-list'].innerHTML;
+  ok('${rotulo}: filtros combinados mostram só quem atende os dois', combinado.includes('Aluno Apendice Pendente') && !combinado.includes('Aluno Apendice Ok'));
+  filtroAp = false; filtroQk = false;
+  DB.alunos[0].quiosque = false;
+  DB.alunos[1].quiosque = false;
+  renderLista();
 
   if (falhas > 0){ console.log('RESULTADO ${rotulo}: ' + falhas + ' FALHA(S)'); process.exit(1); }
   console.log('RESULTADO ${rotulo}: OK');
