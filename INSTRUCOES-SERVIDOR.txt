@@ -160,6 +160,8 @@ com as novas senhas na 1ª linha e reinicie o serviço:
 
 A Secretaria Pedagógica acessa em: http://palmarante.com.br/secretaria.html
 O Plano de Aulas agora exige login (instrutor ou secretaria).
+Restrição por papel: só o INSTRUTOR emite certificados (a secretaria recebe 403
+na API e é redirecionada ao tentar abrir alunos.html).
 
 ------------------------------------------------------------
  CAMINHO MAIS SIMPLES (sem nginx, caso um dia queira)

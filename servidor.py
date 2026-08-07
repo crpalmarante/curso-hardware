@@ -863,6 +863,11 @@ class Handler(BaseHTTPRequestHandler):
             self._negar_acesso(json_=path.startswith("/api/"), destino=destino)
             return
 
+        # --- painel do instrutor (alunos.html) é exclusivo do instrutor ---
+        if path == "/alunos.html" and _sess_papel(self._sess_cookie()) != "instrutor":
+            self._negar_acesso(json_=False, destino="/secretaria.html")
+            return
+
         # --- API: lista de alunos ---
         if path == "/api/alunos":
             self._json(200, carregar_db())
@@ -1114,10 +1119,13 @@ class Handler(BaseHTTPRequestHandler):
                 self._json(500, {"erro": str(e)})
             return
 
-        # --- API: emitir certificado — exige login ---
+        # --- API: emitir certificado — exige login e papel de instrutor ---
         if path == "/api/certificado":
             if not self._autenticado():
                 self._negar_acesso(json_=True)
+                return
+            if _sess_papel(self._sess_cookie()) != "instrutor":
+                self._json(403, {"erro": "Apenas o instrutor pode emitir certificados"})
                 return
             try:
                 body = json.loads(self._read_body().decode("utf-8") or "{}")

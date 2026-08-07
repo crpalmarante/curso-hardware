@@ -90,11 +90,9 @@ Os dados do aluno (progresso, respostas, provas) são guardados no navegador e s
 2. Gerencia turmas, presenças, notas, atividades, comprometimento e histórico.
 3. Avalia as dissertativas do caderno (nota 0–10).
 4. Define a **semana atual do curso** (usada na frequência automática dos alunos).
-5. Consulta o **painel da turma** (ranking de progresso e módulos com dificuldade) e emite **boletins** imprimíveis.
-
-### Secretaria Pedagógica
-
+5. Consulta o **painel da turma** (ranking de progresso e módulos com dificuldade) e emite **boletins** imprimíveis.### Secretaria Pedagógica
 1. Abre `secretaria.html` e faz login com a senha própria (`login-secretaria.html`).
+2. A secretaria **não emite certificados** (ação exclusiva do instrutor) e não acessa o painel do instrutor (`alunos.html` redireciona para a secretaria).
 2. **Monitora o curso** pelo painel da turma (situação, frequência, ranking e módulos com dificuldade).
 3. Consulta por aluno: resumo, presenças, notas, atividades, exercícios (com dissertativas) e provas.
 4. Pode registrar presenças, atividades e notas — útil no **atendimento aos pais** sobre o desempenho dos filhos.
@@ -208,7 +206,7 @@ Gera uma página imprimível (Ctrl+P → "Salvar como PDF") com:
 
 ### Certificado de Conclusão
 
-O botão **🎓 Certificado** na ficha do aluno emite o certificado oficial (apenas para alunos **aprovados** — nota ≥ 6 e frequência ≥ 75%):
+O botão **🎓 Certificado** na ficha do aluno emite o certificado oficial (apenas para alunos **aprovados** — nota ≥ 6 e frequência ≥ 75%). **Só o instrutor pode emitir** — a rota `POST /api/certificado` e o painel `alunos.html` são restritos por papel (a secretaria recebe 403/redirecionamento):
 
 - Página **A4 paisagem** caprichada com nome, curso, carga horária (86h), período, nota final, frequência e assinaturas.
 - **QR Code único** com código de verificação gravado no servidor (`certificados` no banco). Cada aluno tem um código permanente (reemitir não duplica).
@@ -267,7 +265,7 @@ python3 servidor.py 8000 --publico  # aceita acesso externo (sem o flag, apenas 
 | POST | `/api/checkout-avaliar` | sim | Nota 0–10 do instrutor para um checkout |
 | POST | `/api/presenca` | — | Presença automática do aluno (semana atual) |
 | POST | `/api/config` | sim | Grava configuração (ex.: semana atual) |
-| POST | `/api/certificado` | sim | Emite o certificado (gera/reutiliza código único) |
+| POST | `/api/certificado` | sim | Emite o certificado — **somente papel instrutor** (secretaria → 403) |
 | POST | `/api/provas` | — | Salva nota de prova de um módulo |
 | POST | `/api/evento` | — | Registra evento (ex.: violação do modo blindado) |
 | POST | `/api/progresso` | — | Salva andamento das aulas do aluno |
