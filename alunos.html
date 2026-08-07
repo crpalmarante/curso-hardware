@@ -851,18 +851,24 @@ function checkoutsMediaDoAluno(a){
   return d && d.resumo ? d.resumo.media : null;
 }
 function notaExerciciosSugerida(a){
-  // média simples de: caderno (objetivas), dissertativas avaliadas, checkouts e provas
+  // média simples de: caderno (objetivas), dissertativas avaliadas,
+  // dissertativas dos apêndices, checkouts e provas
   const caderno = exNotaSugerida(a);
   const disc = exDiscMedia(a);
+  const apDisc = exApDiscMedia(a);
   const checkouts = checkoutsMediaDoAluno(a);
   const provas = provasMediaDoAluno(a);
-  const componentes = [caderno, disc, checkouts, provas].filter(v => v != null);
+  const componentes = [caderno, disc, apDisc, checkouts, provas].filter(v => v != null);
   if (!componentes.length) return null;
   return Math.round(componentes.reduce((s,v)=>s+v,0) / componentes.length * 10) / 10;
 }
 function exDiscMedia(a){
   const rs = exerciciosCache[(a.nome||"").toLowerCase()] && exerciciosCache[(a.nome||"").toLowerCase()].resumo;
   return rs ? rs.disc_media : null;
+}
+function exApDiscMedia(a){
+  const rs = exerciciosCache[(a.nome||"").toLowerCase()] && exerciciosCache[(a.nome||"").toLowerCase()].resumo;
+  return rs ? rs.ap_disc_media : null;
 }
 function aplicarNotaExercicios(){
   const a = alunoAtual();
@@ -934,9 +940,11 @@ async function renderExercicios(a){
   const notaAtualCard = notaAtual != null ? notaAtual : "—";
   const mediaProvas = provasMediaDoAluno(a);
   const mediaDisc = resumo ? resumo.disc_media : null;
+  const mediaApDisc = resumo ? resumo.ap_disc_media : null;
   const mediaCheckouts = checkoutsMediaDoAluno(a);
   const detNota = "caderno " + (resumo && resumo.nota_sugerida != null ? resumo.nota_sugerida : "—") +
                   " + dissertativas " + (mediaDisc != null ? mediaDisc : "—") +
+                  " + apêndices " + (mediaApDisc != null ? mediaApDisc : "—") +
                   " + checkouts " + (mediaCheckouts != null ? mediaCheckouts : "—") +
                   " + provas " + (mediaProvas != null ? mediaProvas : "—");
   if (aulas.length === 0){

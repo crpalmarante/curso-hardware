@@ -506,9 +506,11 @@ def get_exercicios(nome):
             return {"aluno": nome, "exercicios": {},
                     "resumo": {"objetivas": 0, "certas": 0, "dissertativas": 0,
                                "disc_avaliadas": 0, "disc_media": None,
+                               "ap_disc_avaliadas": 0, "ap_disc_media": None,
                                "aproveitamento": 0, "nota_sugerida": None}}
         aulas = {}
         obj_total = obj_certas = disc_total = disc_avaliadas = disc_soma = 0
+        ap_disc_avaliadas = ap_disc_soma = 0
         for r in conn.execute(
             "SELECT aula_id, qindice, tipo, resposta, correta, nota, corrigida_em, respondido_em "
             "FROM exercicios WHERE aluno_id=? ORDER BY aula_id, qindice", (row["id"],)):
@@ -520,8 +522,13 @@ def get_exercicios(nome):
             if r["tipo"] == "disc":
                 disc_total += 1
                 if r["nota"] is not None:
-                    disc_avaliadas += 1
-                    disc_soma += r["nota"]
+                    # Médias separadas: caderno regular vs apêndices (aulas AP|)
+                    if r["aula_id"].startswith("AP|"):
+                        ap_disc_avaliadas += 1
+                        ap_disc_soma += r["nota"]
+                    else:
+                        disc_avaliadas += 1
+                        disc_soma += r["nota"]
             else:
                 obj_total += 1
                 if r["correta"]:
@@ -529,12 +536,15 @@ def get_exercicios(nome):
         aproveitamento = round(obj_certas / obj_total * 100) if obj_total else 0
         nota = round((obj_certas / obj_total) * 10, 1) if obj_total else None
         disc_media = round(disc_soma / disc_avaliadas, 1) if disc_avaliadas else None
+        ap_disc_media = round(ap_disc_soma / ap_disc_avaliadas, 1) if ap_disc_avaliadas else None
     finally:
         conn.close()
     return {"aluno": nome, "exercicios": aulas,
             "resumo": {"objetivas": obj_total, "certas": obj_certas,
                        "dissertativas": disc_total,
                        "disc_avaliadas": disc_avaliadas, "disc_media": disc_media,
+                       "ap_disc_avaliadas": ap_disc_avaliadas,
+                       "ap_disc_media": ap_disc_media,
                        "aproveitamento": aproveitamento,
                        "nota_sugerida": nota}}
 

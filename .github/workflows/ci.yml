@@ -40,6 +40,9 @@ jobs:
       - name: Teste de permissões por papel (secretaria vs instrutor)
         run: python teste-permissoes.py
 
+      - name: Resumo de exercícios — médias separadas dos apêndices (get_exercicios)
+        run: python teste-resumo-apendices.py
+
       - name: Sintaxe JavaScript (curso, exercícios, provas, QR Code)
         run: node --check curso.js && node --check exercicios.js && node --check provas.js && node --check qrcode.js
 
@@ -60,6 +63,9 @@ jobs:
 
       - name: Boletim impresso com apêndices (render real do boletimAluno)
         run: node teste-boletim-apendices.js
+
+      - name: Nota de Exercícios inclui média dos apêndices (render real do alunos.html)
+        run: node teste-nota-apendices.js
 
       - name: Aulas extras dos apêndices no plano de aulas (render real do plano-de-aulas.html)
         run: node teste-plano-apendices.js
