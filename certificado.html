@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Certificado de Conclusão</title>
+<style>
+:root{--gold:#c9a227;--dark:#1e2a44;--ink:#222}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:Georgia,"Times New Roman",serif;background:#e2e8f0;color:var(--ink)}
+.toolbar{
+  position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:14px;padding:12px 20px;
+  background:#0f172a;color:#fff;font-family:"Segoe UI",Arial,sans-serif;
+}
+.toolbar h1{font-size:15px}
+.toolbar .right{margin-left:auto}
+.toolbar button{
+  padding:8px 16px;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700;
+  background:var(--gold);color:#fff;
+}
+.cert{
+  width:297mm;min-height:210mm;margin:16px auto;background:#fff;
+  box-shadow:0 4px 20px rgba(0,0,0,.2);position:relative;overflow:hidden;
+  border:10px solid var(--dark);
+}
+.cert-inner{
+  position:absolute;inset:4mm;border:2px solid var(--gold);
+  padding:14mm 18mm;display:flex;flex-direction:column;align-items:center;
+}
+.cert-top{display:flex;align-items:center;gap:10px;margin-bottom:4mm}
+.cert-top .logo{
+  width:16mm;height:16mm;border-radius:4mm;display:grid;place-items:center;
+  background:linear-gradient(135deg,#0f766e,#3B82F6);color:#fff;font-size:8mm;font-weight:800;
+}
+.cert-top .org{font-size:14px;font-weight:700;letter-spacing:1px;color:var(--dark)}
+.cert-top .org small{display:block;font-weight:400;font-size:11px;letter-spacing:.5px;color:#555}
+.faixa{
+  font-size:13px;letter-spacing:4px;text-transform:uppercase;color:var(--gold);
+  font-weight:700;margin:5mm 0 3mm;
+}
+.titulo{
+  font-size:30px;font-weight:800;color:var(--dark);letter-spacing:1px;text-align:center;
+}
+.linha-ouro{width:70mm;height:2px;background:var(--gold);margin:5mm 0}
+.texto{
+  font-size:15px;line-height:1.9;text-align:center;max-width:190mm;color:#333;
+}
+.texto b{color:var(--dark)}
+.destaque{
+  font-size:26px;font-weight:700;color:var(--dark);margin:2mm 0;text-align:center;
+}
+.meta{
+  display:flex;gap:14mm;justify-content:center;margin:5mm 0;flex-wrap:wrap;
+}
+.meta .item{text-align:center}
+.meta .item .num{font-size:18px;font-weight:800;color:var(--gold)}
+.meta .item .lab{font-size:11px;color:#666;text-transform:uppercase;letter-spacing:.5px}
+.assinaturas{
+  display:flex;justify-content:space-between;gap:20mm;width:100%;max-width:200mm;
+  margin-top:auto;padding-top:6mm;
+}
+.assinatura{text-align:center;width:70mm}
+.assinatura .linha{border-top:1px solid #333;padding-top:2mm}
+.assinatura b{font-size:13px;color:var(--dark)}
+.assinatura small{display:block;font-size:11px;color:#666}
+.qr-area{
+  position:absolute;right:10mm;bottom:10mm;text-align:center;background:#fff;
+}
+.qr-area canvas{display:block;margin:0 auto;background:#fff}
+.qr-area .lab{font-size:9px;color:#666;margin-top:1mm}
+.codigo{
+  position:absolute;left:10mm;bottom:10mm;text-align:center;
+}
+.codigo .lab{font-size:9px;color:#666;text-transform:uppercase;letter-spacing:.5px}
+.codigo .val{font-size:14px;font-weight:800;color:var(--gold);letter-spacing:1px}
+@media print{
+  body{background:#fff}
+  .toolbar{display:none}
+  .cert{box-shadow:none;margin:0}
+  @page{size:A4 landscape;margin:0}
+}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <h1>🎓 Certificado de Conclusão</h1>
+  <div class="right">
+    <button onclick="window.print()">🖨️ Imprimir / PDF</button>
+  </div>
+</div>
+
+<div class="cert">
+  <div class="cert-inner">
+    <div class="cert-top">
+      <div class="logo">⚡</div>
+      <div class="org">CURSO DE MONTAGEM E MANUTENÇÃO DE COMPUTADORES
+        <small>palmarante.com.br · Curso livre de extensão</small>
+      </div>
+    </div>
+
+    <div class="faixa">Certificado de Conclusão</div>
+    <div class="titulo" id="c-nome">—</div>
+    <div class="linha-ouro"></div>
+    <div class="texto">
+      Concluiu com aproveitamento o curso de <b>Montagem e Manutenção de Computadores</b>,
+      com carga horária de <b>86 horas</b>, em <b>43 aulas</b> (8 módulos), abrangendo fundamentos
+      de hardware, montagem completa, instalação de sistemas, manutenção preventiva e corretiva,
+      redes e atendimento ao cliente.
+    </div>
+    <div class="meta">
+      <div class="item"><div class="num" id="c-nota">—</div><div class="lab">Nota final (0–10)</div></div>
+      <div class="item"><div class="num" id="c-freq">—</div><div class="lab">Frequência</div></div>
+      <div class="item"><div class="num" id="c-ch">86h</div><div class="lab">Carga horária</div></div>
+      <div class="item"><div class="num" id="c-periodo">—</div><div class="lab">Período</div></div>
+    </div>
+
+    <div class="assinaturas">
+      <div class="assinatura">
+        <div class="linha"><b id="c-por">Coordenador(a) do Curso</b></div>
+        <small id="c-emitido">—</small>
+      </div>
+      <div class="assinatura">
+        <div class="linha"><b id="c-nome2">—</b></div>
+        <small>Aluno(a)</small>
+      </div>
+    </div>
+  </div>
+
+  <div class="codigo">
+    <div class="lab">Código de verificação</div>
+    <div class="val" id="c-codigo">—</div>
+  </div>
+  <div class="qr-area">
+    <canvas id="qr"></canvas>
+    <div class="lab">Escaneie para verificar a autenticidade</div>
+  </div>
+</div>
+
+<script src="qrcode.js"></script>
+<script>
+const params = new URLSearchParams(location.search);
+const aluno = params.get("aluno") || "";
+const nomeEl = document.getElementById("c-nome");
+
+async function carregar(){
+  if (!aluno){ nomeEl.textContent = "Aluno não informado"; return; }
+  try {
+    const r = await fetch("api/certificado?aluno=" + encodeURIComponent(aluno));
+    const j = await r.json();
+    const c = j.certificado;
+    if (!c){
+      document.getElementById("c-nome").textContent = "Certificado ainda não emitido para este aluno.";
+      return;
+    }
+    const emitido = new Date(c.emitido_em).toLocaleDateString("pt-BR");
+    const criado = new Date(c.criado_em).toLocaleDateString("pt-BR");
+    document.getElementById("c-nome").textContent = c.nome;
+    document.getElementById("c-nome2").textContent = c.nome;
+    document.getElementById("c-nota").textContent = c.nota_final != null ? c.nota_final : "—";
+    document.getElementById("c-freq").textContent = c.frequencia != null ? c.frequencia + "%" : "—";
+    document.getElementById("c-periodo").textContent = criado + " a " + emitido;
+    document.getElementById("c-por").textContent = c.emitido_por || "Coordenador(a) do Curso";
+    document.getElementById("c-emitido").textContent = "Emitido em " + emitido + " · " + (c.turma ? "Turma " + c.turma : "Curso livre");
+    document.getElementById("c-codigo").textContent = c.codigo;
+    gerarQR(c.codigo);
+  } catch(e){
+    document.getElementById("c-nome").textContent = "Erro ao carregar certificado.";
+  }
+}
+function gerarQR(codigo){
+  const url = location.origin + "/verificar-certificado.html?codigo=" + encodeURIComponent(codigo);
+  const qr = qrcode(0, "M");
+  qr.addData(url);
+  qr.make();
+  const canvas = document.getElementById("qr");
+  const ctx = canvas.getContext("2d");
+  const cel = 5;
+  const size = qr.getModuleCount() * cel;
+  canvas.width = size; canvas.height = size;
+  ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, size, size);
+  ctx.fillStyle = "#000";
+  for (let r = 0; r < qr.getModuleCount(); r++){
+    for (let c = 0; c < qr.getModuleCount(); c++){
+      if (qr.isDark(r, c)) ctx.fillRect(c * cel, r * cel, cel, cel);
+    }
+  }
+}
+carregar();
+</script>
+</body>
+</html>

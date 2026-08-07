@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Curso de Montagem e Manutenção de Computadores — Apresentação</title>
+<meta name="description" content="Curso completo de Montagem e Manutenção de Computadores: 8 módulos, 43 aulas, 86 horas, com laboratório, exercícios e certificado com QR Code.">
+<meta name="theme-color" content="#14b8a6">
+<style>
+:root{
+  --primary:#14b8a6; --primary-hover:#0d9488; --secondary:#3B82F6;
+  --gold:#c9a227; --text:#fff; --text-muted:rgba(255,255,255,.65);
+  --border:rgba(255,255,255,.14); --surface:rgba(255,255,255,.06);
+  --glass:rgba(255,255,255,.08);
+  --radius:16px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  font-family:"Inter","Segoe UI",Arial,sans-serif;
+  background:linear-gradient(135deg,#06101f,#101b35,#151044);
+  color:var(--text);line-height:1.6;min-height:100vh;
+}
+.wrap{max-width:1080px;margin:0 auto;padding:0 22px}
+.btn{
+  display:inline-block;padding:13px 30px;border-radius:999px;font-weight:800;font-size:15px;
+  text-decoration:none;cursor:pointer;transition:all .2s;border:2px solid transparent;
+}
+.btn-primary{background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(20,184,166,.35)}
+.btn-outline{background:transparent;color:#fff;border-color:var(--border)}
+.btn-outline:hover{border-color:var(--primary);color:var(--primary)}
+.btn-whats{background:#22C55E;color:#fff}
+.btn-whats:hover{background:#16a34a;transform:translateY(-2px)}
+.tag{display:inline-block;padding:4px 12px;border-radius:999px;font-size:11.5px;font-weight:700;letter-spacing:.4px}
+.tag-outline{border:1px solid var(--primary);color:var(--primary)}
+.tag-soft{background:rgba(20,184,166,.12);color:#5eead4}
+
+/* ===== TOPO ===== */
+.topbar{
+  position:sticky;top:0;z-index:50;backdrop-filter:blur(18px);
+  background:rgba(6,16,31,.7);border-bottom:1px solid var(--border);
+}
+.topbar .wrap{display:flex;align-items:center;gap:14px;padding-top:13px;padding-bottom:13px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:15px}
+.brand-badge{
+  width:34px;height:34px;border-radius:10px;display:grid;place-items:center;
+  background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;font-size:17px;
+}
+.brand small{display:block;font-weight:500;font-size:11px;color:var(--text-muted)}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.nav-link{color:var(--text-muted);text-decoration:none;font-size:13.5px;font-weight:600}
+.nav-link:hover{color:var(--text)}
+.btn-top{padding:9px 20px;font-size:13.5px}
+@media(max-width:760px){.nav-link{display:none}}
+
+/* ===== HERO ===== */
+.hero{padding:70px 0 60px;text-align:center;position:relative;overflow:hidden}
+.hero::before{
+  content:"";position:absolute;top:-160px;left:50%;transform:translateX(-50%);
+  width:700px;height:700px;border-radius:50%;
+  background:radial-gradient(circle,rgba(59,130,246,.18),transparent 60%);
+}
+.hero > *{position:relative}
+.hero .chips{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:22px}
+.hero h1{font-size:44px;line-height:1.15;max-width:800px;margin:0 auto 18px;font-weight:900;letter-spacing:-.5px}
+.hero h1 em{font-style:normal;background:linear-gradient(135deg,#2dd4bf,#60a5fa);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.hero .sub{max-width:680px;margin:0 auto 30px;color:var(--text-muted);font-size:17px}
+.hero .ctas{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+.hero .meta-linha{display:flex;gap:26px;justify-content:center;flex-wrap:wrap;margin-top:36px;font-size:13.5px;color:var(--text-muted)}
+.hero .meta-linha b{color:var(--text);font-size:18px;display:block}
+@media(max-width:600px){.hero h1{font-size:30px}}
+
+/* ===== SEÇÕES ===== */
+section{padding:64px 0}
+.section-tag{color:var(--primary);font-size:12px;font-weight:800;letter-spacing:2px;text-transform:uppercase}
+h2{font-size:30px;font-weight:900;margin:10px 0 14px;letter-spacing:-.3px}
+.section-sub{color:var(--text-muted);max-width:620px;font-size:15.5px;margin-bottom:38px}
+.alt{background:rgba(255,255,255,.03);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+
+/* Benefícios */
+.bens{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
+.ben{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:22px;transition:all .2s;
+}
+.ben:hover{transform:translateY(-4px);border-color:var(--primary)}
+.ben .ico{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;font-size:21px;margin-bottom:12px;background:rgba(20,184,166,.14)}
+.ben h3{font-size:15.5px;margin-bottom:6px}
+.ben p{font-size:13px;color:var(--text-muted)}
+
+/* Módulos */
+.mods{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.mod{
+  display:flex;gap:14px;align-items:flex-start;background:var(--surface);
+  border:1px solid var(--border);border-radius:var(--radius);padding:18px;
+}
+.mod .num{
+  flex-shrink:0;width:38px;height:38px;border-radius:10px;display:grid;place-items:center;
+  font-weight:900;font-size:15px;background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;
+}
+.mod h3{font-size:15px;margin-bottom:3px}
+.mod p{font-size:12.5px;color:var(--text-muted)}
+.mod .qtd{font-size:11px;color:var(--primary);font-weight:700;margin-top:2px;display:block}
+@media(max-width:760px){.mods{grid-template-columns:1fr}}
+
+/* Metodologia */
+.etapas{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;counter-reset:etapa}
+.etapa{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:18px;position:relative;padding-top:34px;
+}
+.etapa::before{
+  counter-increment:etapa;content:counter(etapa);
+  position:absolute;top:12px;left:16px;font-weight:900;font-size:14px;color:var(--primary);
+}
+.etapa b{font-size:13.5px;display:block;margin-bottom:3px}
+.etapa span{font-size:11.5px;color:var(--text-muted)}
+
+/* Diferenciais */
+.diffs{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+.diff{
+  border:1px solid var(--border);border-radius:var(--radius);padding:22px;
+  background:linear-gradient(160deg,rgba(20,184,166,.08),transparent);
+}
+.diff .ico{font-size:26px;margin-bottom:10px}
+.diff h3{font-size:15px;margin-bottom:6px}
+.diff p{font-size:12.5px;color:var(--text-muted)}
+
+/* Depoimentos */
+.deps{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.dep{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px}
+.dep .estrelas{color:var(--gold);letter-spacing:2px;font-size:14px;margin-bottom:8px}
+.dep p{font-size:13px;color:var(--text-muted);font-style:italic;margin-bottom:12px}
+.dep .quem{font-size:12.5px;font-weight:700}
+.dep .quem small{display:block;font-weight:500;color:var(--text-muted)}
+
+/* FAQ */
+.faq-item{border:1px solid var(--border);border-radius:12px;margin-bottom:10px;overflow:hidden}
+.faq-q{
+  padding:15px 18px;font-weight:700;font-size:14px;cursor:pointer;display:flex;
+  justify-content:space-between;align-items:center;background:var(--surface);
+}
+.faq-q .seta{transition:transform .2s;color:var(--text-muted)}
+.faq-item.open .faq-q .seta{transform:rotate(180deg)}
+.faq-a{max-height:0;overflow:hidden;transition:max-height .25s ease;font-size:13px;color:var(--text-muted)}
+.faq-item.open .faq-a{max-height:400px;padding:0 18px 15px}
+
+/* CTA final */
+.cta-final{text-align:center;padding:70px 0}
+.cta-final h2{font-size:32px}
+.cta-final .ctas{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:26px}
+
+/* Footer */
+footer{border-top:1px solid var(--border);padding:26px 0;text-align:center;font-size:12px;color:var(--text-muted)}
+footer a{color:var(--primary);text-decoration:none}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="wrap">
+    <div class="brand">
+      <div class="brand-badge">⚡</div>
+      <div>
+        Montagem e Manutenção de Computadores
+        <small>Curso livre de extensão · Laboratório prático</small>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <a class="nav-link" href="#curso">O curso</a>
+      <a class="nav-link" href="#diferenciais">Diferenciais</a>
+      <a class="nav-link" href="#duvidas">Dúvidas</a>
+      <a class="btn btn-primary btn-top" href="login-aluno.html">Começar agora</a>
+    </div>
+  </div>
+</div>
+
+<div class="hero">
+  <div class="wrap">
+    <div class="chips">
+      <span class="tag tag-soft">🏆 Certificado com QR Code</span>
+      <span class="tag tag-outline">🛠️ Laboratório prático</span>
+      <span class="tag tag-outline">💼 Para o mercado de trabalho</span>
+    </div>
+    <h1>Aprenda a montar, diagnosticar e consertar computadores <em>do zero ao profissional</em></h1>
+    <p class="sub">
+      Curso prático de 8 módulos e 43 aulas semanais: você vai montar computadores de verdade,
+      instalar sistemas, resolver defeitos e sair pronto para atender clientes.
+    </p>
+    <div class="ctas">
+      <a class="btn btn-primary" href="login-aluno.html">Quero me inscrever</a>
+      <a class="btn btn-outline" href="#curso">Conhecer o curso</a>
+    </div>
+    <div class="meta-linha">
+      <div><b>8</b>módulos</div>
+      <div><b>43</b>aulas</div>
+      <div><b>86h</b>carga horária</div>
+      <div><b>2h</b>por semana</div>
+      <div><b>1</b>aula por semana</div>
+    </div>
+  </div>
+</div>
+
+<section id="curso">
+  <div class="wrap">
+    <div class="section-tag">Por que este curso</div>
+    <h2>Tudo que você precisa para trabalhar com hardware</h2>
+    <p class="section-sub">Um percurso completo, do conceito ao atendimento ao cliente, com prática de verdade em cada aula.</p>
+    <div class="bens">
+      <div class="ben"><div class="ico">🖥️</div><h3>Montagem completa</h3><p>Monte computadores do zero: gabinete, placa-mãe, CPU, memórias e armazenamento.</p></div>
+      <div class="ben"><div class="ico">🔧</div><h3>Diagnóstico real</h3><p>Método de bancada para identificar e corrigir defeitos comuns de hardware.</p></div>
+      <div class="ben"><div class="ico">💾</div><h3>Instalação de sistemas</h3><p>Windows e Linux do zero, drivers e atualizações com preparo profissional.</p></div>
+      <div class="ben"><div class="ico">🌐</div><h3>Redes e conectividade</h3><p>Monte e configure redes domésticas e de pequenas empresas.</p></div>
+      <div class="ben"><div class="ico">🧾</div><h3>Ordem de serviço</h3><p>Aprenda a atender clientes, orçar e entregar com garantia e ética.</p></div>
+      <div class="ben"><div class="ico">🎓</div><h3>Certificado oficial</h3><p>Certificado de conclusão com QR Code verificável online.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="alt">
+  <div class="wrap">
+    <div class="section-tag">O que você vai aprender</div>
+    <h2>8 módulos, do básico ao profissional</h2>
+    <p class="section-sub">Cada módulo tem aulas teóricas e práticas, com exercícios de fixação e uma avaliação ao final.</p>
+    <div class="mods" id="modulos"></div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="section-tag">Como funciona</div>
+    <h2>Metodologia de cada aula (2h)</h2>
+    <p class="section-sub">Um roteiro claro, com teoria, demonstração e prática guiada para você aprender fazendo.</p>
+    <div class="etapas">
+      <div class="etapa"><b>Revisão</b><span>Retomada da aula anterior</span></div>
+      <div class="etapa"><b>Teoria</b><span>Exposição dialogada</span></div>
+      <div class="etapa"><b>Demonstração</b><span>Prática guiada pelo instrutor</span></div>
+      <div class="etapa"><b>Prática</b><span>Você faz e registra o checkout</span></div>
+      <div class="etapa"><b>Fechamento</b><span>Correção e próximos passos</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="alt" id="diferenciais">
+  <div class="wrap">
+    <div class="section-tag">Nossos diferenciais</div>
+    <h2>Muito além de uma apostila</h2>
+    <p class="section-sub">Ferramentas digitais que acompanham você em cada etapa.</p>
+    <div class="diffs">
+      <div class="diff"><div class="ico">📘</div><h3>Livro completo em 8 volumes</h3><p>Material de estudo aprofundado, capítulo por capítulo.</p></div>
+      <div class="diff"><div class="ico">✏️</div><h3>Caderno de exercícios</h3><p>Objetivas e dissertativas em cada aula, corrigidas na hora.</p></div>
+      <div class="diff"><div class="ico">🧪</div><h3>Avaliações por módulo</h3><p>Provas que garantem que você domina cada etapa antes de avançar.</p></div>
+      <div class="diff"><div class="ico">🗂️</div><h3>Checkout das aulas práticas</h3><p>Você registra o equipamento, o problema e a solução — como numa oficina.</p></div>
+      <div class="diff"><div class="ico">📈</div><h3>Acompanhamento individual</h3><p>Seu progresso, frequência e notas ficam registrados para o instrutor.</p></div>
+      <div class="diff"><div class="ico">✅</div><h3>Certificado verificável</h3><p>Cada certificado tem um QR Code único que qualquer pessoa pode conferir.</p></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="section-tag">Quem já fez</div>
+    <h2>Depoimentos</h2>
+    <div class="deps">
+      <div class="dep">
+        <div class="estrelas">★★★★★</div>
+        <p>Saí do curso sabendo montar um computador do zero. Hoje atendo clientes da minha própria cidade.</p>
+        <div class="quem">Carlos Eduardo<small>Aluno · Turma concluída</small></div>
+      </div>
+      <div class="dep">
+        <div class="estrelas">★★★★★</div>
+        <p>O checkout das aulas práticas me fez aprender de verdade. É igual a um laboratório profissional.</p>
+        <div class="quem">Mariana Souza<small>Aluna · Turma concluída</small></div>
+      </div>
+      <div class="dep">
+        <div class="estrelas">★★★★★</div>
+        <p>Resolvi o defeito do meu notebook sozinho depois da aula de diagnóstico. Valeu cada semana.</p>
+        <div class="quem">João Pedro<small>Aluno · Turma concluída</small></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="alt" id="duvidas">
+  <div class="wrap" style="max-width:760px">
+    <div class="section-tag">Dúvidas frequentes</div>
+    <h2 style="text-align:center">Perguntas e respostas</h2>
+    <div class="faq" id="faq">
+      <div class="faq-item open">
+        <div class="faq-q">Preciso ter experiência ou computador próprio?<span class="seta">▼</span></div>
+        <div class="faq-a">Não. O curso parte do zero e usa os equipamentos do laboratório. Ter um computador em casa ajuda, mas não é obrigatório.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Como é a avaliação?<span class="seta">▼</span></div>
+        <div class="faq-a">Nota final = Participação (20%) + Exercícios (20%) + Montagem (30%) + Diagnóstico (30%). Para ser aprovado é preciso nota final ≥ 6 e presença ≥ 75%.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">O certificado é reconhecido?<span class="seta">▼</span></div>
+        <div class="faq-a">O certificado é de curso livre de extensão, com código e QR Code para verificação online de autenticidade — ideal para comprovar o conhecimento no currículo.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Quanto tempo dura o curso?<span class="seta">▼</span></div>
+        <div class="faq-a">São 43 semanas (uma aula de 2 horas por semana), totalizando 86 horas distribuídas em 8 módulos.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="cta-final">
+  <div class="wrap">
+    <h2>Pronto para montar seu futuro?</h2>
+    <p class="section-sub" style="margin:12px auto 0">Garanta sua vaga e comece a aprender de verdade.</p>
+    <div class="ctas">
+      <a class="btn btn-primary" href="login-aluno.html">Quero me inscrever</a>
+      <a class="btn btn-whats" href="https://wa.me/SEUNUMERO?text=Olá!%20Tenho%20interesse%20no%20curso%20de%20Montagem%20e%20Manutenção%20de%20Computadores." target="_blank" rel="noopener">💬 Tirar dúvidas no WhatsApp</a>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap">
+    Curso de Montagem e Manutenção de Computadores · 8 módulos · 43 aulas · 86 horas<br>
+    <a href="index.html">Acessar o ambiente do curso</a> · <a href="verificar-certificado.html">Verificar certificado</a>
+  </div>
+</footer>
+
+<script src="curso.js"></script>
+<script>
+const VOL = {
+  "01":"Fundamentos de Hardware","02":"Componentes Internos","03":"Montagem de Computadores",
+  "04":"Instalação de Sistemas","05":"Manutenção Preventiva","06":"Diagnóstico e Manutenção Corretiva",
+  "07":"Redes e Conectividade","08":"Atendimento, Ordem de Serviço e Mercado"
+};
+function esc(s){ return String(s||"").replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function renderModulos(){
+  const el = document.getElementById("modulos");
+  el.innerHTML = CURSO.map(m=>`
+    <div class="mod">
+      <div class="num">${m.num}</div>
+      <div>
+        <h3>${esc(m.titulo)}</h3>
+        <p>${esc(m.objetivo)}</p>
+        <span class="qtd">${m.aulas.length} aulas · ${m.aulas.length*2}h</span>
+      </div>
+    </div>`).join("");
+}
+document.getElementById("faq").addEventListener("click", e=>{
+  const item = e.target.closest(".faq-item");
+  if (item) item.classList.toggle("open");
+});
+renderModulos();
+</script>
+</body>
+</html>

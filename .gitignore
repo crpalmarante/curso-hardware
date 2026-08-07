@@ -1,0 +1,11 @@
+# Dados do curso (banco, senha do instrutor, segredo de sessão)
+# — gerados na primeira execução do servidor; NUNCA versionar
+dados/
+
+# Python
+__pycache__/
+*.pyc
+
+# Sistema
+.DS_Store
+Thumbs.db

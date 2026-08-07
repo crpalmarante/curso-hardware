@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Livro — Montagem e Manutenção de Computadores</title>
+<meta name="theme-color" content="#14b8a6">
+<style>
+:root{
+  --primary:#14b8a6; --primary-hover:#0d9488; --primary-active:#0f766e;
+  --secondary:#3B82F6; --danger:#EF4444; --success:#22C55E; --warning:#F59E0B;
+  --bg:linear-gradient(135deg,#06101f,#101b35,#151044);
+  --text:#FFFFFF; --text-secondary:#DDDDDD; --text-muted:rgba(255,255,255,.5);
+  --border:rgba(255,255,255,.14); --border-hover:rgba(255,255,255,.3);
+  --surface:rgba(255,255,255,.06); --surface-hover:rgba(255,255,255,.12);
+  --glass:rgba(255,255,255,.08);
+  --radius-sm:6px; --radius-md:10px; --radius-lg:16px; --radius-xl:24px;
+  --font-family:"Inter","Segoe UI",Arial,sans-serif;
+}
+[data-theme="light"]{
+  --bg:linear-gradient(135deg,#f0f4f8,#e2e8f0,#cbd5e1);
+  --text:#1a202c; --text-secondary:#4a5568; --text-muted:rgba(0,0,0,.5);
+  --border:rgba(0,0,0,.12); --border-hover:rgba(0,0,0,.25);
+  --surface:rgba(255,255,255,.65); --surface-hover:rgba(255,255,255,.85);
+  --glass:rgba(255,255,255,.7);
+  --primary:#0f766e; --primary-hover:#0d5c55;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:var(--font-family);
+  background:var(--bg); color:var(--text);
+  min-height:100vh; line-height:1.55;
+}
+::selection{background:var(--primary);color:#fff}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(128,128,128,.4);border-radius:20px}
+
+/* ===== TOPO ===== */
+.topbar{
+  position:sticky;top:0;z-index:50;
+  display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+  padding:14px 24px;
+  background:var(--glass);
+  backdrop-filter:blur(18px);
+  border-bottom:1px solid var(--border);
+}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:15px}
+.brand-badge{
+  width:34px;height:34px;border-radius:10px;display:grid;place-items:center;
+  background:linear-gradient(135deg,var(--primary),var(--secondary));
+  color:#fff;font-size:17px;flex-shrink:0;
+}
+.brand small{display:block;font-weight:500;color:var(--text-muted);font-size:11px}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.icon-btn{
+  padding:8px 12px;border-radius:var(--radius-md);cursor:pointer;
+  color:var(--text-secondary);font-size:13px;
+  border:1px solid var(--border);background:var(--surface);
+  transition:all .2s;
+}
+.icon-btn:hover{background:var(--surface-hover);color:var(--text);border-color:var(--border-hover)}
+
+/* ===== CONTEÚDO ===== */
+.container{max-width:1100px;margin:0 auto;padding:32px 24px 80px}
+
+/* HERO */
+.hero{
+  background:var(--glass);border:1px solid var(--border);
+  border-radius:var(--radius-xl);padding:36px;margin-bottom:24px;
+  position:relative;overflow:hidden;
+}
+.hero::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(600px 200px at 90% 0%,rgba(20,184,166,.18),transparent);
+}
+.hero h1{font-size:clamp(1.6rem,4vw,2.4rem);margin-bottom:8px}
+.hero p.sub{color:var(--text-secondary);max-width:760px;margin-bottom:22px}
+.chips{display:flex;gap:10px;flex-wrap:wrap}
+.chip{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:8px 14px;border-radius:999px;font-size:13px;font-weight:600;
+  background:var(--surface);border:1px solid var(--border);color:var(--text-secondary);
+}
+.chip b{color:var(--text)}
+
+/* BUSCA */
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:24px}
+.search-box{
+  flex:1;min-width:220px;display:flex;align-items:center;gap:8px;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius-md);padding:10px 14px;
+}
+.search-box input{background:none;border:none;outline:none;color:var(--text);flex:1;font-size:14px}
+.search-box input::placeholder{color:var(--text-muted)}
+
+/* VOLUMES */
+.volume{
+  background:var(--glass);border:1px solid var(--border);
+  border-radius:var(--radius-lg);margin-bottom:18px;overflow:hidden;
+}
+.volume-head{
+  display:flex;align-items:center;gap:14px;padding:18px 22px;cursor:pointer;
+  transition:background .2s;
+}
+.volume-head:hover{background:var(--surface-hover)}
+.volume-num{
+  width:42px;height:42px;border-radius:12px;flex-shrink:0;
+  display:grid;place-items:center;font-weight:800;font-size:16px;
+  background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;
+}
+.volume-info{flex:1;min-width:0}
+.volume-info h3{font-size:16px;margin-bottom:3px}
+.volume-info .meta{font-size:12.5px;color:var(--text-muted)}
+.volume-chevron{color:var(--text-muted);transition:transform .3s;font-size:18px}
+.volume.open .volume-chevron{transform:rotate(90deg)}
+
+.volume-body{display:none;border-top:1px solid var(--border);padding:14px 22px 20px}
+.volume.open .volume-body{display:block}
+
+/* CAPÍTULOS */
+.chapter{
+  border:1px solid var(--border);border-radius:var(--radius-md);
+  margin-bottom:10px;overflow:hidden;background:var(--surface);
+}
+.chapter-head{
+  display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;
+  transition:background .2s;
+}
+.chapter-head:hover{background:var(--surface-hover)}
+.chapter-idx{
+  width:28px;height:28px;border-radius:8px;flex-shrink:0;
+  display:grid;place-items:center;font-weight:700;font-size:13px;
+  background:var(--surface-hover);color:var(--primary);
+}
+.chapter-head h4{font-size:14px;flex:1;min-width:0}
+.chapter-head .cap-chevron{color:var(--text-muted);transition:transform .3s;font-size:14px}
+.chapter.open .cap-chevron{transform:rotate(90deg)}
+.chapter-body{display:none;border-top:1px solid var(--border);padding:14px 16px}
+.chapter.open .chapter-body{display:block}
+.chapter-body p{color:var(--text-secondary);font-size:13.5px;margin-bottom:10px}
+.chapter-body ul{color:var(--text-secondary);font-size:13.5px;padding-left:18px;list-style:disc}
+.chapter-body ul li{margin-bottom:3px}
+.chip-cap{
+  display:inline-flex;align-items:center;gap:6px;padding:3px 10px;
+  border-radius:999px;font-size:11.5px;font-weight:700;
+  background:var(--surface-hover);border:1px solid var(--border);color:var(--text-secondary);
+  margin:0 4px 6px 0;
+}
+
+/* GUIA DE DIAGNÓSTICO (volume 6) */
+.diag-box{border:1px solid var(--border);border-radius:var(--radius-md);padding:14px 16px;margin-bottom:12px;background:var(--surface)}
+.diag-box h5{font-size:13px;margin-bottom:8px;color:var(--primary)}
+.diag-causes{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.diag-causes span{
+  font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;
+  background:var(--surface-hover);border:1px solid var(--border);color:var(--text-secondary);
+}
+.steps{list-style:none;display:flex;flex-direction:column;gap:8px}
+.steps li{
+  display:flex;gap:10px;font-size:13.5px;color:var(--text-secondary);
+  padding:8px 12px;border-radius:var(--radius-md);background:var(--glass);border:1px solid var(--border);
+}
+.steps li .step-num{
+  width:22px;height:22px;border-radius:50%;flex-shrink:0;
+  display:grid;place-items:center;font-size:12px;font-weight:800;
+  background:var(--primary);color:#fff;
+}
+
+/* RECURSOS / COMPLEMENTAR */
+.res-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px;margin-bottom:24px}
+.res-card{
+  background:var(--glass);border:1px solid var(--border);
+  border-radius:var(--radius-lg);padding:22px 24px;
+}
+.res-card h3{
+  display:flex;align-items:center;gap:10px;font-size:15px;margin-bottom:14px;
+}
+.res-card h3 .ico{
+  width:30px;height:30px;border-radius:9px;display:grid;place-items:center;
+  font-size:15px;background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;flex-shrink:0;
+}
+.mat-list{list-style:none;display:flex;flex-direction:column;gap:9px}
+.mat-list li{
+  display:flex;align-items:center;gap:10px;font-size:13.5px;color:var(--text-secondary);
+  padding:10px 12px;border-radius:var(--radius-md);background:var(--surface);border:1px solid var(--border);
+}
+.mat-list li .mk{color:var(--success);flex-shrink:0}
+.mat-list li .ex{color:var(--text-muted);font-size:12px}
+
+/* RODAPÉ */
+.footer{
+  text-align:center;color:var(--text-muted);font-size:13px;
+  padding:20px;border-top:1px solid var(--border);margin-top:30px;
+}
+
+@media (max-width:640px){
+  .container{padding:20px 14px}
+  .hero{padding:24px}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-badge">📕</div>
+    <div>
+      Livro — Montagem e Manutenção de Computadores
+      <small>Apostila completa em 8 volumes · 350 a 500 páginas</small>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <a class="icon-btn" href="index.html" title="Ir para o curso">▶ Curso</a>
+    <button class="icon-btn" onclick="toggleTheme()" title="Alternar tema">◐ Tema</button>
+  </div>
+</div>
+
+<div class="container">
+
+  <section class="hero">
+    <h1>Livro — Apostila Completa</h1>
+    <p class="sub">
+      Livro completo, totalmente em português, com aproximadamente <strong>350 a 500 páginas</strong>.
+      Dividido em 8 volumes que acompanham o curso: dos fundamentos da informática ao atendimento
+      técnico, com centenas de fotografias, diagramas, tabelas e exercícios.
+    </p>
+    <div class="chips">
+      <span class="chip"><b id="chip-volumes">8</b> volumes</span>
+      <span class="chip"><b id="chip-cap">53</b> capítulos</span>
+      <span class="chip">📖 350–500 páginas</span>
+      <span class="chip">🇧🇷 100% português</span>
+    </div>
+  </section>
+
+  <div class="toolbar">
+    <div class="search-box">
+      <span>🔍</span>
+      <input type="text" id="search" placeholder="Buscar capítulo ou assunto...">
+    </div>
+  </div>
+
+  <div id="book-root"></div>
+
+  <h2 style="font-size:20px;margin:34px 0 4px">Recursos didáticos</h2>
+  <p style="color:var(--text-secondary);font-size:13.5px;margin-bottom:16px">Elementos visuais e de apoio incluídos ao longo da apostila.</p>
+  <div class="res-grid">
+    <section class="res-card">
+      <h3><span class="ico">🖼️</span> Elementos visuais</h3>
+      <ul class="mat-list">
+        <li><span class="mk">✓</span> Centenas de fotografias</li>
+        <li><span class="mk">✓</span> Diagramas coloridos</li>
+        <li><span class="mk">✓</span> Tabelas</li>
+        <li><span class="mk">✓</span> Fluxogramas</li>
+        <li><span class="mk">✓</span> Esquemas elétricos simplificados</li>
+      </ul>
+    </section>
+    <section class="res-card">
+      <h3><span class="ico">💡</span> Caixas de destaque</h3>
+      <ul class="mat-list">
+        <li><span class="mk">✓</span> Caixas de curiosidades</li>
+        <li><span class="mk">✓</span> Dicas do técnico</li>
+        <li><span class="mk">✓</span> Erros comuns</li>
+        <li><span class="mk">✓</span> Estudos de caso</li>
+      </ul>
+    </section>
+    <section class="res-card">
+      <h3><span class="ico">📝</span> Exercícios e apoio</h3>
+      <ul class="mat-list">
+        <li><span class="mk">✓</span> Exercícios ao final de cada capítulo</li>
+        <li><span class="mk">✓</span> Questionários</li>
+        <li><span class="mk">✓</span> Checklist de bancada</li>
+        <li><span class="mk">✓</span> Roteiro de laboratório</li>
+      </ul>
+    </section>
+  </div>
+
+  <h2 style="font-size:20px;margin:34px 0 4px">Material complementar</h2>
+  <p style="color:var(--text-secondary);font-size:13.5px;margin-bottom:16px">Produzido junto da apostila para apoiar alunos e instrutores.</p>
+  <div class="res-grid">
+    <section class="res-card">
+      <h3><span class="ico">👨‍🏫</span> Para o instrutor</h3>
+      <ul class="mat-list">
+        <li><span class="mk">✓</span> Manual do Instrutor <span class="ex">— respostas dos exercícios, orientações p/ aulas práticas e critérios de avaliação</span></li>
+        <li><span class="mk">✓</span> Banco de questões <span class="ex">— centenas de perguntas para provas teóricas e práticas</span></li>
+        <li><span class="mk">✓</span> Certificado e modelo de diário de classe</li>
+      </ul>
+    </section>
+    <section class="res-card">
+      <h3><span class="ico">🧪</span> Para o aluno</h3>
+      <ul class="mat-list">
+        <li><span class="mk">✓</span> Caderno de Laboratório <span class="ex">— atividades práticas, espaço para anotações e registros de testes</span></li>
+        <li><span class="mk">✓</span> Guia de bancada <span class="ex">— A4 plastificável com procedimentos rápidos de montagem e diagnóstico</span></li>
+      </ul>
+    </section>
+    <section class="res-card">
+      <h3><span class="ico">🖥️</span> Apresentações</h3>
+      <ul class="mat-list">
+        <li><span class="mk">✓</span> Slides para cada aula <span class="ex">— PowerPoint / LibreOffice Impress</span></li>
+      </ul>
+    </section>
+  </div>
+
+  <div class="footer">
+    Livro de Montagem e Manutenção de Computadores — estrutura da apostila em 8 volumes
+  </div>
+</div>
+
+<script>
+const LIVRO = [
+  {
+    num:"1", titulo:"Fundamentos da Informática", desc:"Introdução ao mundo da computação, da história aos conceitos essenciais.", 
+    capitulos:[
+      {t:"História da computação"},
+      {t:"Como funciona um computador"},
+      {t:"Sistema binário"},
+      {t:"Hardware × Software"},
+      {t:"Arquitetura de Von Neumann"},
+      {t:"CPU, memória e barramentos"},
+      {t:"Periféricos"},
+      {t:"Exercícios", tipo:"exercicio"}
+    ]
+  },
+  {
+    num:"2", titulo:"Hardware", desc:"Cada componente possui um capítulo completo, com diagramas, fotos e exercícios.", 
+    capitulos:[
+      {t:"Placa-mãe", destaque:true,
+       subt:"Um capítulo inteiro, em torno de 40 páginas, sobre a placa-mãe.",
+       itens:["O que é","Evolução","Formatos (AT, ATX, MicroATX, MiniITX...)","Chipsets","VRM","Barramentos","Slots PCIe","SATA","NVMe","M.2","BIOS","UEFI","CMOS","Bateria","Diagramas","Fotos","Exercícios"]},
+      {t:"Processadores"},
+      {t:"Memórias"},
+      {t:"Fontes"},
+      {t:"SSD"},
+      {t:"HD"},
+      {t:"Placas de vídeo"},
+      {t:"Coolers"},
+      {t:"Gabinetes"}
+    ]
+  },
+  {
+    num:"3", titulo:"Montagem", desc:"Passo a passo completo, com mais de 100 fotografias.",
+    capitulos:[
+      {t:"Passo a passo da montagem", itens:["Mais de 100 fotografias","Cada parafuso","Cada cabo","Cada conector","Cada erro comum"]},
+      {t:"Checklist completo de montagem", tipo:"checklist"}
+    ]
+  },
+  {
+    num:"4", titulo:"Instalação", desc:"Instalação de sistemas operacionais e configuração de firmware.",
+    capitulos:[
+      {t:"Windows"},
+      {t:"Linux"},
+      {t:"Drivers"},
+      {t:"UEFI"},
+      {t:"Secure Boot"},
+      {t:"GPT"},
+      {t:"MBR"},
+      {t:"Backup"}
+    ]
+  },
+  {
+    num:"5", titulo:"Manutenção", desc:"Rotinas preventivas que prolongam a vida útil do equipamento.",
+    capitulos:[
+      {t:"Limpeza"},
+      {t:"Troca de pasta térmica"},
+      {t:"Atualizações"},
+      {t:"Organização"},
+      {t:"Ferramentas"}
+    ]
+  },
+  {
+    num:"6", titulo:"Diagnóstico", desc:"Um verdadeiro guia de bancada: do sintoma ao próximo teste.",
+    capitulos:[
+      {t:"Sintoma: Não liga", exemplo:true,
+       causas:["Fonte","Botão Power","Curto","CPU","BIOS","RAM","Placa-mãe"],
+       passos:["Verificar se a fonte recebe energia e o botão power responde","Testar a fonte com o teste do clip e com o multímetro","Remover periféricos e testar com o mínimo (CPU, 1 RAM, vídeo integrado)","Testar a RAM em outro slot e com outro pente","Testar o processador e, por fim, a placa-mãe (POST card)","Isolar a causa e registrar o laudo do diagnóstico"],
+       result:"Sistema liga com o mínimo de componentes → a causa é um periférico ou módulo instalado."},
+      {t:"Fluxograma de diagnóstico", tipo:"fluxograma",
+       itens:["Coleta do sintoma","Lista de possíveis causas","Testes de eliminação","Isolamento da causa","Solução e validação","Registro do laudo técnico"]},
+      {t:"Sintoma: Sem imagem no monitor"},
+      {t:"Sintoma: Reinicia sozinho"},
+      {t:"Sintoma: Tela azul (BSOD)"},
+      {t:"Sintoma: Superaquecimento"},
+      {t:"Sintoma: Ruídos estranhos"},
+      {t:"Sintoma: Lentidão excessiva"},
+      {t:"Como testar — metodologia passo a passo", itens:["Passo 1: Observar","Passo 2: Listar hipóteses","Passo 3: Testar e eliminar","Resultado esperado","Próximo teste"]}
+    ]
+  },
+  {
+    num:"7", titulo:"Laboratório", desc:"Mais de 100 exercícios práticos, cada um com roteiro completo.",
+    capitulos:[
+      {t:"Estrutura de cada exercício", destaque:true,
+       itens:["Problema","Sintoma","Ferramentas","Procedimento","Solução"]},
+      {t:"Exercícios de montagem"},
+      {t:"Exercícios de instalação"},
+      {t:"Exercícios de manutenção"},
+      {t:"Exercícios de diagnóstico"},
+      {t:"Exercícios de redes"}
+    ]
+  },
+  {
+    num:"8", titulo:"Atendimento Técnico", desc:"A parte profissional: como atender clientes e gerir uma oficina.",
+    capitulos:[
+      {t:"Como atender clientes"},
+      {t:"Ordem de serviço"},
+      {t:"Garantia"},
+      {t:"Orçamento"},
+      {t:"LGPD"},
+      {t:"Postura profissional"}
+    ]
+  }
+];
+
+/* ===== ESTADO ===== */
+let query = "";
+
+function render(){
+  const root = document.getElementById("book-root");
+  root.innerHTML = LIVRO.map(v => {
+    const caps = v.capitulos.filter(c =>
+      !query || (c.t+" "+(c.subt||"")+" "+(c.itens||[]).join(" ")).toLowerCase().includes(query)
+    );
+    if (caps.length === 0) return "";
+
+    return `
+    <section class="volume open" data-volume="${v.num}">
+      <div class="volume-head" onclick="toggleVolume(this)">
+        <div class="volume-num">${v.num}</div>
+        <div class="volume-info">
+          <h3>Volume ${v.num} — ${v.titulo}</h3>
+          <div class="meta">${caps.length} capítulos · ${v.desc}</div>
+        </div>
+        <span class="volume-chevron">▶</span>
+      </div>
+      <div class="volume-body">
+        ${caps.map((c, i) => `
+          <div class="chapter open">
+            <div class="chapter-head" onclick="toggleChapter(this)">
+              <div class="chapter-idx">${i+1}</div>
+              <h4>${c.t}${c.destaque?' <span style="color:var(--primary);font-size:12px">★ destaque</span>':''}</h4>
+              <span class="cap-chevron">▶</span>
+            </div>
+            <div class="chapter-body">
+              ${c.subt ? `<p>${c.subt}</p>` : ""}
+              ${c.causas ? `
+                <div class="diag-box">
+                  <h5>Possíveis causas</h5>
+                  <div class="diag-causes">${c.causas.map(x=>`<span>${x}</span>`).join("")}</div>
+                  <h5>Como testar</h5>
+                  <ul class="steps">${c.passos.map((p,i)=>`<li><span class="step-num">${i+1}</span>${p}</li>`).join("")}</ul>
+                  <h5>Resultado esperado</h5>
+                  <p style="margin:0">${c.result}</p>
+                </div>` : ""}
+              ${c.itens ? `<ul>${c.itens.map(x=>`<li>${x}</li>`).join("")}</ul>` : ""}
+              ${c.tipo==='exercicio' ? `<p style="margin-top:10px">📝 Exercícios de fixação sobre todo o conteúdo do volume.</p>` : ""}
+              ${c.tipo==='checklist' ? `<p style="margin-top:10px">✅ Lista verificável para conferir cada etapa da montagem.</p>` : ""}
+              ${c.tipo==='fluxograma' ? `<p style="margin-top:10px">🔀 Fluxograma visual encartado para uso na bancada.</p>` : ""}
+              ${c.exemplo ? `<p style="margin-top:10px">🔎 Exemplo real de entrada do guia de bancada — cada sintoma do volume seguirá este mesmo modelo.</p>` : ""}
+            </div>
+          </div>`).join("")}
+      </div>
+    </section>`;
+  }).join("");
+
+  if (!root.innerHTML.trim()) {
+    root.innerHTML = '<div class="hero" style="text-align:center">Nenhum capítulo encontrado para a busca.</div>';
+  }
+}
+
+function toggleVolume(head){ head.closest(".volume").classList.toggle("open"); }
+function toggleChapter(head){ head.closest(".chapter").classList.toggle("open"); }
+function toggleTheme(){
+  const html = document.documentElement;
+  html.setAttribute("data-theme", html.getAttribute("data-theme")==="dark" ? "light" : "dark");
+}
+
+document.getElementById("search").addEventListener("input", e => { query = e.target.value.trim().toLowerCase(); render(); });
+
+render();
+</script>
+</body>
+</html>

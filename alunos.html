@@ -1,0 +1,1388 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Registro de Alunos — Curso de Informática</title>
+<meta name="theme-color" content="#14b8a6">
+<style>
+:root{
+  --primary:#14b8a6; --primary-hover:#0d9488; --primary-active:#0f766e;
+  --secondary:#3B82F6; --danger:#EF4444; --success:#22C55E; --warning:#F59E0B;
+  --bg:linear-gradient(135deg,#06101f,#101b35,#151044);
+  --text:#FFFFFF; --text-secondary:#DDDDDD; --text-muted:rgba(255,255,255,.5);
+  --border:rgba(255,255,255,.14); --border-hover:rgba(255,255,255,.3);
+  --surface:rgba(255,255,255,.06); --surface-hover:rgba(255,255,255,.12);
+  --glass:rgba(255,255,255,.08);
+  --radius-sm:6px; --radius-md:10px; --radius-lg:16px; --radius-xl:24px;
+  --font-family:"Inter","Segoe UI",Arial,sans-serif;
+}
+[data-theme="light"]{
+  --bg:linear-gradient(135deg,#f0f4f8,#e2e8f0,#cbd5e1);
+  --text:#1a202c; --text-secondary:#4a5568; --text-muted:rgba(0,0,0,.5);
+  --border:rgba(0,0,0,.12); --border-hover:rgba(0,0,0,.25);
+  --surface:rgba(255,255,255,.65); --surface-hover:rgba(255,255,255,.85);
+  --glass:rgba(255,255,255,.7);
+  --primary:#0f766e; --primary-hover:#0d5c55;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:var(--font-family);background:var(--bg);color:var(--text);
+  min-height:100vh;line-height:1.55;
+}
+::selection{background:var(--primary);color:#fff}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(128,128,128,.4);border-radius:20px}
+
+.topbar{
+  position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+  padding:14px 24px;background:var(--glass);backdrop-filter:blur(18px);
+  border-bottom:1px solid var(--border);
+}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:15px}
+.brand-badge{
+  width:34px;height:34px;border-radius:10px;display:grid;place-items:center;
+  background:linear-gradient(135deg,var(--primary),var(--secondary));
+  color:#fff;font-size:17px;flex-shrink:0;
+}
+.brand small{display:block;font-weight:500;color:var(--text-muted);font-size:11px}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.icon-btn{
+  padding:8px 12px;border-radius:var(--radius-md);cursor:pointer;
+  color:var(--text-secondary);font-size:13px;border:1px solid var(--border);
+  background:var(--surface);transition:all .2s;
+}
+.icon-btn:hover{background:var(--surface-hover);color:var(--text);border-color:var(--border-hover)}
+.icon-btn.primary{background:var(--primary);color:#fff;border-color:var(--primary)}
+.icon-btn.primary:hover{background:var(--primary-hover)}
+
+.container{max-width:1200px;margin:0 auto;padding:28px 24px 80px}
+
+/* LAYOUT DOIS PAINÉIS */
+.layout{display:grid;grid-template-columns:320px 1fr;gap:20px;align-items:start}
+@media (max-width:860px){.layout{grid-template-columns:1fr}}
+
+/* LISTA DE ALUNOS */
+.side{
+  background:var(--glass);border:1px solid var(--border);border-radius:var(--radius-lg);
+  overflow:hidden;position:sticky;top:90px;
+}
+.side-head{padding:16px;border-bottom:1px solid var(--border)}
+.side-head h3{font-size:14px;margin-bottom:10px}
+.side-search{
+  display:flex;align-items:center;gap:8px;background:var(--surface);
+  border:1px solid var(--border);border-radius:var(--radius-md);padding:8px 12px;
+}
+.side-search input{background:none;border:none;outline:none;color:var(--text);flex:1;font-size:13px}
+.side-list{max-height:520px;overflow:auto}
+.aluno-item{
+  display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer;
+  border-bottom:1px solid var(--border);transition:background .2s;
+}
+.aluno-item:hover{background:var(--surface-hover)}
+.aluno-item.active{background:var(--surface-hover);border-left:3px solid var(--primary)}
+.aluno-avatar{
+  width:34px;height:34px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;
+  font-weight:700;font-size:13px;color:#fff;background:linear-gradient(135deg,var(--primary),var(--secondary));
+}
+.aluno-info{flex:1;min-width:0}
+.aluno-info b{font-size:13.5px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.aluno-info small{color:var(--text-muted);font-size:11.5px}
+.aluno-situ{font-size:10.5px;font-weight:800;padding:3px 8px;border-radius:999px}
+.situ-aprovado{color:var(--success);border:1px solid var(--success)}
+.situ-cursando{color:var(--warning);border:1px solid var(--warning)}
+.situ-reprovado{color:var(--danger);border:1px solid var(--danger)}
+
+/* PAINEL DO ALUNO */
+.panel{background:var(--glass);border:1px solid var(--border);border-radius:var(--radius-xl);overflow:hidden}
+.panel-head{padding:22px 26px;border-bottom:1px solid var(--border)}
+.panel-head h2{font-size:20px;margin-bottom:4px}
+.panel-head .sub{color:var(--text-secondary);font-size:13px}
+.panel-head .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.chip{
+  display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;
+  font-size:12px;font-weight:600;background:var(--surface);border:1px solid var(--border);color:var(--text-secondary);
+}
+.chip b{color:var(--text)}
+
+/* TABS */
+.tabs{display:flex;gap:4px;padding:0 26px;border-bottom:1px solid var(--border);overflow-x:auto}
+.tab{
+  padding:14px 16px;cursor:pointer;font-size:13.5px;font-weight:600;color:var(--text-muted);
+  border-bottom:3px solid transparent;white-space:nowrap;transition:all .2s;
+}
+.tab:hover{color:var(--text)}
+.tab.active{color:var(--primary);border-bottom-color:var(--primary)}
+
+.tab-body{padding:24px 26px}
+
+/* TABELA */
+table{width:100%;border-collapse:collapse}
+th{
+  text-align:left;font-size:11.5px;text-transform:uppercase;letter-spacing:.5px;
+  color:var(--text-muted);padding:8px 10px;border-bottom:1px solid var(--border);
+}
+td{padding:9px 10px;border-bottom:1px solid var(--border);font-size:13.5px;color:var(--text-secondary)}
+td b{color:var(--text)}
+.table-wrap{overflow-x:auto}
+
+/* GRADE DE PRESENÇA */
+.pres-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:8px}
+.pres-day{
+  border:1px solid var(--border);border-radius:var(--radius-md);padding:8px;text-align:center;
+  cursor:pointer;transition:all .15s;background:var(--surface);
+}
+.pres-day:hover{background:var(--surface-hover)}
+.pres-day .sem{font-size:10px;color:var(--text-muted);font-weight:700}
+.pres-day .est{font-size:11px;font-weight:800;margin-top:2px}
+.pres-day.presente{border-color:var(--success);color:var(--success)}
+.pres-day.falta{border-color:var(--danger);color:var(--danger)}
+.pres-day.justificado{border-color:var(--warning);color:var(--warning)}
+
+/* FORMULÁRIO DE NOTAS */
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:18px}
+.field label{display:block;font-size:12px;color:var(--text-muted);margin-bottom:5px;font-weight:600}
+.field input,.field select,.field textarea{
+  width:100%;padding:10px 12px;border-radius:var(--radius-md);font-size:14px;
+  background:var(--surface);border:1px solid var(--border);color:var(--text);
+}
+.field textarea{resize:vertical;min-height:60px}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--primary)}
+.btn{
+  padding:10px 18px;border-radius:var(--radius-md);cursor:pointer;font-size:13.5px;font-weight:700;
+  background:var(--primary);color:#fff;border:1px solid var(--primary);transition:all .2s;
+}
+.btn:hover{background:var(--primary-hover)}
+.btn.ghost{background:var(--surface);color:var(--text-secondary);border-color:var(--border)}
+.btn.ghost:hover{background:var(--surface-hover);color:var(--text)}
+.btn.danger{background:var(--danger);border-color:var(--danger)}
+.btn.danger:hover{background:var(--danger-hover,#c9302c)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+
+/* RESUMO */
+.sum-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:22px}
+.sum-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);
+  padding:16px;text-align:center;
+}
+.sum-card .val{font-size:26px;font-weight:800;color:var(--primary)}
+.sum-card .lab{font-size:12px;color:var(--text-muted);margin-top:4px}
+.barra{height:10px;border-radius:999px;background:var(--surface-hover);overflow:hidden;margin-top:8px}
+.barra-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--primary),var(--secondary))}
+
+/* HISTÓRICO */
+.hist{list-style:none;display:flex;flex-direction:column}
+.hist-item{
+  display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px;
+}
+.hist-item:last-child{border-bottom:none}
+.hist-time{color:var(--text-muted);font-size:12px;min-width:150px}
+.hist-item b{color:var(--text)}
+.hist-item .tag{
+  font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:999px;flex-shrink:0;height:fit-content;
+}
+.hist-item .tag.presenca{color:var(--success);border:1px solid var(--success)}
+.hist-item .tag.nota{color:var(--secondary);border:1px solid var(--secondary)}
+.hist-item .tag.atividade{color:var(--warning);border:1px solid var(--warning)}
+.hist-item .tag.disciplina{color:var(--danger);border:1px solid var(--danger)}
+.hist-item .tag.sistema{color:var(--text-muted);border:1px solid var(--border)}
+
+.vazio{
+  text-align:center;color:var(--text-muted);padding:40px 20px;font-size:14px;
+}
+.disc-item{padding:10px 0;border-bottom:1px dashed var(--border)}
+.disc-item:last-child{border-bottom:none}
+.disc-q{font-size:12.5px;font-weight:700;color:var(--text);margin-bottom:4px}
+.disc-r{font-size:13px;color:var(--text-secondary);line-height:1.5}
+.ck-item{padding:12px 0;border-bottom:1px dashed var(--border)}
+.ck-item:last-child{border-bottom:none}
+.ck-rotulo{font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px;margin:8px 0 3px}
+.ck-valor{font-size:13px;color:var(--text-secondary);line-height:1.5;white-space:pre-wrap}
+.ck-avaliar{display:flex;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap}
+.ck-avaliar label{font-size:12px;color:var(--text-muted);font-weight:600}
+.ck-avaliar input{
+  width:80px;padding:8px 10px;border-radius:var(--radius-md);font-size:13px;
+  background:var(--glass);border:1px solid var(--border);color:var(--text);
+}
+
+.footer{text-align:center;color:var(--text-muted);font-size:13px;padding:20px;border-top:1px solid var(--border);margin-top:30px}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-badge">👨‍🎓</div>
+    <div>
+      Registro de Alunos
+      <small>Curso de Montagem e Manutenção de Computadores</small>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <button class="icon-btn" onclick="exportDados()" title="Exportar tudo (JSON)">⭳ Exportar</button>
+    <button class="icon-btn" onclick="importDados()" title="Importar dados (JSON)">⭱ Importar</button>
+    <a class="icon-btn" href="index.html">▶ Curso</a>
+    <a class="icon-btn" href="livro.html">📕 Livro</a>
+    <button class="icon-btn" onclick="toggleTheme()" title="Alternar tema">◐ Tema</button>
+  </div>
+</div>
+
+<div class="container">
+  <div class="layout">
+
+    <!-- LISTA DE ALUNOS -->
+    <aside class="side">
+      <div class="side-head">
+        <h3>Alunos (<span id="total-alunos">0</span>)</h3>
+        <div class="side-search">
+          <span>🔍</span>
+          <input type="text" id="search-aluno" placeholder="Buscar aluno...">
+        </div>
+        <button class="btn" style="width:100%;margin-top:10px" onclick="novoAluno()">+ Novo aluno</button>
+      </div>
+      <div class="side-list" id="aluno-list"></div>
+    </aside>
+
+    <!-- PAINEL DO ALUNO -->
+    <main class="panel">
+      <div id="empty-state" class="vazio">
+        <p>👨‍🎓 Selecione um aluno na lista ou clique em <b>+ Novo aluno</b> para começar.</p>
+      </div>
+      <div id="aluno-panel" style="display:none">
+
+        <div class="panel-head">
+          <h2 id="p-nome">—</h2>
+          <div class="sub" id="p-turma"></div>
+          <div class="chips">
+            <span class="chip">Frequência: <b id="p-freq">0%</b></span>
+            <span class="chip">Nota final: <b id="p-nota">—</b></span>
+            <span class="chip" id="p-situ-chip">Situação: <b>—</b></span>
+            <span class="chip">Presenças: <b id="p-pres">0</b>/43</span>
+            <button class="btn" style="padding:7px 14px;font-size:12px" onclick="abrirCursoDoAluno()" title="Abrir o curso já com este aluno identificado">▶ Iniciar curso deste aluno</button>
+            <button class="btn" style="padding:7px 14px;font-size:12px" onclick="boletimAluno()" title="Gerar boletim para impressão/PDF">🖨️ Boletim</button>
+            <button class="btn" id="btn-certificado" style="padding:7px 14px;font-size:12px;background:linear-gradient(135deg,#c9a227,#b45309);border-color:#c9a227" onclick="certificadoAluno()" title="Emitir certificado de conclusão (apenas alunos aprovados)">🎓 Certificado</button>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 26px;border-bottom:1px solid var(--border);background:var(--surface)">
+          <span style="font-size:13px;font-weight:700">🗓️ Semana atual do curso:</span>
+          <input type="number" id="cfg-semana" min="1" max="43" value="1" style="width:80px;padding:8px 10px;border-radius:var(--radius-md);font-size:14px;background:var(--glass);border:1px solid var(--border);color:var(--text)">
+          <button class="btn" style="padding:8px 14px;font-size:12px" onclick="salvarSemanaAtual()">Salvar</button>
+          <span id="cfg-semana-status" style="font-size:12px;color:var(--text-muted)"></span>
+        </div>
+
+        <div class="tabs">
+          <div class="tab active" data-tab="resumo" onclick="tabAtiva('resumo')">📊 Resumo</div>
+          <div class="tab" data-tab="presenca" onclick="tabAtiva('presenca')">🗓️ Presença (43 semanas)</div>
+          <div class="tab" data-tab="notas" onclick="tabAtiva('notas')">🎯 Avaliação</div>
+          <div class="tab" data-tab="atividades" onclick="tabAtiva('atividades')">🔧 Atividades</div>
+          <div class="tab" data-tab="exercicios" onclick="tabAtiva('exercicios')">📝 Exercícios</div>
+          <div class="tab" data-tab="provas" onclick="tabAtiva('provas')">🗒️ Provas</div>
+          <div class="tab" data-tab="checkouts" onclick="tabAtiva('checkouts')">🛠️ Checkouts</div>
+          <div class="tab" data-tab="comprometimento" onclick="tabAtiva('comprometimento')">💪 Comprometimento</div>
+          <div class="tab" data-tab="historico" onclick="tabAtiva('historico')">🕘 Histórico</div>
+          <div class="tab" data-tab="turma" onclick="tabAtiva('turma')">🏫 Turma</div>
+        </div>
+
+        <div class="tab-body" id="tab-body"></div>
+
+      </div>
+    </main>
+
+  </div>
+
+  <div class="footer" id="footer">
+    Registro de Alunos — conectando ao servidor...
+  </div>
+</div>
+
+<!-- MODAL NOVO ALUNO -->
+<div class="dialog-overlay" id="modal-novo" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);place-items:center;z-index:5000;backdrop-filter:blur(4px)">
+  <div style="background:var(--glass);border:1px solid var(--border);border-radius:var(--radius-xl);padding:26px;width:420px;max-width:94vw;backdrop-filter:blur(20px)">
+    <h3 style="margin-bottom:16px">Novo aluno</h3>
+    <div class="field" style="margin-bottom:12px">
+      <label>Nome completo</label>
+      <input type="text" id="nv-nome" placeholder="Nome do aluno">
+    </div>
+    <div class="field" style="margin-bottom:18px">
+      <label>Turma / observação</label>
+      <input type="text" id="nv-turma" placeholder="Ex.: Turma A">
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn ghost" onclick="fecharModal()">Cancelar</button>
+      <button class="btn" onclick="salvarNovoAluno()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<script src="exercicios.js"></script>
+<script src="provas.js"></script>
+<script>
+/* ============================================================
+   REGISTRO DE ALUNOS — sistema completo
+   Dados salvos no localStorage do navegador.
+   ============================================================ */
+const DB_KEY = "curso-hardware-alunos";
+let DB = { alunos: [] };
+let atualId = null;
+let abaAtiva = "resumo";
+let busca = "";
+let MODO_SERVIDOR = false;   // true quando conectado ao servidor central
+let SYNC_TIMER = null;
+
+function carregar(){
+  try { DB = JSON.parse(localStorage.getItem(DB_KEY)) || { alunos: [] }; } catch(e){ DB = { alunos: [] }; }
+  if (!DB.alunos) DB.alunos = [];
+}
+function salvar(){
+  localStorage.setItem(DB_KEY, JSON.stringify(DB));
+  if (MODO_SERVIDOR) enfileirarSync();
+}
+function enfileirarSync(){
+  // debounce: envia ao servidor 800ms depois da última alteração
+  if (SYNC_TIMER) clearTimeout(SYNC_TIMER);
+  SYNC_TIMER = setTimeout(syncParaServidor, 800);
+}
+async function syncParaServidor(){
+  try {
+    const r = await fetch("api/alunos", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(DB)
+    });
+    const j = await r.json();
+    if (j.status !== "ok") throw new Error(j.erro || "erro");
+  } catch(e) {
+    console.warn("[SYNC] Falha ao sincronizar com o servidor:", e);
+  }
+}
+async function detectarServidor(){
+  // tenta alcançar a API do servidor central
+  try {
+    const ctl = new AbortController();
+    setTimeout(()=>ctl.abort(), 2500);
+    const r = await fetch("api/alunos", { signal: ctl.signal });
+    if (r.status === 401) {
+      // servidor existe, mas não autenticado → ir para o login
+      window.location.href = "login-alunos.html";
+      return false;
+    }
+    if (!r.ok) throw new Error("sem api");
+    const j = await r.json();
+    if (!j || !Array.isArray(j.alunos)) throw new Error("formato");
+    MODO_SERVIDOR = true;
+    DB = j;
+    if (atualId && !DB.alunos.find(a=>a.id===atualId)) atualId = null;
+    return true;
+  } catch(e) {
+    MODO_SERVIDOR = false;
+    return false;
+  }
+}
+
+function novoId(){ return "a" + Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+
+function novoAluno(){
+  document.getElementById("nv-nome").value = "";
+  document.getElementById("nv-turma").value = "";
+  document.getElementById("modal-novo").style.display = "grid";
+  setTimeout(()=>document.getElementById("nv-nome").focus(),50);
+}
+function fecharModal(){ document.getElementById("modal-novo").style.display = "none"; }
+function salvarNovoAluno(){
+  const nome = document.getElementById("nv-nome").value.trim();
+  if (!nome) { alert("Informe o nome do aluno."); return; }
+  const a = {
+    id: novoId(),
+    nome,
+    turma: document.getElementById("nv-turma").value.trim(),
+    criadoEm: new Date().toISOString(),
+    presencas: {},       // {semana: 'presente'|'falta'|'justificado'}
+    notas: { participacao:null, exercicios:null, montagem:null, diagnostico:null },
+    atividades: [],      // [{data,titulo,nota,obs}]
+    comprometimento: { pontualidade:null, dedicacao:null, material:null, disciplina:null },
+    historico: [ { data: new Date().toISOString(), tipo:"sistema", texto:"Aluno cadastrado no curso." } ]
+  };
+  DB.alunos.push(a);
+  salvar();
+  fecharModal();
+  atualId = a.id;
+  renderTudo();
+}
+
+function alunoAtual(){ return DB.alunos.find(a=>a.id===atualId); }
+
+/* ===== RENDER LISTA ===== */
+function renderLista(){
+  const q = busca.toLowerCase();
+  const list = DB.alunos.filter(a=>!q || a.nome.toLowerCase().includes(q) || (a.turma||"").toLowerCase().includes(q));
+  document.getElementById("total-alunos").textContent = DB.alunos.length;
+  const el = document.getElementById("aluno-list");
+  if (list.length === 0){ el.innerHTML = '<div class="vazio" style="padding:24px">Nenhum aluno.</div>'; return; }
+  el.innerHTML = list.map(a => {
+    const sit = situacao(a);
+    return `<div class="aluno-item ${a.id===atualId?'active':''}" onclick="abrirAluno('${a.id}')">
+      <div class="aluno-avatar">${initiais(a.nome)}</div>
+      <div class="aluno-info">
+        <b>${esc(a.nome)}</b>
+        <small>${esc(a.turma||"Sem turma")} · ${presencasCont(a)}/43</small>
+      </div>
+      <span class="aluno-situ situ-${sit.classe}">${sit.label}</span>
+    </div>`;
+  }).join("");
+}
+function initiais(nome){
+  return nome.split(" ").filter(Boolean).slice(0,2).map(p=>p[0].toUpperCase()).join("");
+}
+function presencasCont(a){
+  return Object.values(a.presencas).filter(v=>v==="presente").length;
+}
+function situacao(a){
+  const pres = presencasCont(a)/43;
+  const nota = notaFinal(a);
+  if (nota != null && nota >= 6 && pres >= 0.75) return { label:"Aprovado", classe:"aprovado" };
+  if (nota != null && nota < 4) return { label:"Reprovado", classe:"reprovado" };
+  return { label:"Cursando", classe:"cursando" };
+}
+function notaFinal(a){
+  const n = a.notas;
+  if (n.participacao==null||n.exercicios==null||n.montagem==null||n.diagnostico==null) return null;
+  return +(n.participacao*0.2 + n.exercicios*0.2 + n.montagem*0.3 + n.diagnostico*0.3).toFixed(1);
+}
+
+/* ===== RENDER PAINEL ===== */
+function renderTudo(){
+  renderLista();
+  const a = alunoAtual();
+  const panel = document.getElementById("aluno-panel");
+  const empty = document.getElementById("empty-state");
+  if (abaAtiva === "turma"){
+    empty.style.display="none"; panel.style.display="block";
+    renderTurma();
+    return;
+  }
+  if (!a){ panel.style.display="none"; empty.style.display="block"; return; }
+  empty.style.display="none"; panel.style.display="block";
+
+  document.getElementById("p-nome").textContent = a.nome;
+  document.getElementById("p-turma").textContent = (a.turma?"Turma "+a.turma+" · ":"")+"Matriculado em "+fmt(new Date(a.criadoEm));
+  const pres = presencasCont(a);
+  document.getElementById("p-freq").textContent = Math.round(pres/43*100)+"%";
+  document.getElementById("p-pres").textContent = pres;
+  const nf = notaFinal(a);
+  document.getElementById("p-nota").textContent = nf!=null?nf:"—";
+  const sit = situacao(a);
+  const chip = document.getElementById("p-situ-chip");
+  chip.innerHTML = `Situação: <b style="color:var(--${sit.classe==="aprovado"?"success":sit.classe==="reprovado"?"danger":"warning"})">${sit.label}</b>`;
+  const btnCert = document.getElementById("btn-certificado");
+  if (btnCert){
+    if (sit.classe === "aprovado"){
+      btnCert.style.display = "";
+      btnCert.title = "Emitir certificado de conclusão";
+    } else {
+      btnCert.style.display = "none";
+    }
+  }
+
+  renderAba();
+}
+function abrirAluno(id){ atualId=id; renderTudo(); }
+function abrirCursoDoAluno(){
+  const a = alunoAtual();
+  if (!a) return;
+  window.open("index.html?aluno=" + encodeURIComponent(a.nome), "_blank");
+}
+function tabAtiva(tab){
+  abaAtiva = tab;
+  document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active", t.dataset.tab===tab));
+  if (tab === "turma"){
+    renderTurma();
+    return;
+  }
+  renderAba();
+}
+function renderAba(){
+  const a = alunoAtual();
+  if (!a) return;
+  const body = document.getElementById("tab-body");
+  const map = {
+    resumo: renderResumo,
+    presenca: renderPresenca,
+    notas: renderNotas,
+    atividades: renderAtividades,
+    exercicios: renderExercicios,
+    provas: renderProvas,
+    checkouts: renderCheckouts,
+    comprometimento: renderComprometimento,
+    historico: renderHistorico
+  };
+  const html = map[abaAtiva](a);
+  if (html && html.then){
+    body.innerHTML = '<div class="vazio">Carregando...</div>';
+    html.then(h=>{
+      if (abaAtiva === "exercicios" || abaAtiva === "provas" || abaAtiva === "checkouts") body.innerHTML = h;
+    });
+  } else {
+    body.innerHTML = html;
+  }
+}
+
+function renderResumo(a){
+  const pres = presencasCont(a);
+  const freq = Math.round(pres/43*100);
+  const nf = notaFinal(a);
+  const n = a.notas;
+  const comp = a.comprometimento;
+  return `
+    <div class="sum-cards">
+      <div class="sum-card"><div class="val">${pres}/43</div><div class="lab">Presenças</div><div class="barra"><div class="barra-fill" style="width:${freq}%"></div></div></div>
+      <div class="sum-card"><div class="val">${freq}%</div><div class="lab">Frequência</div></div>
+      <div class="sum-card"><div class="val">${nf!=null?nf:"—"}</div><div class="lab">Nota final (0–10)</div></div>
+      <div class="sum-card"><div class="val">${n.participacao!=null?n.participacao:"—"}</div><div class="lab">Participação (20%)</div></div>
+      <div class="sum-card"><div class="val">${n.exercicios!=null?n.exercicios:"—"}</div><div class="lab">Exercícios (20%)</div></div>
+      <div class="sum-card"><div class="val">${n.montagem!=null?n.montagem:"—"}</div><div class="lab">Montagem (30%)</div></div>
+      <div class="sum-card"><div class="val">${n.diagnostico!=null?n.diagnostico:"—"}</div><div class="lab">Diagnóstico (30%)</div></div>
+      <div class="sum-card"><div class="val">${comp.pontualidade!=null?mediaComp(a):"—"}</div><div class="lab">Comprometimento (0–5)</div></div>
+    </div>
+    ${nf!=null?`
+      <div class="sum-card" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px;text-align:center">
+        <div style="font-size:13px;color:var(--text-muted)">Composição da nota final</div>
+        <div style="margin:10px 0;display:flex;gap:6px">
+          <div class="barra"><div class="barra-fill" style="width:${nf*10}%"></div></div>
+        </div>
+        <div style="font-size:12px;color:var(--text-secondary)">Participação 20% · Exercícios 20% · Montagem 30% · Diagnóstico 30%</div>
+      </div>`:`
+      <div class="vazio">Complete as 4 notas na aba <b>Avaliação</b> para calcular a nota final.</div>`}
+  `;
+}
+function mediaComp(a){
+  const c = a.comprometimento;
+  const vals = [c.pontualidade,c.dedicacao,c.material,c.disciplina].filter(v=>v!=null);
+  return vals.length? (vals.reduce((s,x)=>s+x,0)/vals.length).toFixed(1) : null;
+}
+
+function renderPresenca(a){
+  let html = `<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">
+    <span class="chip" style="border-color:var(--success);color:var(--success)">🟢 Presente</span>
+    <span class="chip" style="border-color:var(--danger);color:var(--danger)">🔴 Falta</span>
+    <span class="chip" style="border-color:var(--warning);color:var(--warning)">🟡 Justificado</span>
+    <span class="chip">Clique em cada semana para alternar</span>
+  </div>`;
+  html += '<div class="pres-grid">';
+  for (let s=1; s<=43; s++){
+    const v = a.presencas[s] || "sem";
+    const cls = v==="presente"?"presente":v==="falta"?"falta":v==="justificado"?"justificado":"";
+    const lab = v==="presente"?"Presente":v==="falta"?"Falta":v==="justificado"?"Justif.":"Sem marca";
+    html += `<div class="pres-day ${cls}" onclick="marcarPresenca(${s})" title="${lab}">
+      <div class="sem">Semana ${s}</div>
+      <div class="est">${lab}</div>
+    </div>`;
+  }
+  html += '</div>';
+  return html;
+}
+function marcarPresenca(s){
+  const a = alunoAtual();
+  const ordem = ["presente","falta","justificado"];
+  const atual = a.presencas[s];
+  const prox = atual? (ordem[(ordem.indexOf(atual)+1)%3]) : "presente";
+  a.presencas[s] = prox;
+  logEvento(a, "presenca", `Semana ${s} marcada como ${prox==="presente"?"presente":prox==="falta"?"falta":"justificada"}.`);
+  salvar(); renderTudo();
+}
+
+function renderNotas(a){
+  const n = a.notas;
+  const nf = notaFinal(a);
+  return `
+    <div class="form-grid">
+      <div class="field"><label>Participação e presença (20%)</label><input type="number" id="nota-participacao" min="0" max="10" step="0.5" value="${n.participacao!=null?n.participacao:""}" placeholder="0 a 10"></div>
+      <div class="field"><label>Exercícios práticos (20%)</label><input type="number" id="nota-exercicios" min="0" max="10" step="0.5" value="${n.exercicios!=null?n.exercicios:""}" placeholder="0 a 10"></div>
+      <div class="field"><label>Montagem completa (30%)</label><input type="number" id="nota-montagem" min="0" max="10" step="0.5" value="${n.montagem!=null?n.montagem:""}" placeholder="0 a 10"></div>
+      <div class="field"><label>Diagnóstico e solução (30%)</label><input type="number" id="nota-diagnostico" min="0" max="10" step="0.5" value="${n.diagnostico!=null?n.diagnostico:""}" placeholder="0 a 10"></div>
+    </div>
+    <button class="btn" onclick="salvarNotas()">Salvar notas</button>
+    ${nf!=null?`
+      <div class="sum-card" style="margin-top:16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;text-align:center">
+        <div class="val" style="font-size:30px;font-weight:800;color:${nf>=6?"var(--success)":"var(--danger)"}">${nf}</div>
+        <div class="lab">Nota final (${nf>=6?"aprovado":"reprovado"})</div>
+      </div>`:""}
+  `;
+}
+function salvarNotas(){
+  const a = alunoAtual();
+  const novos = {
+    participacao: parseNum("nota-participacao"),
+    exercicios: parseNum("nota-exercicios"),
+    montagem: parseNum("nota-montagem"),
+    diagnostico: parseNum("nota-diagnostico")
+  };
+  const mudou = Object.keys(novos).some(k=>novos[k]!=a.notas[k]);
+  a.notas = novos;
+  if (mudou) logEvento(a, "nota", `Notas atualizadas (final ${notaFinal(a)}).`);
+  salvar(); renderTudo();
+}
+function parseNum(id){
+  const v = document.getElementById(id).value;
+  return v===""?null:Math.min(10,Math.max(0,+v));
+}
+
+function renderAtividades(a){
+  return `
+    <div class="form-grid">
+      <div class="field"><label>Título da atividade</label><input type="text" id="atv-titulo" placeholder="Ex.: Troca de pasta térmica"></div>
+      <div class="field"><label>Nota (0 a 10)</label><input type="number" id="atv-nota" min="0" max="10" step="0.5" placeholder="Opcional"></div>
+      <div class="field"><label>Observações</label><input type="text" id="atv-obs" placeholder="Observações"></div>
+    </div>
+    <button class="btn" onclick="addAtividade()">+ Registrar atividade</button>
+    <div class="table-wrap" style="margin-top:18px">
+      <table>
+        <thead><tr><th>Data</th><th>Atividade</th><th>Nota</th><th>Observações</th><th></th></tr></thead>
+        <tbody>
+          ${a.atividades.length===0?'<tr><td colspan="5" class="vazio">Nenhuma atividade registrada.</td></tr>':
+            a.atividades.slice().reverse().map((at,i)=>`
+            <tr>
+              <td><small>${fmt(new Date(at.data))}</small></td>
+              <td><b>${esc(at.titulo)}</b></td>
+              <td>${at.nota!=null?at.nota:"—"}</td>
+              <td>${esc(at.obs||"—")}</td>
+              <td><button class="btn ghost" style="padding:5px 10px;font-size:12px" onclick="remAtividade(${a.atividades.length-1-i})">✕</button></td>
+            </tr>`).join("")}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+function addAtividade(){
+  const a = alunoAtual();
+  const titulo = document.getElementById("atv-titulo").value.trim();
+  if (!titulo){ alert("Informe o título da atividade."); return; }
+  const v = document.getElementById("atv-nota").value;
+  const nota = v===""?null:Math.min(10,Math.max(0,+v));
+  const obs = document.getElementById("atv-obs").value.trim();
+  a.atividades.push({ data:new Date().toISOString(), titulo, nota, obs });
+  logEvento(a, "atividade", `Atividade registrada: ${titulo}${nota!=null?" (nota "+nota+")":""}.`);
+  salvar(); renderTudo();
+}
+function remAtividade(i){
+  const a = alunoAtual();
+  a.atividades.splice(i,1);
+  salvar(); renderTudo();
+}
+
+/* ===== EXERCÍCIOS (do caderno, gravados via servidor) ===== */
+let exerciciosCache = {};   // nome -> {aula_id: [respostas], resumo:{...}}
+async function exerciciosDoAluno(nome){
+  if (!nome) return {};
+  const ck = nome.toLowerCase();
+  if (exerciciosCache[ck]) return exerciciosCache[ck];
+  try {
+    const ctl = new AbortController();
+    setTimeout(()=>ctl.abort(), 3000);
+    const r = await fetch("api/exercicios?aluno=" + encodeURIComponent(nome), { signal: ctl.signal });
+    if (!r.ok) return {};
+    const j = await r.json();
+    exerciciosCache[ck] = { aulas: j.exercicios || {}, resumo: j.resumo || null };
+    return exerciciosCache[ck];
+  } catch(e){ return {}; }
+}
+function exNotaSugerida(a){
+  const rs = exerciciosCache[(a.nome||"").toLowerCase()] && exerciciosCache[(a.nome||"").toLowerCase()].resumo;
+  return rs ? rs.nota_sugerida : null;
+}
+function provasMediaDoAluno(a){
+  const d = provasCache[(a.nome||"").toLowerCase()];
+  return d ? d.media : null;
+}
+function checkoutsMediaDoAluno(a){
+  const d = checkoutsCache[(a.nome||"").toLowerCase()];
+  return d && d.resumo ? d.resumo.media : null;
+}
+function notaExerciciosSugerida(a){
+  // média simples de: caderno (objetivas), dissertativas avaliadas, checkouts e provas
+  const caderno = exNotaSugerida(a);
+  const disc = exDiscMedia(a);
+  const checkouts = checkoutsMediaDoAluno(a);
+  const provas = provasMediaDoAluno(a);
+  const componentes = [caderno, disc, checkouts, provas].filter(v => v != null);
+  if (!componentes.length) return null;
+  return Math.round(componentes.reduce((s,v)=>s+v,0) / componentes.length * 10) / 10;
+}
+function exDiscMedia(a){
+  const rs = exerciciosCache[(a.nome||"").toLowerCase()] && exerciciosCache[(a.nome||"").toLowerCase()].resumo;
+  return rs ? rs.disc_media : null;
+}
+function aplicarNotaExercicios(){
+  const a = alunoAtual();
+  if (!a) return;
+  const nota = notaExerciciosSugerida(a);
+  if (nota == null){ alert("O aluno ainda não tem aproveitamento de exercícios (caderno e/ou provas) suficiente para gerar nota."); return; }
+  if (!confirm(`Aplicar a nota sugerida de Exercícios (${nota}/10) para ${a.nome}?`)) return;
+  const mudou = a.notas.exercicios !== nota;
+  a.notas.exercicios = nota;
+  if (mudou) logEvento(a, "nota", `Nota de Exercícios aplicada automaticamente (média caderno + dissertativas + checkouts + provas): ${nota}.`);
+  salvar(); renderTudo();
+  alert(`Nota de Exercícios definida para ${nota}/10.`);
+}
+async function renderExercicios(a){
+  const data = await exerciciosDoAluno(a.nome);
+  await provasDoAluno(a.nome);
+  await checkoutsDoAluno(a.nome);
+  const ex = data.aulas || {};
+  const resumo = data.resumo;
+  const aulas = Object.keys(ex);
+  let objResp = 0, objCert = 0, objTot = 0, discEnt = 0, discTot = 0;
+  const linhas = [];
+  const discAbas = [];
+  for (const aulaId of aulas){
+    const qs = (EXERCICIOS || {})[aulaId] || [];
+    const resp = ex[aulaId] || [];
+    let ac = 0, re = 0, de = 0;
+    const discDetalhes = [];
+    for (const r of resp){
+      const q = qs[r.q];
+      if (!q) continue;
+      if (q.tipo === "disc"){
+        discTot++; de++; discEnt++;
+        const notaDisc = r.nota != null ? r.nota : "";
+        discDetalhes.push(`<div class="disc-item">
+          <div class="disc-q">${r.q+1}. ${esc(q.q)}</div>
+          <div class="disc-r">${esc(r.resposta||"<i>(sem resposta)</i>")}</div>
+          <div class="disc-avaliar">
+            <label>Nota (0–10)</label>
+            <input type="number" id="disc-nota-${cssId(aulaId)}-${r.q}" min="0" max="10" step="0.5" value="${notaDisc}" placeholder="—">
+            <button class="btn" style="padding:6px 12px;font-size:12px" onclick="avaliarDisc('${escAttr(aulaId)}', ${r.q}, '${escAttr(a.nome)}')">Salvar nota</button>
+          </div>
+        </div>`);
+      }
+      else {
+        objTot++; re++;
+        if (r.correta === 1){ ac++; objCert++; }
+      }
+    }
+    objResp += re;
+    const titulo = aulaId.replace(/^\d+\|/, "");
+    const mod = aulaId.split("|")[0];
+    linhas.push(`<tr>
+      <td><b>${esc(mod)}</b></td>
+      <td>${esc(titulo)}</td>
+      <td>${re}</td>
+      <td>${ac}</td>
+      <td>${re? Math.round(ac/re*100) : "—"}%</td>
+      <td>${de? "✓ "+de : "—"}</td>
+      ${discDetalhes.length? `<td><button class="btn ghost" style="padding:5px 10px;font-size:12px" onclick="exDiscToggle('${escAttr(aulaId)}')">Ver respostas</button></td>` : "<td></td>"}
+    </tr>
+    <tr id="disc-linha-${cssId(aulaId)}" style="display:none">
+      <td colspan="7" style="background:var(--surface)">${discDetalhes.join("")}</td>
+    </tr>`);
+  }
+  const pct = resumo && resumo.aproveitamento != null ? resumo.aproveitamento : (objResp? Math.round(objCert/objResp*100) : null);
+  const notaSug = notaExerciciosSugerida(a);
+  const notaAtual = a.notas && a.notas.exercicios;
+  const notaAtualCard = notaAtual != null ? notaAtual : "—";
+  const mediaProvas = provasMediaDoAluno(a);
+  const mediaDisc = resumo ? resumo.disc_media : null;
+  const mediaCheckouts = checkoutsMediaDoAluno(a);
+  const detNota = "caderno " + (resumo && resumo.nota_sugerida != null ? resumo.nota_sugerida : "—") +
+                  " + dissertativas " + (mediaDisc != null ? mediaDisc : "—") +
+                  " + checkouts " + (mediaCheckouts != null ? mediaCheckouts : "—") +
+                  " + provas " + (mediaProvas != null ? mediaProvas : "—");
+  if (aulas.length === 0){
+    return `<div class="vazio">Este aluno ainda não respondeu nenhum exercício do caderno (aula por aula no site do curso).</div>`;
+  }
+  return `
+    <div class="sum-cards">
+      <div class="sum-card"><div class="val">${objResp}/${objTot}</div><div class="lab">Objetivas respondidas</div></div>
+      <div class="sum-card"><div class="val">${objCert}</div><div class="lab">Objetivas corretas</div></div>
+      <div class="sum-card"><div class="val">${pct!=null?pct+"%":"—"}</div><div class="lab">Aproveitamento</div></div>
+      <div class="sum-card"><div class="val">${discEnt}/${discTot}</div><div class="lab">Dissertativas entregues</div></div>
+      <div class="sum-card" style="border:1px solid var(--primary)">
+        <div class="val">${notaSug!=null?notaSug:"—"}</div>
+        <div class="lab">Nota sugerida (0–10)</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px">${detNota}</div>
+        <div style="font-size:11px;color:var(--text-muted)">Nota atual: <b>${notaAtualCard}</b></div>
+        <button class="btn" style="margin-top:10px;padding:7px 12px;font-size:12px" onclick="aplicarNotaExercicios()">✔ Aplicar no registro</button>
+      </div>
+    </div>
+    <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px">🔒 Exercícios de cada aula liberados após concluir a aula anterior (progressão do curso).</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Mód.</th><th>Aula</th><th>Respondidas</th><th>Certas</th><th>Aprov.</th><th>Disc.</th><th></th></tr></thead>
+        <tbody>${linhas.join("")}</tbody>
+      </table>
+    </div>`;
+}
+function exDiscToggle(id){
+  const tr = document.getElementById("disc-linha-" + cssId(id));
+  if (tr) tr.style.display = tr.style.display === "none" ? "" : "none";
+}
+function cssId(id){ return id.replace(/[^a-zA-Z0-9_-]/g, "_"); }
+function escAttr(s){ return String(s).replace(/["']/g, c=>({"'":"&#39;",'"':"&quot;"}[c])); }
+
+/* ===== AVALIAR DISSERTATIVA ===== */
+async function avaliarDisc(aulaId, q, nome){
+  const inp = document.getElementById("disc-nota-" + cssId(aulaId) + "-" + q);
+  const v = inp ? inp.value : "";
+  if (v === ""){ alert("Informe uma nota de 0 a 10."); return; }
+  const nota = Math.min(10, Math.max(0, parseFloat(v.replace(",", "."))));
+  if (isNaN(nota)){ alert("Nota inválida."); return; }
+  const aluno = DB.alunos.find(x=>x.nome.toLowerCase() === (nome||"").toLowerCase()) || alunoAtual();
+  try {
+    const r = await fetch("api/dissertativa", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nome: (aluno||{}).nome || nome, aula_id: aulaId, q, nota })
+    });
+    const j = await r.json();
+    if (j.status !== "ok"){ alert(j.erro || "Erro ao salvar nota."); return; }
+    if (aluno) logEvento(aluno, "nota", "Dissertativa da aula '" + aulaId.replace(/^\d+\|/, "") + "' avaliada com nota " + nota + ".");
+    salvar();
+    delete exerciciosCache[(nome||"").toLowerCase()];
+    renderTudo();
+    alert("Nota " + nota + " salva para a dissertativa.");
+  } catch(e){ alert("Erro de conexão."); }
+}
+
+/* ===== SEMANA ATUAL (frequência automática) ===== */
+async function carregarSemanaAtual(){
+  try {
+    const ctl = new AbortController();
+    setTimeout(()=>ctl.abort(), 2500);
+    const r = await fetch("api/config", { signal: ctl.signal });
+    if (r.ok){
+      const j = await r.json();
+      const inp = document.getElementById("cfg-semana");
+      if (inp && j.semana_atual) inp.value = j.semana_atual;
+    }
+  } catch(e) {}
+}
+async function salvarSemanaAtual(){
+  const inp = document.getElementById("cfg-semana");
+  const v = parseInt(inp.value, 10);
+  if (isNaN(v) || v < 1 || v > 43){ alert("Semana deve estar entre 1 e 43."); return; }
+  try {
+    const r = await fetch("api/config", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chave: "semana_atual", valor: v })
+    });
+    const j = await r.json();
+    if (j.status !== "ok"){ alert(j.erro || "Erro ao salvar."); return; }
+    const st = document.getElementById("cfg-semana-status");
+    if (st) st.textContent = "✓ Semana " + v + " definida. Alunos que entrarem no curso serão marcados presentes.";
+  } catch(e){ alert("Erro de conexão."); }
+}
+
+/* ===== ABA TURMA (painel geral + ranking de progresso) ===== */
+let turmaProgressoCache = null;
+async function renderTurma(){
+  const body = document.getElementById("tab-body");
+  body.innerHTML = '<div class="vazio">Carregando dados da turma...</div>';
+  const data = await Promise.all(DB.alunos.map(a=>turmaProgresso(a)));
+  const alunos = DB.alunos.map((a,i)=>{
+    const prog = data[i];
+    return {
+      nome: a.nome, turma: a.turma || "", sit: situacao(a), nf: notaFinal(a),
+      pres: presencasCont(a), pct: prog.pct, mods: prog.mods
+    };
+  });
+  const aprovados = alunos.filter(x=>x.sit.classe==="aprovado").length;
+  const cursando = alunos.filter(x=>x.sit.classe==="cursando").length;
+  const reprovados = alunos.filter(x=>x.sit.classe==="reprovado").length;
+  const comNota = alunos.filter(x=>x.nf!=null).length;
+  const mediaTurma = comNota? (alunos.filter(x=>x.nf!=null).reduce((s,x)=>s+x.nf,0)/comNota).toFixed(1) : "—";
+  const ranking = alunos.slice().sort((a,b)=>b.pct - a.pct);
+
+  // módulos mais fracos (média de objetivas certas por módulo)
+  const mods = await turmaModulosFracos();
+
+  body.innerHTML = `
+    <div class="sum-cards">
+      <div class="sum-card"><div class="val">${alunos.length}</div><div class="lab">Total de alunos</div></div>
+      <div class="sum-card"><div class="val" style="color:var(--success)">${aprovados}</div><div class="lab">Aprovados</div></div>
+      <div class="sum-card"><div class="val" style="color:var(--warning)">${cursando}</div><div class="lab">Cursando</div></div>
+      <div class="sum-card"><div class="val" style="color:var(--danger)">${reprovados}</div><div class="lab">Reprovados</div></div>
+      <div class="sum-card"><div class="val">${mediaTurma}</div><div class="lab">Nota média da turma</div></div>
+    </div>
+
+    <h3 style="font-size:15px;margin:18px 0 10px">🏆 Ranking de progresso</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>#</th><th>Aluno</th><th>Situação</th><th>Nota</th><th>Presenças</th><th>Progresso</th></tr></thead>
+        <tbody>${ranking.map((x,i)=>`
+          <tr style="cursor:pointer" onclick="abrirTurmaAluno('${escAttr(x.nome)}')">
+            <td><b>${i+1}º</b></td>
+            <td><b>${esc(x.nome)}</b>${x.turma?` <small style="color:var(--text-muted)">(${esc(x.turma)})</small>`:""}</td>
+            <td><span class="aluno-situ situ-${x.sit.classe}">${x.sit.label}</span></td>
+            <td>${x.nf!=null?x.nf:"—"}</td>
+            <td>${x.pres}/43</td>
+            <td style="min-width:180px">
+              <div class="barra"><div class="barra-fill" style="width:${x.pct}%"></div></div>
+              <small style="color:var(--text-muted)">${x.pct}%</small>
+            </td>
+          </tr>`).join("")}
+        </tbody>
+      </table>
+    </div>
+
+    <h3 style="font-size:15px;margin:22px 0 10px">📉 Módulos com mais dificuldade (acerto de exercícios)</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Módulo</th><th>Aula</th><th>Aproveitamento médio</th></tr></thead>
+        <tbody>${mods.map(m=>`
+          <tr>
+            <td><b>${m.mod}</b></td>
+            <td>${esc(m.aula)}</td>
+            <td>
+              <div class="barra"><div class="barra-fill" style="width:${m.acerto}%"></div></div>
+              <small style="color:var(--text-muted)">${m.acerto}%</small>
+            </td>
+          </tr>`).join("")}
+        </tbody>
+      </table>
+    </div>`;
+}
+function abrirTurmaAluno(nome){
+  const a = DB.alunos.find(x=>x.nome.toLowerCase() === (nome||"").toLowerCase());
+  if (a){ atualId = a.id; abaAtiva = "resumo"; document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active", t.dataset.tab==="resumo")); renderTudo(); }
+}
+async function turmaProgresso(a){
+  try {
+    const p = await progressoDoAluno(a.nome);
+    const vals = Object.values(p);
+    const total = 43;
+    const concluidas = vals.filter(Boolean).length;
+    return { pct: total? Math.round(concluidas/total*100) : 0 };
+  } catch(e){ return { pct: 0 }; }
+}
+async function turmaModulosFracos(){
+  const resumoPorAula = {};
+  for (const a of DB.alunos){
+    try {
+      const ex = await exerciciosDoAluno(a.nome);
+      const aulas = ex.aulas || {};
+      for (const aulaId in aulas){
+        if (!resumoPorAula[aulaId]) resumoPorAula[aulaId] = { certas:0, total:0 };
+        aulas[aulaId].forEach(r=>{
+          if (r.tipo === "disc") return;
+          resumoPorAula[aulaId].total++;
+          if (r.correta === 1) resumoPorAula[aulaId].certas++;
+        });
+      }
+    } catch(e) {}
+  }
+  return Object.keys(resumoPorAula).map(aulaId=>{
+    const d = resumoPorAula[aulaId];
+    const mod = aulaId.split("|")[0];
+    const aula = aulaId.replace(/^\d+\|/, "");
+    const acerto = d.total? Math.round(d.certas/d.total*100) : 0;
+    return { mod, aula, acerto, total: d.total };
+  }).filter(m=>m.total>0).sort((a,b)=>a.acerto-b.acerto).slice(0,8);
+}
+
+/* ===== BOLETIM (impressão/PDF) ===== */
+function boletimAluno(){
+  const a = alunoAtual();
+  if (!a) return;
+  const nf = notaFinal(a);
+  const pres = presencasCont(a);
+  const freq = Math.round(pres/43*100);
+  const sit = situacao(a);
+  const n = a.notas;
+  const comp = a.comprometimento;
+  const w = window.open("", "_blank", "width=820,height=900");
+  w.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Boletim — ${esc(a.nome)}</title>
+  <style>
+    body{font-family:Georgia,'Times New Roman',serif;color:#1a202c;margin:0;padding:40px}
+    h1{font-size:22px;margin:0 0 2px}
+    .sub{color:#666;font-size:13px;margin-bottom:22px}
+    h2{font-size:14px;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid #14b8a6;padding-bottom:4px;margin:24px 0 12px}
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    td,th{border:1px solid #cbd5e0;padding:8px 10px;text-align:left}
+    th{background:#f1f5f9;font-size:11px;text-transform:uppercase}
+    .nota-final{font-size:30px;font-weight:800;color:#0f766e}
+    .sit{display:inline-block;padding:4px 12px;border-radius:6px;font-weight:700;font-size:12px}
+    .sit-aprovado{background:#dcfce7;color:#166534}
+    .sit-cursando{background:#fef3c7;color:#92400e}
+    .sit-reprovado{background:#fee2e2;color:#991b1b}
+    .row{display:flex;justify-content:space-between;font-size:13px;margin:4px 0}
+    .footer{margin-top:40px;font-size:11px;color:#888;border-top:1px solid #e2e8f0;padding-top:10px}
+    @media print{body{padding:20px}}
+  </style></head><body>
+  <h1>Boletim de Desempenho</h1>
+  <div class="sub">Curso de Montagem e Manutenção de Computadores · Gerado em ${new Date().toLocaleString("pt-BR")}</div>
+  <h2>Dados do aluno</h2>
+  <div class="row"><b>Nome:</b> ${esc(a.nome)}</div>
+  <div class="row"><b>Turma:</b> ${esc(a.turma||"—")}</div>
+  <div class="row"><b>Matrícula:</b> ${fmt(new Date(a.criadoEm))}</div>
+  <div class="row"><b>Situação:</b> <span class="sit sit-${sit.classe}">${sit.label}</span></div>
+  <div class="row"><b>Frequência:</b> ${pres}/43 (${freq}%)</div>
+  <h2>Notas (0–10)</h2>
+  <table>
+    <tr><th>Critério</th><th>Peso</th><th>Nota</th></tr>
+    <tr><td>Participação e presença</td><td>20%</td><td>${n.participacao!=null?n.participacao:"—"}</td></tr>
+    <tr><td>Exercícios</td><td>20%</td><td>${n.exercicios!=null?n.exercicios:"—"}</td></tr>
+    <tr><td>Montagem completa</td><td>30%</td><td>${n.montagem!=null?n.montagem:"—"}</td></tr>
+    <tr><td>Diagnóstico e solução</td><td>30%</td><td>${n.diagnostico!=null?n.diagnostico:"—"}</td></tr>
+    <tr><td colspan="2"><b>Nota final</b></td><td class="nota-final">${nf!=null?nf:"—"}</td></tr>
+  </table>
+  <h2>Comprometimento (0–5)</h2>
+  <table>
+    <tr><th>Critério</th><th>Nota</th></tr>
+    <tr><td>Pontualidade</td><td>${comp.pontualidade!=null?comp.pontualidade:"—"}</td></tr>
+    <tr><td>Dedicação e esforço</td><td>${comp.dedicacao!=null?comp.dedicacao:"—"}</td></tr>
+    <tr><td>Material e organização</td><td>${comp.material!=null?comp.material:"—"}</td></tr>
+    <tr><td>Disciplina e respeito</td><td>${comp.disciplina!=null?comp.disciplina:"—"}</td></tr>
+  </table>
+  <h2>Atividades registradas</h2>
+  <table>
+    <tr><th>Data</th><th>Atividade</th><th>Nota</th></tr>
+    ${a.atividades.length===0? '<tr><td colspan="3">Nenhuma atividade registrada.</td></tr>' :
+      a.atividades.slice().reverse().map(at=>`<tr><td>${fmt(new Date(at.data))}</td><td>${esc(at.titulo)}</td><td>${at.nota!=null?at.nota:"—"}</td></tr>`).join("")}
+  </table>
+  <div class="footer">Emitido pelo Registro de Alunos do Curso de Montagem e Manutenção de Computadores.<br>Documento informativo — assinatura e selo quando houver certificação oficial.</div>
+  <script>window.onload=function(){ window.print(); }<\/script>
+  </body></html>`);
+  w.document.close();
+}
+
+/* ===== CERTIFICADO DE CONCLUSÃO ===== */
+async function certificadoAluno(){
+  const a = alunoAtual();
+  if (!a) return;
+  const sit = situacao(a);
+  if (sit.classe !== "aprovado"){
+    alert("Este aluno ainda não está aprovado (nota ≥ 6 e frequência ≥ 75%). O certificado só pode ser emitido para alunos aprovados.");
+    return;
+  }
+  const pres = presencasCont(a);
+  const freq = Math.round(pres/43*100);
+  const nf = notaFinal(a);
+  const ok = confirm("Emitir certificado de conclusão para " + a.nome + "?\n\nNota final: " + nf + " · Frequência: " + freq + "%");
+  if (!ok) return;
+  try {
+    const r = await fetch("api/certificado", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nome: a.nome, nota_final: nf, frequencia: freq })
+    });
+    const j = await r.json();
+    if (j.status !== "ok"){ alert(j.erro || "Erro ao emitir certificado."); return; }
+    logEvento(a, "certificado", "Certificado de conclusão emitido (código " + j.codigo + ").");
+    salvar();
+    window.open("certificado.html?aluno=" + encodeURIComponent(a.nome), "_blank");
+  } catch(e){ alert("Erro de conexão."); }
+}
+
+/* ===== PROVAS POR MÓDULO (do servidor) ===== */
+const PROVA_MOD_LESSONS = { "01":5, "02":7, "03":6, "04":4, "05":5, "06":6, "07":5, "08":5 };
+let provasCache = {};   // nome -> {provas:{}, media:null}
+let progressoCache = {}; // nome -> {aula_id: bool}
+async function progressoDoAluno(nome){
+  if (!nome) return {};
+  const ck = nome.toLowerCase();
+  if (progressoCache[ck]) return progressoCache[ck];
+  try {
+    const ctl = new AbortController();
+    setTimeout(()=>ctl.abort(), 3000);
+    const r = await fetch("api/progresso?aluno=" + encodeURIComponent(nome), { signal: ctl.signal });
+    if (!r.ok) return {};
+    const j = await r.json();
+    progressoCache[ck] = j.progresso || {};
+    return progressoCache[ck];
+  } catch(e){ return {}; }
+}
+async function provasDoAluno(nome){
+  if (!nome) return { provas: {}, media: null };
+  const ck = nome.toLowerCase();
+  if (provasCache[ck]) return provasCache[ck];
+  try {
+    const ctl = new AbortController();
+    setTimeout(()=>ctl.abort(), 3000);
+    const r = await fetch("api/provas?aluno=" + encodeURIComponent(nome), { signal: ctl.signal });
+    if (!r.ok) return { provas: {}, media: null };
+    const j = await r.json();
+    provasCache[ck] = { provas: j.provas || {}, media: j.media || null };
+    return provasCache[ck];
+  } catch(e){ return { provas: {}, media: null }; }
+}
+async function renderProvas(a){
+  const data = await provasDoAluno(a.nome);
+  const provas = data.provas;
+  const progresso = await progressoDoAluno(a.nome);
+  const mods = Object.keys(PROVAS || {});
+  const linhas = [];
+  let feitas = 0, soma = 0;
+  for (const mod of mods){
+    const p = (PROVAS||{})[mod];
+    const r = provas[mod];
+    const total = PROVA_MOD_LESSONS[mod] || 0;
+    const conclu = Object.keys(progresso).filter(k=>k.startsWith(mod + "|") && progresso[k]).length;
+    const liberada = conclu >= total;
+    const progLab = conclu + "/" + total + " aulas";
+    if (r && r.nota != null){
+      feitas++; soma += r.nota;
+      const discLab = r.disc_entregue ? "✓ entregue" : "—";
+      linhas.push(`<tr>
+        <td><b>${mod}</b></td>
+        <td>${esc(p.titulo)}</td>
+        <td>${r.objetivas_certas}/${r.objetivas_total}</td>
+        <td>${discLab}</td>
+        <td>${liberada? "✅":"🔒"} ${progLab}</td>
+        <td><b style="color:${r.nota>=6?"var(--success)":"var(--danger)"}">${r.nota}</b></td>
+        <td><small>${fmt(new Date(r.aplicada_em))}</small></td>
+      </tr>`);
+    } else {
+      linhas.push(`<tr>
+        <td><b>${mod}</b></td>
+        <td>${esc(p.titulo)}</td>
+        <td colspan="2" class="vazio" style="padding:8px">Não realizada</td>
+        <td>${liberada? "✅":"🔒"} ${progLab}</td>
+        <td colspan="2" class="vazio" style="padding:8px">—</td>
+      </tr>`);
+    }
+  }
+  const media = data.media;
+  return `
+    <div class="sum-cards">
+      <div class="sum-card"><div class="val">${feitas}/${mods.length}</div><div class="lab">Provas realizadas</div></div>
+      <div class="sum-card"><div class="val">${media!=null?media:"—"}</div><div class="lab">Média das provas (0–10)</div></div>
+    </div>
+    <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px">🔒 Prova liberada somente após concluir todas as aulas do módulo (coluna Aulas).</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Mód.</th><th>Avaliação</th><th>Objetivas</th><th>Dissertativa</th><th>Aulas</th><th>Nota</th><th>Data</th></tr></thead>
+        <tbody>${linhas.join("")}</tbody>
+      </table>
+    </div>`;
+}
+
+/* ===== CHECKOUTS DE AULAS PRÁTICAS ===== */
+const CHECKOUT_CAMPOS_REG = [
+  ["marca","Marca"],
+  ["modelo","Modelo"],
+  ["cpu","CPU"],
+  ["ram","Memória RAM"],
+  ["hd","HD/SSD"],
+  ["video","Placa de vídeo"],
+  ["placa_mae","Placa-mãe"],
+  ["fonte","Fonte"],
+  ["so","Sistema operacional"],
+  ["outros","Outros"]
+];
+let checkoutsCache = {};
+async function checkoutsDoAluno(nome){
+  if (!nome) return { checkouts: {}, resumo: null };
+  const ck = nome.toLowerCase();
+  if (checkoutsCache[ck]) return checkoutsCache[ck];
+  try {
+    const ctl = new AbortController();
+    setTimeout(()=>ctl.abort(), 3000);
+    const r = await fetch("api/checkout?aluno=" + encodeURIComponent(nome), { signal: ctl.signal });
+    if (!r.ok) return { checkouts: {}, resumo: null };
+    const j = await r.json();
+    checkoutsCache[ck] = { checkouts: j.checkouts || {}, resumo: j.resumo || null };
+    return checkoutsCache[ck];
+  } catch(e){ return { checkouts: {}, resumo: null }; }
+}
+async function renderCheckouts(a){
+  const data = await checkoutsDoAluno(a.nome);
+  const chk = data.checkouts || {};
+  const resumo = data.resumo || null;
+  const ids = Object.keys(chk);
+  if (!ids.length) return '<div class="vazio">Este aluno ainda não entregou nenhum checkout de aula prática.</div>';
+  const itens = ids.map(aulaId=>{
+    const c = chk[aulaId];
+    const d = c.dados || {};
+    const notaAtual = c.nota != null ? c.nota : "";
+    const equip = CHECKOUT_CAMPOS_REG.map(([k,label])=>{
+      const v = d[k];
+      return v ? `<div><b style="color:var(--text)">${label}:</b> ${esc(v)}</div>` : "";
+    }).join("");
+    return `
+    <div class="ck-item">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+        <b style="color:var(--primary)">${esc(aulaId.replace(/^\d+\|/,""))}</b>
+        <span style="font-size:11px;color:var(--text-muted)">Entregue em ${fmt(new Date(c.entregue_em))}</span>
+      </div>
+      ${equip ? `<div class="ck-rotulo">Equipamento</div><div class="ck-valor">${equip}</div>` : ""}
+      ${d.problema ? `<div class="ck-rotulo">🔧 Problema apresentado</div><div class="ck-valor">${esc(d.problema)}</div>` : ""}
+      ${d.descricao ? `<div class="ck-rotulo">📋 Descrição do serviço</div><div class="ck-valor">${esc(d.descricao)}</div>` : ""}
+      ${d.procedimentos ? `<div class="ck-rotulo">🛠️ Procedimentos adotados</div><div class="ck-valor">${esc(d.procedimentos)}</div>` : ""}
+      ${d.solucao ? `<div class="ck-rotulo">✅ Solução final</div><div class="ck-valor">${esc(d.solucao)}</div>` : ""}
+      ${d.materiais ? `<div class="ck-rotulo">🧰 Materiais e ferramentas</div><div class="ck-valor">${esc(d.materiais)}</div>` : ""}
+      <div class="ck-avaliar">
+        <label>Nota (0–10)</label>
+        <input type="number" id="ck-nota-${cssId(aulaId)}" min="0" max="10" step="0.5" value="${notaAtual}" placeholder="—">
+        <button class="btn" style="padding:6px 12px;font-size:12px" onclick="avaliarCheckout('${escAttr(aulaId)}', '${escAttr(a.nome)}')">Salvar nota</button>
+        ${c.corrigida_em ? `<span style="font-size:11px;color:var(--success)">✓ Avaliado em ${fmt(new Date(c.corrigida_em))}</span>` : ""}
+      </div>
+    </div>`;
+  });
+  return `
+    <div class="sum-cards">
+      <div class="sum-card"><div class="val">${resumo ? resumo.entregues : ids.length}</div><div class="lab">Checkouts entregues</div></div>
+      <div class="sum-card"><div class="val">${resumo ? resumo.avaliados : "—"}</div><div class="lab">Avaliados</div></div>
+      <div class="sum-card"><div class="val">${resumo && resumo.media != null ? resumo.media : "—"}</div><div class="lab">Média dos checkouts (0–10)</div></div>
+    </div>
+    ${itens.join("")}`;
+}
+async function avaliarCheckout(aulaId, nome){
+  const inp = document.getElementById("ck-nota-" + cssId(aulaId));
+  const v = inp ? inp.value : "";
+  if (v === ""){ alert("Informe uma nota de 0 a 10."); return; }
+  const nota = Math.min(10, Math.max(0, parseFloat(v.replace(",", "."))));
+  if (isNaN(nota)){ alert("Nota inválida."); return; }
+  const aluno = DB.alunos.find(x=>x.nome.toLowerCase() === (nome||"").toLowerCase()) || alunoAtual();
+  try {
+    const r = await fetch("api/checkout-avaliar", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nome: (aluno||{}).nome || nome, aula_id: aulaId, nota })
+    });
+    const j = await r.json();
+    if (j.status !== "ok"){ alert(j.erro || "Erro ao salvar nota."); return; }
+    if (aluno) logEvento(aluno, "nota", "Checkout da aula '" + aulaId.replace(/^\d+\|/, "") + "' avaliado com nota " + nota + ".");
+    salvar();
+    delete checkoutsCache[(nome||"").toLowerCase()];
+    renderTudo();
+    alert("Nota " + nota + " salva para o checkout.");
+  } catch(e){ alert("Erro de conexão."); }
+}
+
+function renderComprometimento(a){
+  const c = a.comprometimento;
+  const itens = [
+    ["pontualidade","⏰ Pontualidade"],
+    ["dedicacao","📖 Dedicação e esforço"],
+    ["material","🎒 Material e organização"],
+    ["disciplina","🧭 Disciplina e respeito"]
+  ];
+  const notas = itens.map(([k])=>c[k]);
+  const media = notas.filter(v=>v!=null).length? (notas.filter(v=>v!=null).reduce((s,x)=>s+x,0)/notas.filter(v=>v!=null).length).toFixed(1) : null;
+  return `
+    <p style="color:var(--text-secondary);font-size:13.5px;margin-bottom:16px">
+      Avalie o comportamento do aluno em cada critério, de 1 (ruim) a 5 (excelente).
+    </p>
+    ${itens.map(([k,lab])=>`
+      <div class="field" style="margin-bottom:14px">
+        <label>${lab}</label>
+        <select id="comp-${k}">
+          <option value="">— sem avaliação —</option>
+          ${[1,2,3,4,5].map(v=>`<option value="${v}" ${c[k]===v?"selected":""}>${v} — ${v===1?"ruim":v===2?"fraco":v===3?"regular":v===4?"bom":"excelente"}</option>`).join("")}
+        </select>
+      </div>`).join("")}
+    <button class="btn" onclick="salvarComp()">Salvar avaliação</button>
+    ${media!=null?`
+      <div class="sum-card" style="margin-top:16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;text-align:center">
+        <div class="val" style="font-size:30px;font-weight:800;color:${media>=4?"var(--success)":media>=3?"var(--warning)":"var(--danger)"}">${media}/5</div>
+        <div class="lab">Comprometimento geral</div>
+      </div>`:""}
+  `;
+}
+function salvarComp(){
+  const a = alunoAtual();
+  a.comprometimento = {
+    pontualidade: +document.getElementById("comp-pontualidade").value || null,
+    dedicacao: +document.getElementById("comp-dedicacao").value || null,
+    material: +document.getElementById("comp-material").value || null,
+    disciplina: +document.getElementById("comp-disciplina").value || null
+  };
+  logEvento(a, "disciplina", "Avaliação de comprometimento atualizada.");
+  salvar(); renderTudo();
+}
+
+function renderHistorico(a){
+  const hist = a.historico.slice().reverse();
+  if (!hist.length) return '<div class="vazio">Sem registros ainda.</div>';
+  return `
+    <ul class="hist">
+      ${hist.map(h=>`
+        <li class="hist-item">
+          <span class="hist-time">${fmt(new Date(h.data))}</span>
+          <span class="tag ${h.tipo}">${tagLabel(h.tipo)}</span>
+          <span>${esc(h.texto)}</span>
+        </li>`).join("")}
+    </ul>`;
+}
+function tagLabel(t){
+  return t==="presenca"?"Presença":t==="nota"?"Nota":t==="atividade"?"Atividade":t==="disciplina"?"Disciplina":"Sistema";
+}
+function logEvento(a, tipo, texto){
+  a.historico.push({ data:new Date().toISOString(), tipo, texto });
+  // mantém no máximo 500 eventos
+  if (a.historico.length>500) a.historico = a.historico.slice(-500);
+}
+
+/* ===== UTILIDADES ===== */
+function esc(s){ return String(s||"").replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function fmt(d){
+  return d.toLocaleDateString("pt-BR") + " " + d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+}
+function toggleTheme(){
+  const h=document.documentElement;
+  h.setAttribute("data-theme",h.getAttribute("data-theme")==="dark"?"light":"dark");
+}
+
+/* ===== EXPORTAR / IMPORTAR ===== */
+function exportDados(){
+  const blob = new Blob([JSON.stringify(DB,null,2)],{type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "registro-alunos.json";
+  a.click();
+}
+function importDados(){
+  const inp = document.createElement("input");
+  inp.type = "file";
+  inp.accept = ".json";
+  inp.onchange = e=>{
+    const f = e.target.files[0];
+    if (!f) return;
+    const r = new FileReader();
+    r.onload = ()=>{
+      try {
+        const d = JSON.parse(r.result);
+        if (!d.alunos || !Array.isArray(d.alunos)) throw new Error();
+        DB = d;
+        atualId = DB.alunos[0]?DB.alunos[0].id:null;
+        salvar();
+        renderTudo();
+        alert("Dados importados com sucesso.");
+      } catch(err){ alert("Arquivo inválido."); }
+    };
+    r.readAsText(f);
+  };
+  inp.click();
+}
+
+document.getElementById("search-aluno").addEventListener("input", e=>{
+  busca = e.target.value.trim();
+  renderLista();
+});
+
+carregar();
+renderTudo();
+
+(async function(){
+  const ok = await detectarServidor();
+  const footer = document.getElementById("footer");
+  if (ok) {
+    MODO_SERVIDOR = true;
+    footer.innerHTML = "Registro de Alunos — 💾 <b style='color:var(--success)'>conectado ao servidor central</b> — os dados ficam salvos no servidor (nuvem). <button class='icon-btn' style='margin-left:8px' onclick='logout()'>Sair</button>";
+    renderTudo();
+    carregarSemanaAtual();
+  } else {
+    footer.innerHTML = "Registro de Alunos — dados salvos apenas neste navegador (localStorage). Abra via servidor para compartilhar.";
+  }
+})();
+
+function logout(){
+  fetch("api/logout", { method: "POST" })
+    .catch(()=>{})
+    .finally(()=>{ window.location.href = "index.html"; });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,1438 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Curso — Montagem e Manutenção de Computadores</title>
+<meta name="theme-color" content="#14b8a6">
+<style>
+:root{
+  --primary:#14b8a6; --primary-hover:#0d9488; --primary-active:#0f766e;
+  --secondary:#3B82F6; --danger:#EF4444; --success:#22C55E; --warning:#F59E0B;
+  --bg:linear-gradient(135deg,#06101f,#101b35,#151044);
+  --text:#FFFFFF; --text-secondary:#DDDDDD; --text-muted:rgba(255,255,255,.5);
+  --border:rgba(255,255,255,.14); --border-hover:rgba(255,255,255,.3);
+  --surface:rgba(255,255,255,.06); --surface-hover:rgba(255,255,255,.12);
+  --glass:rgba(255,255,255,.08);
+  --radius-sm:6px; --radius-md:10px; --radius-lg:16px; --radius-xl:24px;
+  --font-family:"Inter","Segoe UI",Arial,sans-serif;
+}
+[data-theme="light"]{
+  --bg:linear-gradient(135deg,#f0f4f8,#e2e8f0,#cbd5e1);
+  --text:#1a202c; --text-secondary:#4a5568; --text-muted:rgba(0,0,0,.5);
+  --border:rgba(0,0,0,.12); --border-hover:rgba(0,0,0,.25);
+  --surface:rgba(255,255,255,.65); --surface-hover:rgba(255,255,255,.85);
+  --glass:rgba(255,255,255,.7);
+  --primary:#0f766e; --primary-hover:#0d5c55;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:var(--font-family);
+  background:var(--bg); color:var(--text);
+  min-height:100vh; line-height:1.55;
+}
+::selection{background:var(--primary);color:#fff}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(128,128,128,.4);border-radius:20px}
+
+/* ===== TOPO ===== */
+.topbar{
+  position:sticky;top:0;z-index:50;
+  display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+  padding:14px 24px;
+  background:var(--glass);
+  backdrop-filter:blur(18px);
+  border-bottom:1px solid var(--border);
+}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:15px}
+.brand-badge{
+  width:34px;height:34px;border-radius:10px;display:grid;place-items:center;
+  background:linear-gradient(135deg,var(--primary),var(--secondary));
+  color:#fff;font-size:17px;flex-shrink:0;
+}
+.brand small{display:block;font-weight:500;color:var(--text-muted);font-size:11px}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.icon-btn{
+  padding:8px 12px;border-radius:var(--radius-md);cursor:pointer;
+  color:var(--text-secondary);font-size:13px;
+  border:1px solid var(--border);background:var(--surface);
+  transition:all .2s;
+}
+.icon-btn:hover{background:var(--surface-hover);color:var(--text);border-color:var(--border-hover)}
+
+/* ===== CONTEÚDO ===== */
+.container{max-width:1100px;margin:0 auto;padding:32px 24px 80px}
+
+/* HERO */
+.hero{
+  background:var(--glass);border:1px solid var(--border);
+  border-radius:var(--radius-xl);padding:36px;margin-bottom:24px;
+  position:relative;overflow:hidden;
+}
+.hero::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(600px 200px at 90% 0%,rgba(20,184,166,.18),transparent);
+}
+.hero h1{font-size:clamp(1.6rem,4vw,2.4rem);margin-bottom:8px}
+.hero p.sub{color:var(--text-secondary);max-width:720px;margin-bottom:22px}
+.chips{display:flex;gap:10px;flex-wrap:wrap}
+.chip{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:8px 14px;border-radius:999px;font-size:13px;font-weight:600;
+  background:var(--surface);border:1px solid var(--border);color:var(--text-secondary);
+}
+.chip b{color:var(--text)}
+
+/* PROGRESSO */
+.progress-card{
+  background:var(--glass);border:1px solid var(--border);
+  border-radius:var(--radius-lg);padding:20px 24px;margin-bottom:24px;
+}
+.progress-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px}
+.progress-head h3{font-size:15px}
+.progress-pct{font-size:26px;font-weight:800;color:var(--primary)}
+.progress-bar{height:10px;border-radius:999px;background:var(--surface-hover);overflow:hidden}
+.progress-fill{
+  height:100%;width:0%;border-radius:999px;
+  background:linear-gradient(90deg,var(--primary),var(--secondary));
+  transition:width .4s ease;
+}
+.progress-meta{margin-top:8px;font-size:12px;color:var(--text-muted)}
+
+/* BUSCA */
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:24px}
+.search-box{
+  flex:1;min-width:220px;display:flex;align-items:center;gap:8px;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius-md);padding:10px 14px;
+}
+.search-box input{background:none;border:none;outline:none;color:var(--text);flex:1;font-size:14px}
+.search-box input::placeholder{color:var(--text-muted)}
+.seg{display:flex;border:1px solid var(--border);border-radius:var(--radius-md);overflow:hidden}
+.seg button{
+  padding:10px 16px;background:var(--surface);color:var(--text-secondary);
+  font-size:13px;font-weight:600;cursor:pointer;border:none;
+  border-right:1px solid var(--border);transition:all .2s;
+}
+.seg button:last-child{border-right:none}
+.seg button.active{background:var(--primary);color:#fff}
+
+/* INFO EXTRA (metodologia, avaliação, materiais) */
+.info-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px;margin-bottom:24px}
+.info-card{
+  background:var(--glass);border:1px solid var(--border);
+  border-radius:var(--radius-lg);padding:22px 24px;
+}
+.info-card h3{
+  display:flex;align-items:center;gap:10px;font-size:15px;margin-bottom:14px;
+}
+.info-card h3 .ico{
+  width:30px;height:30px;border-radius:9px;display:grid;place-items:center;
+  font-size:15px;background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;flex-shrink:0;
+}
+/* metodologia — timeline */
+.tl{position:relative;padding-left:20px}
+.tl::before{content:"";position:absolute;left:7px;top:6px;bottom:6px;width:2px;background:var(--border-hover)}
+.tl-item{position:relative;padding:6px 0 10px}
+.tl-item::before{
+  content:"";position:absolute;left:-20px;top:12px;width:12px;height:12px;border-radius:50%;
+  background:var(--primary);border:2px solid var(--glass);
+}
+.tl-item .dur{font-size:12px;font-weight:700;color:var(--primary)}
+.tl-item p{font-size:13.5px;color:var(--text-secondary)}
+.tl-total{margin-top:8px;font-size:12px;color:var(--text-muted)}
+/* avaliação — barras */
+.av-item{margin-bottom:12px}
+.av-top{display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;gap:8px}
+.av-top .pct{font-weight:800;color:var(--primary)}
+.av-bar{height:8px;border-radius:999px;background:var(--surface-hover);overflow:hidden}
+.av-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--primary),var(--secondary))}
+.av-fill.participacao{width:20%}
+.av-fill.exercicios{width:20%}
+.av-fill.montagem{width:30%}
+.av-fill.diagnostico{width:30%}
+/* materiais */
+.mat-list{list-style:none;display:flex;flex-direction:column;gap:9px}
+.mat-list li{
+  display:flex;align-items:center;gap:10px;font-size:13.5px;color:var(--text-secondary);
+  padding:10px 12px;border-radius:var(--radius-md);background:var(--surface);border:1px solid var(--border);
+}
+.mat-list li .mk{color:var(--success);flex-shrink:0}
+
+/* MÓDULOS */
+.module{
+  background:var(--glass);border:1px solid var(--border);
+  border-radius:var(--radius-lg);margin-bottom:18px;overflow:hidden;
+}
+.module-head{
+  display:flex;align-items:center;gap:14px;padding:18px 22px;cursor:pointer;
+  transition:background .2s;
+}
+.module-head:hover{background:var(--surface-hover)}
+.module-num{
+  width:42px;height:42px;border-radius:12px;flex-shrink:0;
+  display:grid;place-items:center;font-weight:800;font-size:16px;
+  background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;
+}
+.module-info{flex:1;min-width:0}
+.module-info h3{font-size:16px;margin-bottom:3px}
+.module-info .meta{font-size:12.5px;color:var(--text-muted)}
+.module-chevron{color:var(--text-muted);transition:transform .3s;font-size:18px}
+.module.open .module-chevron{transform:rotate(90deg)}
+.module-mini-bar{width:120px;height:6px;border-radius:999px;background:var(--surface-hover);overflow:hidden;flex-shrink:0}
+.module-mini-fill{height:100%;background:var(--primary);border-radius:999px}
+
+.module-body{display:none;border-top:1px solid var(--border)}
+.module.open .module-body{display:block}
+
+/* AULAS */
+.lesson{
+  padding:0 22px;border-bottom:1px solid var(--border);
+  cursor:pointer;transition:background .2s;
+}
+.lesson:last-child{border-bottom:none}
+.lesson:hover{background:var(--surface)}
+.lesson-row{display:flex;align-items:flex-start;gap:14px;padding:16px 0}
+.lesson-check{
+  width:22px;height:22px;border-radius:6px;flex-shrink:0;margin-top:2px;
+  border:2px solid var(--border-hover);display:grid;place-items:center;
+  font-size:13px;color:transparent;cursor:pointer;transition:all .2s;
+}
+.lesson-check.done{background:var(--primary);border-color:var(--primary);color:#fff}
+.lesson-main{flex:1;min-width:0}
+.lesson-main h4{font-size:14.5px;margin-bottom:2px;transition:color .2s}
+.lesson.done .lesson-main h4{color:var(--text-muted);text-decoration:line-through}
+.lesson-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.tag{
+  font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;
+  border:1px solid var(--border);
+}
+.tag.semana{color:var(--primary);border-color:var(--primary)}
+.tag.teoria{color:var(--secondary);border-color:var(--secondary)}
+.tag.pratica{color:var(--success);border-color:var(--success)}
+.tag.mista{color:var(--warning);border-color:var(--warning)}
+.tag.horas{color:var(--text-muted)}
+.lesson-body{display:none;padding:0 0 20px 36px}
+.lesson.open .lesson-body{display:block}
+.lesson-body h5{
+  font-size:12px;text-transform:uppercase;letter-spacing:.6px;
+  color:var(--primary);margin:14px 0 6px;
+}
+.lesson-body p{color:var(--text-secondary);font-size:13.5px}
+.lesson-body ul{color:var(--text-secondary);font-size:13.5px;padding-left:18px;list-style:disc}
+.lesson-body ul li{margin-bottom:3px}
+
+/* RODAPÉ */
+.footer{
+  text-align:center;color:var(--text-muted);font-size:13px;
+  padding:20px;border-top:1px solid var(--border);margin-top:30px;
+}
+
+@media (max-width:640px){
+  .container{padding:20px 14px}
+  .hero{padding:24px}
+  .module-mini-bar{display:none}
+  .lesson-body{padding-left:0}
+}
+
+/* ===== EXERCÍCIOS ===== */
+.exer-block{margin-top:18px;border-top:1px dashed var(--border);padding-top:14px}
+.exer-block h5{font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--primary);margin:14px 0 10px;display:flex;align-items:center;gap:8px}
+.ck-block{margin-top:18px;border-top:1px dashed var(--border);padding-top:14px}
+.ck-block h5{font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--secondary);margin:14px 0 10px;display:flex;align-items:center;gap:8px}
+.ck-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.ck-field{display:flex;flex-direction:column;gap:5px}
+.ck-field label{font-size:12px;color:var(--text-muted);font-weight:600}
+.ck-field input,.ck-field select{
+  padding:9px 11px;border-radius:var(--radius-md);font-size:13px;
+  background:var(--glass);border:1px solid var(--border);color:var(--text);
+}
+.ck-field input:focus,.ck-field select:focus{border-color:var(--secondary);outline:none}
+.ck-full{grid-column:1/-1}
+.ck-field textarea{
+  padding:9px 11px;border-radius:var(--radius-md);font-size:13px;min-height:70px;resize:vertical;
+  background:var(--glass);border:1px solid var(--border);color:var(--text);
+}
+.ck-field textarea:focus{border-color:var(--secondary);outline:none}
+.ck-resumo{font-size:12px;color:var(--text-muted);margin:8px 0 4px}
+.ck-resumo.ok{color:var(--success)}
+.exer-score{font-size:11px;color:var(--text-muted);letter-spacing:0}
+.exer-q{margin-bottom:16px;padding:12px 14px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--surface)}
+.exer-q .enunciado{font-size:13.5px;color:var(--text);font-weight:600;margin-bottom:10px}
+.exer-opcoes{display:flex;flex-direction:column;gap:8px}
+.exer-op{
+  display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--radius-md);
+  border:1px solid var(--border);cursor:pointer;transition:all .15s;font-size:13px;
+  color:var(--text-secondary);background:var(--glass);
+}
+.exer-op:hover{border-color:var(--primary);color:var(--text)}
+.exer-op .letra{
+  width:24px;height:24px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;
+  font-size:12px;font-weight:800;border:1px solid var(--border);color:var(--text-muted);
+}
+.exer-op.certa{border-color:var(--success);color:var(--success);background:rgba(34,197,94,.08)}
+.exer-op.certa .letra{border-color:var(--success);background:var(--success);color:#fff}
+.exer-op.errada{border-color:var(--danger);color:var(--danger);background:rgba(239,68,68,.08)}
+.exer-op.errada .letra{border-color:var(--danger);background:var(--danger);color:#fff}
+.exer-op.bloqueada{cursor:default;opacity:.9}
+.exer-feedback{font-size:12px;margin-top:8px;display:none;padding:8px 10px;border-radius:var(--radius-md)}
+.exer-feedback.show{display:block}
+.exer-feedback.ok{background:rgba(34,197,94,.12);border:1px solid var(--success);color:var(--success)}
+.exer-feedback.nok{background:rgba(239,68,68,.1);border:1px solid var(--danger);color:var(--danger)}
+.exer-disc textarea{
+  width:100%;min-height:70px;padding:10px 12px;border-radius:var(--radius-md);font-size:13.5px;
+  background:var(--surface);border:1px solid var(--border);color:var(--text);resize:vertical;
+}
+.exer-disc textarea:focus{border-color:var(--primary);outline:none}
+.exer-disc textarea:disabled{opacity:.6}
+.exer-enviar{
+  margin-top:8px;padding:8px 16px;border-radius:var(--radius-md);cursor:pointer;
+  background:var(--primary);color:#fff;font-size:12.5px;font-weight:700;border:none;
+}
+.exer-enviar:hover{background:var(--primary-hover)}
+.exer-enviar:disabled{opacity:.5;cursor:not-allowed}
+.exer-entrega{font-size:12px;margin-top:8px;color:var(--success);display:none;align-items:center;gap:6px}
+.exer-entrega.show{display:flex}
+.exer-sem-login{font-size:12px;color:var(--text-muted);margin-top:4px}
+
+/* ===== AVALIAÇÕES POR MÓDULO ===== */
+.provas-card{
+  background:var(--glass);border:1px solid var(--border);
+  border-radius:var(--radius-lg);padding:20px 24px;margin-bottom:24px;
+}
+.provas-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px}
+.provas-head h3{font-size:15px}
+.provas-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+.prova-item{
+  border:1px solid var(--border);border-radius:var(--radius-md);padding:14px 16px;
+  background:var(--surface);display:flex;flex-direction:column;gap:8px;
+}
+.prova-item .p-mod{font-size:11px;font-weight:800;color:var(--primary);text-transform:uppercase;letter-spacing:.5px}
+.prova-item .p-tit{font-size:13.5px;font-weight:700}
+.prova-item .p-status{font-size:12px;color:var(--text-muted)}
+.prova-item .p-status.ok{color:var(--success)}
+.prova-item .p-nota{font-size:22px;font-weight:800;color:var(--primary)}
+.prova-btn{
+  margin-top:auto;padding:8px 12px;border-radius:var(--radius-md);cursor:pointer;
+  background:var(--primary);color:#fff;font-size:12.5px;font-weight:700;border:none;
+}
+.prova-btn:hover{background:var(--primary-hover)}
+.prova-btn.ghost{background:var(--surface);color:var(--text-secondary);border:1px solid var(--border)}
+.prova-btn.ghost:hover{background:var(--surface-hover);color:var(--text)}
+
+.prova-modal{
+  position:fixed;inset:0;z-index:8000;display:none;place-items:center;
+  background:rgba(0,0,0,.72);backdrop-filter:blur(4px);padding:20px;
+}
+.prova-modal.show{display:grid}
+.prova-modal-inner{
+  width:100%;max-width:680px;max-height:88vh;overflow:auto;
+  background:var(--glass);border:1px solid var(--border);border-radius:var(--radius-xl);
+  padding:26px;backdrop-filter:blur(20px);
+}
+.prova-modal-inner h2{font-size:18px;margin-bottom:4px}
+.prova-modal-inner .p-sub{font-size:12.5px;color:var(--text-muted);margin-bottom:16px}
+.prova-modal-close{
+  float:right;background:none;border:none;color:var(--text-muted);font-size:20px;cursor:pointer;
+}
+.prova-modal-close:hover{color:var(--text)}
+
+/* ===== MODO BLINDADO ===== */
+.guard-overlay{
+  position:fixed;inset:0;z-index:9000;
+  display:none;place-items:center;text-align:center;
+  background:rgba(0,0,0,.92);backdrop-filter:blur(6px);
+  color:var(--text);padding:24px;
+}
+.guard-overlay.show{display:grid}
+.guard-overlay .guard-box{max-width:480px}
+.guard-overlay h2{font-size:26px;margin-bottom:12px}
+.guard-overlay p{color:var(--text-secondary);margin-bottom:18px;font-size:14px}
+.guard-overlay .guard-count{
+  font-size:13px;padding:10px 16px;border-radius:var(--radius-md);
+  background:var(--surface);border:1px solid var(--border);margin-bottom:18px;
+}
+.guard-overlay .guard-count b{color:var(--danger)}
+.guard-overlay .guard-btn{
+  padding:12px 22px;border-radius:var(--radius-md);cursor:pointer;
+  background:var(--primary);color:#fff;font-weight:700;font-size:14px;
+}
+.guard-overlay .guard-btn:hover{background:var(--primary-hover)}
+.guard-badge{
+  display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;
+  font-size:11px;font-weight:700;color:#fff;background:var(--danger);margin-left:8px;
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-badge">⚡</div>
+    <div>
+      Montagem e Manutenção de Computadores
+      <small>Curso completo · Estrutura programática interativa</small>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <a class="icon-btn" href="apresentacao.html" title="Página de apresentação/divulgação do curso">📣 Apresentação</a>
+    <a class="icon-btn" href="login-aluno.html" title="Entrar como aluno" id="btn-login-aluno">👤 Aluno</a>
+    <a class="icon-btn" href="alunos.html" title="Registro de alunos">👨‍🎓 Alunos</a>
+    <a class="icon-btn" href="plano-de-aulas.html" title="Plano de aulas (imprimir)">📋 Plano de Aulas</a>
+    <a class="icon-btn" href="verificar-certificado.html" title="Verificar autenticidade de um certificado">🔎 Certificado</a>
+    <button class="icon-btn" onclick="toggleTheme()" title="Alternar tema">◐ Tema</button>
+    <button class="icon-btn" id="btn-guard" onclick="guardToggle()" title="Ativar modo blindado" style="border-color:var(--primary);color:var(--primary)">🔒 Modo blindado</button>
+  </div>
+</div>
+
+<div class="container">
+
+  <section class="hero">
+    <h1>Montagem e Manutenção de Computadores</h1>
+    <p class="sub">
+      Curso estruturado do zero ao profissional: fundamentos de hardware, montagem completa,
+      instalação de sistemas, manutenção preventiva e corretiva, redes e atendimento ao cliente.
+      <strong>Uma aula por semana, com 2 horas de duração.</strong>
+    </p>
+    <div class="chips">
+      <span class="chip"><b id="chip-modulos">8</b> módulos</span>
+      <span class="chip"><b id="chip-aulas">43</b> aulas</span>
+      <span class="chip"><b id="chip-semanas">43</b> semanas</span>
+      <span class="chip"><b id="chip-horas">86</b> horas</span>
+      <span class="chip">🛡️ Certificado de conclusão</span>
+      <span class="chip" id="semana-aviso" style="display:none"></span>
+    </div>
+  </section>
+
+  <section class="progress-card">
+    <div class="progress-head">
+      <h3>Seu progresso no curso</h3>
+      <span class="progress-pct" id="progress-pct">0%</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+    <div class="progress-meta" id="progress-meta">Nenhuma aula concluída ainda. Marque as aulas conforme avançar.</div>
+    <div class="progress-meta" id="progress-exercicios" style="margin-top:4px"></div>
+  </section>
+
+  <div class="toolbar">
+    <div class="search-box">
+      <span>🔍</span>
+      <input type="text" id="search" placeholder="Buscar aula ou assunto...">
+    </div>
+    <div class="seg" id="seg-filter">
+      <button data-filter="all" class="active">Todas</button>
+      <button data-filter="teoria">Teoria</button>
+      <button data-filter="pratica">Prática</button>
+      <button data-filter="mista">Mista</button>
+    </div>
+  </div>
+
+  <div class="info-grid">
+    <section class="info-card">
+      <h3><span class="ico">📚</span> Metodologia</h3>
+      <div class="tl">
+        <div class="tl-item"><span class="dur">15 min</span><p>Revisão da aula anterior.</p></div>
+        <div class="tl-item"><span class="dur">35 min</span><p>Conteúdo teórico.</p></div>
+        <div class="tl-item"><span class="dur">60 min</span><p>Atividade prática.</p></div>
+        <div class="tl-item"><span class="dur">10 min</span><p>Perguntas, revisão e preparação para a próxima aula.</p></div>
+      </div>
+      <div class="tl-total">Total: 120 minutos (2 horas) por aula.</div>
+    </section>
+
+    <section class="info-card">
+      <h3><span class="ico">🎯</span> Avaliação</h3>
+      <div class="av-item">
+        <div class="av-top"><span>Participação e presença</span><span class="pct">20%</span></div>
+        <div class="av-bar"><div class="av-fill participacao"></div></div>
+      </div>
+      <div class="av-item">
+        <div class="av-top"><span>Exercícios práticos</span><span class="pct">20%</span></div>
+        <div class="av-bar"><div class="av-fill exercicios"></div></div>
+      </div>
+      <div class="av-item">
+        <div class="av-top"><span>Montagem completa de um computador</span><span class="pct">30%</span></div>
+        <div class="av-bar"><div class="av-fill montagem"></div></div>
+      </div>
+      <div class="av-item">
+        <div class="av-top"><span>Diagnóstico e solução de um defeito</span><span class="pct">30%</span></div>
+        <div class="av-bar"><div class="av-fill diagnostico"></div></div>
+      </div>
+    </section>
+
+    <section class="info-card">
+      <h3><span class="ico">🎒</span> Materiais do aluno</h3>
+      <ul class="mat-list">
+        <li><span class="mk">✓</span> Apostila ilustrada</li>
+        <li><span class="mk">✓</span> Checklist de montagem</li>
+        <li><span class="mk">✓</span> Guia de diagnóstico de defeitos</li>
+        <li><span class="mk">✓</span> Tabela de compatibilidade de componentes</li>
+        <li><span class="mk">✓</span> Lista de ferramentas</li>
+        <li><span class="mk">✓</span> Lista de softwares técnicos</li>
+        <li><span class="mk">✓</span> Exercícios de fixação ao final de cada aula</li>
+      </ul>
+    </section>
+  </div>
+
+  <div id="course-root"></div>
+
+  <!-- AVALIAÇÕES POR MÓDULO -->
+  <section class="provas-card">
+    <div class="provas-head">
+      <h3>🗒️ Avaliações por módulo</h3>
+      <span class="provas-media" id="provas-media" style="font-size:13px;color:var(--text-muted)"></span>
+    </div>
+    <div class="provas-grid" id="provas-grid"></div>
+  </section>
+
+  <div class="footer">
+    Curso de Montagem e Manutenção de Computadores — uma aula por semana (2h) · estrutura programática interativa
+  </div>
+</div>
+
+<!-- TELA DE BLOQUEIO DO MODO BLINDADO -->
+<div class="guard-overlay" id="guard-overlay">
+  <div class="guard-box">
+    <h2>⚠️ Tentativa de saída detectada</h2>
+    <p>
+      O modo blindado detectou que a janela do curso saiu do foco ou foi minimizada.
+      Isso pode indicar tentativa de abrir outra aba ou consultar outro conteúdo.
+      Esta ocorrência foi registrada e será informada ao instrutor.
+    </p>
+    <div class="guard-count">Registros de desatenção: <b id="guard-count">0</b></div>
+    <button class="guard-btn" onclick="guardResume()">Voltar ao curso</button>
+  </div>
+</div>
+
+<!-- MODAL DA PROVA POR MÓDULO -->
+<div class="prova-modal" id="prova-modal">
+  <div class="prova-modal-inner">
+    <button class="prova-modal-close" onclick="provaFechar()" title="Fechar">✕</button>
+    <h2 id="prova-modal-titulo">Avaliação</h2>
+    <div class="p-sub" id="prova-modal-sub">Responda as questões e envie ao final.</div>
+    <div id="prova-modal-body"></div>
+  </div>
+</div>
+
+<script src="curso.js"></script>
+<script src="exercicios.js"></script>
+<script src="provas.js"></script>
+<script>
+
+/* ===== ESTADO ===== */
+const STORAGE_KEY = "curso-hardware-progresso";
+let done = {};
+try { done = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); } catch(e) {}
+
+function allLessons(){
+  const list = [];
+  CURSO.forEach(m => m.aulas.forEach(a => list.push({mod:m.num, titulo:a.t, id:lessonId(m,a)})));
+  return list;
+}
+function lessonId(m, a){ return m.num + "|" + a.t; }
+
+function save(){
+  localStorage.setItem(storageKey(), JSON.stringify(done));
+  if (alunoNome) enfileirarSyncProgresso();
+}
+function storageKey(){
+  return alunoNome ? STORAGE_KEY + "-" + alunoNome.toLowerCase().trim() : STORAGE_KEY;
+}
+let SYNC_PROG_TIMER = null;
+function enfileirarSyncProgresso(){
+  if (SYNC_PROG_TIMER) clearTimeout(SYNC_PROG_TIMER);
+  SYNC_PROG_TIMER = setTimeout(syncProgresso, 800);
+}
+async function syncProgresso(){
+  if (!alunoNome) return;
+  try {
+    const r = await fetch("api/progresso", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nome: alunoNome, progresso: done })
+    });
+    const j = await r.json();
+    if (j.status !== "ok") throw new Error(j.erro || "erro");
+  } catch(e) {
+    console.warn("[PROGRESSO] Falha ao sincronizar:", e);
+  }
+}
+
+/* ===== RENDER ===== */
+let filter = "all";
+let query = "";
+let semanaGlobal = 0;
+
+function render(){
+  const root = document.getElementById("course-root");
+  semanaGlobal = 0;
+  root.innerHTML = CURSO.map(m => {
+    const aulas = m.aulas.filter(a => {
+      if (filter !== "all" && a.tipo !== filter) return false;
+      if (query && !(a.t+" "+a.objetivo+" "+a.conteudo.join(" ")).toLowerCase().includes(query)) return false;
+      return true;
+    });
+    if (aulas.length === 0) return "";
+    const modDone = aulas.filter(a => done[lessonId(m,a)]).length;
+    const pct = Math.round(modDone/aulas.length*100);
+
+    return `
+    <section class="module open" data-module="${m.num}">
+      <div class="module-head" onclick="toggleModule(this)">
+        <div class="module-num">${m.num}</div>
+        <div class="module-info">
+          <h3>Módulo ${m.num} — ${m.titulo}</h3>
+          <div class="meta">${aulas.length} aulas · ${aulas.length} semanas · ${aulas.length*2}h · ${m.objetivo}</div>
+        </div>
+        <div class="module-mini-bar"><div class="module-mini-fill" style="width:${pct}%"></div></div>
+        <span class="module-chevron">▶</span>
+      </div>
+      <div class="module-body">
+        ${aulas.map(a => {
+          semanaGlobal++;
+          return `
+          <div class="lesson ${done[lessonId(m,a)]?'done':''}" id="${lessonId(m,a)}">
+            <div class="lesson-row">
+              <div class="lesson-check ${done[lessonId(m,a)]?'done':''}" onclick="toggleLesson('${lessonId(m,a)}',event)">✓</div>
+              <div class="lesson-main" onclick="toggleLessonOpen(this)">
+                <h4>${a.t}</h4>
+                <div class="lesson-tags">
+                  <span class="tag semana">Semana ${semanaGlobal}</span>
+                  <span class="tag ${a.tipo}">${a.tipo==='pratica'?'Prática':a.tipo==='mista'?'Mista':'Teoria'}</span>
+                  <span class="tag horas">2 horas</span>
+                </div>
+              </div>
+            </div>
+            <div class="lesson-body">
+              <h5>🎯 Objetivo</h5><p>${a.obj}</p>
+              <h5>📘 Conteúdo</h5>
+              <ul>${a.conteudo.map(c=>`<li>${c}</li>`).join("")}</ul>
+              <h5>🔧 Atividade prática</h5><p>${a.pratica}</p>
+              ${renderExercicios(m, a)}
+              ${renderCheckout(m, a)}
+            </div>
+          </div>`;
+        }).join("")}
+      </div>
+    </section>`;
+  }).join("");
+
+  updateStats();
+}
+
+function toggleModule(head){
+  head.closest(".module").classList.toggle("open");
+}
+function toggleLessonOpen(el){
+  el.closest(".lesson").classList.toggle("open");
+}
+function toggleLesson(id, ev){
+  ev.stopPropagation();
+  done[id] = !done[id];
+  save();
+  registrarAula(id, done[id]);
+  render();
+  renderProvas();
+}
+
+/* ============================================================
+   INTEGRAÇÃO COM O REGISTRO DE ALUNOS (alunos.html)
+   Se o curso for aberto com ?aluno=Nome, as ações do aluno são
+   registradas no histórico do registro.
+   ============================================================ */
+const ALUNOS_KEY = "curso-hardware-alunos";
+let alunoNome = null;
+
+(function(){
+  try {
+    const params = new URLSearchParams(window.location.search);
+    alunoNome = (params.get("aluno")||"").trim();
+  } catch(e){}
+  if (alunoNome){
+    document.getElementById("btn-guard").textContent = "🔒 " + alunoNome;
+    document.getElementById("btn-guard").title = "Modo blindado — aluno " + alunoNome;
+    const btnAluno = document.getElementById("btn-login-aluno");
+    btnAluno.textContent = "👤 " + alunoNome;
+    btnAluno.title = "Trocar de aluno";
+    btnAluno.href = "login-aluno.html";
+    btnAluno.onclick = function(e){
+      if (!confirm("Sair de " + alunoNome + " e trocar de aluno?")) {
+        e.preventDefault();
+        return false;
+      }
+      window.location.href = "login-aluno.html";
+    };
+    try { done = JSON.parse(localStorage.getItem(storageKey()) || "{}"); } catch(e) {}
+    try { exState = JSON.parse(localStorage.getItem(exStorageKey()) || "{}"); } catch(e) {}
+    try { provasState = JSON.parse(localStorage.getItem(provasStorageKey()) || "{}"); } catch(e) {}
+    carregarProgresso();
+    exCarregarServidor();
+    provasCarregarServidor();
+  }
+})();
+
+async function carregarProgresso(){
+  if (!alunoNome) return;
+  try {
+    const ctl = new AbortController();
+    setTimeout(()=>ctl.abort(), 3000);
+    const r = await fetch("api/progresso?aluno=" + encodeURIComponent(alunoNome), { signal: ctl.signal });
+    if (!r.ok) return;
+    const j = await r.json();
+    if (!j.progresso) return;
+    for (const k in j.progresso) if (j.progresso[k]) done[k] = true;
+    localStorage.setItem(storageKey(), JSON.stringify(done));
+    render();
+  } catch(e) {}
+}
+
+function registrarAula(id, concluida){
+  if (!alunoNome) return;
+  const semana = (id.split("|")[0] || "").replace(/^0+/,"");
+  const titulo = (id.split("|")[1] || "Aula");
+  registrarNoAluno({
+    tipo: "atividade",
+    texto: (concluida ? "Aula concluída" : "Aula desmarcada") + " — Semana " + (semana||"?") + ": " + titulo + "."
+  });
+}
+
+function registrarNoAluno(evt){
+  if (!alunoNome) return;
+  // 1) envia ao servidor central quando disponível
+  try {
+    fetch("api/evento", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nome: alunoNome, tipo: evt.tipo, texto: evt.texto })
+    }).catch(()=>{});
+  } catch(e){}
+  // 2) registra também no localStorage (fallback local)
+  try {
+    let db = JSON.parse(localStorage.getItem(ALUNOS_KEY)) || { alunos: [] };
+    let a = db.alunos.find(x => x.nome.toLowerCase() === alunoNome.toLowerCase());
+    if (!a){
+      a = {
+        id: "auto-" + Date.now().toString(36),
+        nome: alunoNome,
+        turma: "",
+        criadoEm: new Date().toISOString(),
+        presencas: {}, notas: { participacao:null, exercicios:null, montagem:null, diagnostico:null },
+        atividades: [], comprometimento: { pontualidade:null, dedicacao:null, material:null, disciplina:null },
+        historico: []
+      };
+      db.alunos.push(a);
+    }
+    a.historico.push({ data: new Date().toISOString(), tipo: evt.tipo, texto: evt.texto });
+    if (a.historico.length > 500) a.historico = a.historico.slice(-500);
+    localStorage.setItem(ALUNOS_KEY, JSON.stringify(db));
+  } catch(e){}
+}
+
+function updateStats(){
+  const list = allLessons();
+  const doneCount = list.filter(l => done[l.id]).length;
+  const total = list.length;
+  const pct = Math.round(doneCount/total*100);
+  document.getElementById("progress-pct").textContent = pct + "%";
+  document.getElementById("progress-fill").style.width = pct + "%";
+  document.getElementById("progress-meta").textContent =
+    doneCount === 0 ? "Nenhuma aula concluída ainda. Marque as aulas conforme avançar."
+    : doneCount === total ? "🏆 Parabéns! Curso concluído! Você pode solicitar seu certificado."
+    : doneCount + " de " + total + " aulas concluídas (semana " + doneCount + " de " + total + "). Faltam " + (total-doneCount) + " semanas para o certificado.";
+  const exPct = exAproveitamento();
+  let respondidasObj = 0, totaisObj = 0, discEntregues = 0, totaisDisc = 0;
+  for (const id in (EXERCICIOS||{})) {
+    EXERCICIOS[id].forEach((q,i)=>{
+      if (q.tipo === "disc"){ totaisDisc++; if (exState[id] && exState[id][i] && exState[id][i].entregue) discEntregues++; }
+      else { totaisObj++; if (exState[id] && exState[id][i] && exState[id][i].respondido) respondidasObj++; }
+    });
+  }
+  const el = document.getElementById("progress-exercicios");
+  if (el) el.innerHTML =
+    "📝 Caderno de exercícios: <b>" + respondidasObj + "/" + totaisObj + "</b> questões objetivas respondidas · aproveitamento <b>" + exPct + "%</b> · dissertativas entregues <b>" + discEntregues + "/" + totaisDisc + "</b>";
+  const mediaProvas = provasMedia();
+  if (mediaProvas != null){
+    el.innerHTML += " · 🗒️ Média das provas: <b>" + mediaProvas + "/10</b>";
+  }
+}
+
+/* ============================================================
+   CADERNO DE EXERCÍCIOS
+   - Questões por aula vêm de exercicios.js.
+   - Objetivas: clique na resposta → correção na hora + gravação.
+   - Dissertativas: texto salvo (entregue ao instrutor).
+   - Quando há aluno identificado, sincroniza com o servidor.
+   ============================================================ */
+const EX_STORAGE_KEY = "curso-hardware-exercicios";
+let exState = {};
+try { exState = JSON.parse(localStorage.getItem(EX_STORAGE_KEY) || "{}"); } catch(e){}
+
+function exStorageKey(){
+  return alunoNome ? EX_STORAGE_KEY + "-" + alunoNome.toLowerCase().trim() : EX_STORAGE_KEY;
+}
+function exSaveLocal(){
+  localStorage.setItem(exStorageKey(), JSON.stringify(exState));
+}
+function exAula(m, a){ return lessonId(m, a); }
+function exQuestoes(m, a){ return (EXERCICIOS || {})[exAula(m, a)] || []; }
+
+function exOrdemGlobal(){
+  // lista global ordenada de aulas para o desbloqueio progressivo
+  const lista = [];
+  CURSO.forEach(m => m.aulas.forEach(a => lista.push({ id: lessonId(m,a), mod: m.num, titulo: a.t })));
+  return lista;
+}
+function exLiberada(id){
+  const ordem = exOrdemGlobal();
+  const idx = ordem.findIndex(l => l.id === id);
+  if (idx <= 0) return { liberada: true, faltam: "" };
+  const anterior = ordem[idx-1];
+  if (done[anterior.id]) return { liberada: true, faltam: "" };
+  return { liberada: false, faltam: anterior.titulo };
+}
+function exCorretas(id){
+  const qs = (EXERCICIOS || {})[id] || [];
+  return qs.filter((q,i)=>q.tipo!=="disc" && exState[id] && exState[id][i] && exState[id][i].acertou).length;
+}
+function exTotaisObj(id){
+  return ((EXERCICIOS || {})[id] || []).filter(q=>q.tipo!=="disc").length;
+}
+function exAproveitamento(){
+  let certas = 0, total = 0;
+  for (const id in (EXERCICIOS||{})) {
+    const qs = EXERCICIOS[id];
+    qs.forEach((q,i)=>{
+      if (q.tipo === "disc") return;
+      total++;
+      if (exState[id] && exState[id][i] && exState[id][i].acertou) certas++;
+    });
+  }
+  return total ? Math.round(certas/total*100) : 0;
+}
+
+function renderExercicios(m, a){
+  const id = exAula(m, a);
+  const qs = exQuestoes(m, a);
+  if (!qs.length) return "";
+  const libera = exLiberada(id);
+  if (!libera.liberada){
+    return `
+    <div class="exer-block">
+      <h5>📝 Exercícios da aula</h5>
+      <div class="exer-q" style="text-align:center;color:var(--text-muted)">
+        🔒 Exercícios bloqueados.<br>
+        <span style="font-size:12.5px">Conclua a aula anterior — <b style="color:var(--text-secondary)">${esc(libera.faltam)}</b> — para liberar.</span>
+      </div>
+    </div>`;
+  }
+  const certas = exCorretas(id);
+  const totObj = exTotaisObj(id);
+  const respondidas = Object.keys(exState[id]||{}).filter(k=>exState[id][k].respondido).length;
+  return `
+    <div class="exer-block">
+      <h5>📝 Exercícios da aula
+        <span class="exer-score">${certas}/${totObj} objetivas certas · ${respondidas}/${qs.length} respondidas</span>
+      </h5>
+      ${qs.map((q, qi)=>{
+        const resp = exState[id] && exState[id][qi];
+        if (q.tipo === "disc"){
+          return `
+          <div class="exer-q exer-disc">
+            <div class="enunciado">${qi+1}. ${q.q}</div>
+            <textarea id="ex-disc-${cssId(id)}-${qi}" ${resp && resp.entregue ? "disabled" : ""} placeholder="Escreva sua resposta aqui...">${resp && resp.resposta ? esc(resp.resposta) : ""}</textarea>
+            <button class="exer-enviar" onclick="exEnviarDisc('${escAttr(id)}', ${qi})" ${resp && resp.entregue ? "disabled" : ""}>${resp && resp.entregue ? "✓ Entregue" : "Entregar resposta"}</button>
+            <div class="exer-entrega ${resp && resp.entregue ? "show" : ""}" id="ex-entrega-${cssId(id)}-${qi}">📨 Resposta entregue — fica registrada para o instrutor.</div>
+          </div>`;
+        }
+        const letras = ["A","B","C","D","E","F"];
+        return `
+        <div class="exer-q">
+          <div class="enunciado">${qi+1}. ${q.q}</div>
+          <div class="exer-opcoes">
+            ${q.opcoes.map((op, oi)=>{
+              let cls = "exer-op", bloqueada = "";
+              if (resp && resp.respondido){
+                cls += " bloqueada";
+                if (oi === q.correta) cls += " certa";
+                else if (oi === resp.escolha) cls += " errada";
+              }
+              return `<div class="${cls}" ${resp && resp.respondido ? "" : `onclick="exResponder('${escAttr(id)}', ${qi}, ${oi})"`}>
+                <span class="letra">${letras[oi]}</span><span>${op}</span>
+              </div>`;
+            }).join("")}
+          </div>
+          <div class="exer-feedback ${resp && resp.respondido ? "show " + (resp.acertou ? "ok" : "nok") : ""}" id="ex-fb-${cssId(id)}-${qi}">
+            ${resp && resp.respondido
+              ? (resp.acertou ? "✅ Correto!" : `❌ Não foi dessa vez. A resposta certa é: <b>${letras[q.correta]} — ${esc(q.opcoes[q.correta])}</b>`)
+              : ""}
+          </div>
+        </div>`;
+      }).join("")}
+    </div>`;
+}
+
+function cssId(id){ return id.replace(/[^a-zA-Z0-9_-]/g, "_"); }
+function escAttr(s){ return String(s).replace(/["']/g, c=>({"'":"&#39;",'"':"&quot;"}[c])); }
+function fmt(d){
+  return d.toLocaleDateString("pt-BR") + " " + d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+}
+
+/* ===== CHECKOUT DE AULA PRÁTICA ===== */
+const CHECKOUT_CAMPOS = [
+  ["marca","Marca do equipamento","","input"],
+  ["modelo","Modelo","","input"],
+  ["cpu","CPU (processador)","","input"],
+  ["ram","Memória RAM","","input"],
+  ["hd","HD/SSD (armazenamento)","","input"],
+  ["video","Placa de vídeo","","input"],
+  ["placa_mae","Placa-mãe","","input"],
+  ["fonte","Fonte (potência)","","input"],
+  ["so","Sistema operacional","","input"],
+  ["outros","Outros componentes/observações","","input"]
+];
+function renderCheckout(m, a){
+  const id = exAula(m, a);
+  const d = checkoutState[id] || {};
+  const entregue = !!d.entregue;
+  const linhas = CHECKOUT_CAMPOS.map(([k,label,ph])=>
+    `<div class="ck-field ${k==="outros"?"ck-full":""}">
+      <label>${label}</label>
+      <input type="text" id="ck-${cssId(id)}-${k}" ${entregue?"disabled":""} placeholder="${ph}" value="${esc(d[k]||"")}">
+    </div>`).join("");
+  return `
+  <div class="ck-block">
+    <h5>🛠️ Checkout da aula prática
+      <span class="exer-score">${entregue ? "✓ entregue em " + fmt(new Date(d.em)) : "preencha os dados do equipamento e o relatório do serviço"}</span>
+    </h5>
+    <div class="ck-grid">
+      ${linhas}
+      <div class="ck-field ck-full">
+        <label>🔧 Problema apresentado</label>
+        <textarea id="ck-${cssId(id)}-problema" ${entregue?"disabled":""} placeholder="Descreva o problema do equipamento...">${esc(d.problema||"")}</textarea>
+      </div>
+      <div class="ck-field ck-full">
+        <label>📋 Descrição do serviço</label>
+        <textarea id="ck-${cssId(id)}-descricao" ${entregue?"disabled":""} placeholder="O que foi identificado e o que foi feito...">${esc(d.descricao||"")}</textarea>
+      </div>
+      <div class="ck-field ck-full">
+        <label>🛠️ Procedimentos adotados</label>
+        <textarea id="ck-${cssId(id)}-procedimentos" ${entregue?"disabled":""} placeholder="Passo a passo do procedimento realizado...">${esc(d.procedimentos||"")}</textarea>
+      </div>
+      <div class="ck-field ck-full">
+        <label>✅ Solução final</label>
+        <textarea id="ck-${cssId(id)}-solucao" ${entregue?"disabled":""} placeholder="Como o problema foi resolvido / o que foi entregue ao cliente...">${esc(d.solucao||"")}</textarea>
+      </div>
+      <div class="ck-field ck-full">
+        <label>🧰 Materiais e ferramentas usados</label>
+        <textarea id="ck-${cssId(id)}-materiais" ${entregue?"disabled":""} placeholder="Ex.: chave philips, pasta térmica, pincel, multímetro...">${esc(d.materiais||"")}</textarea>
+      </div>
+    </div>
+    ${entregue
+      ? `<div class="ck-resumo ok">📨 Checkout entregue — fica registrado para o instrutor. ${d.nota!=null?`Nota: <b>${d.nota}</b>/10`:"aguardando avaliação."}</div>`
+      : `<button class="exer-enviar" style="margin-top:14px" onclick="ckEnviar('${escAttr(id)}')">Entregar checkout</button>`}
+  </div>`;
+}
+
+let checkoutState = {};
+try { checkoutState = JSON.parse(localStorage.getItem("checkoutState") || "{}"); } catch(e){}
+function ckStorageKey(){ return "checkoutState" + (alunoNome ? "-" + alunoNome.toLowerCase().replace(/\s+/g,"-") : ""); }
+function ckSaveLocal(){
+  try { localStorage.setItem(ckStorageKey(), JSON.stringify(checkoutState)); } catch(e){}
+}
+async function ckEnviar(id){
+  if (!alunoNome){ alert("Entre como aluno para registrar seu checkout."); return; }
+  const dados = {};
+  CHECKOUT_CAMPOS.forEach(([k])=>{
+    const el = document.getElementById("ck-" + cssId(id) + "-" + k);
+    dados[k] = el ? el.value.trim() : "";
+  });
+  dados.problema = (document.getElementById("ck-" + cssId(id) + "-problema")||{}).value || "";
+  dados.descricao = (document.getElementById("ck-" + cssId(id) + "-descricao")||{}).value || "";
+  dados.procedimentos = (document.getElementById("ck-" + cssId(id) + "-procedimentos")||{}).value || "";
+  dados.solucao = (document.getElementById("ck-" + cssId(id) + "-solucao")||{}).value || "";
+  dados.materiais = (document.getElementById("ck-" + cssId(id) + "-materiais")||{}).value || "";
+  const requeridos = [dados.problema, dados.descricao, dados.procedimentos, dados.solucao, dados.materiais];
+  if (requeridos.some(v=>!v.trim())){ alert("Preencha o problema, a descrição, os procedimentos, a solução e os materiais antes de entregar."); return; }
+  checkoutState[id] = { ...dados, entregue: true, em: new Date().toISOString() };
+  ckSaveLocal();
+  registrarNoAluno({ tipo: "atividade", texto: "Checkout da aula prática entregue (" + id + ")." });
+  try {
+    await fetch("api/checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nome: alunoNome, aula_id: id, dados })
+    });
+  } catch(e){}
+  render();
+}
+async function ckCarregarServidor(){
+  if (!alunoNome) return;
+  try {
+    const ctl = new AbortController();
+    setTimeout(()=>ctl.abort(), 3000);
+    const r = await fetch("api/checkout?aluno=" + encodeURIComponent(alunoNome), { signal: ctl.signal });
+    if (!r.ok) return;
+    const j = await r.json();
+    const dadosLocais = checkoutState;
+    for (const aulaId in (j.checkouts||{})){
+      const c = j.checkouts[aulaId];
+      if (!dadosLocais[aulaId] && c.entregue_em){
+        dadosLocais[aulaId] = { ...c.dados, entregue: true, em: c.entregue_em, nota: c.nota };
+      } else if (dadosLocais[aulaId] && c.nota != null){
+        dadosLocais[aulaId].nota = c.nota;
+      }
+    }
+    ckSaveLocal();
+    render();
+  } catch(e){}
+}
+
+function exResponder(id, qi, escolha){
+  const qs = (EXERCICIOS || {})[id] || [];
+  const q = qs[qi];
+  if (!q || q.tipo === "disc") return;
+  if (!exState[id]) exState[id] = {};
+  const acertou = escolha === q.correta;
+  exState[id][qi] = { respondido: true, escolha, acertou, em: new Date().toISOString() };
+  exSaveLocal();
+  registrarNoAluno({ tipo: "atividade", texto: `Exercício da aula resolvido — ${acertou ? "acertou" : "errou"} a questão ${qi+1} (${id}).` });
+  exSincronizar(id, qi);
+  render();
+}
+
+function exEnviarDisc(id, qi){
+  const ta = document.getElementById("ex-disc-" + cssId(id) + "-" + qi);
+  const texto = (ta.value || "").trim();
+  if (!texto){ alert("Escreva sua resposta antes de entregar."); return; }
+  if (!exState[id]) exState[id] = {};
+  exState[id][qi] = { respondido: true, entregue: true, resposta: texto, em: new Date().toISOString() };
+  exSaveLocal();
+  registrarNoAluno({ tipo: "atividade", texto: `Resposta dissertativa entregue — questão ${qi+1} (${id}).` });
+  exSincronizar(id, qi);
+  render();
+}
+
+let EX_SYNC_TIMER = null;
+function exSincronizar(aulaId, qi){
+  if (!alunoNome) return;
+  const id = aulaId;
+  const qs = (EXERCICIOS || {})[id] || [];
+  const respostas = [];
+  (exState[id] || {}).forEach((r, i)=>{
+    respostas.push({
+      aula_id: id, q: i, tipo: qs[i] && qs[i].tipo === "disc" ? "disc" : "obj",
+      resposta: r.tipo === "disc" ? (r.resposta||"") : String(r.escolha),
+      correta: r.acertou === true
+    });
+  });
+  if (!respostas.length) return;
+  if (EX_SYNC_TIMER) clearTimeout(EX_SYNC_TIMER);
+  EX_SYNC_TIMER = setTimeout(()=>{
+    fetch("api/exercicios", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nome: alunoNome, respostas })
+    }).catch(()=>{});
+  }, 700);
+}
+
+async function exCarregarServidor(){
+  if (!alunoNome) return;
+  try {
+    const ctl = new AbortController();
+    setTimeout(()=>ctl.abort(), 3000);
+    const r = await fetch("api/exercicios?aluno=" + encodeURIComponent(alunoNome), { signal: ctl.signal });
+    if (!r.ok) return;
+    const j = await r.json();
+    if (!j.exercicios) return;
+    for (const aula in j.exercicios){
+      if (!exState[aula]) exState[aula] = {};
+      j.exercicios[aula].forEach(r=>{
+        const qs = (EXERCICIOS || {})[aula] || [];
+        const q = qs[r.q];
+        if (!q) return;
+        if (q.tipo === "disc"){
+          exState[aula][r.q] = { respondido: true, entregue: true, resposta: r.resposta || "", em: r.em || "" };
+        } else {
+          exState[aula][r.q] = { respondido: true, escolha: Number(r.resposta), acertou: r.correta === 1, em: r.em || "" };
+        }
+      });
+    }
+    exSaveLocal();
+    render();
+  } catch(e) {}
+}
+
+/* ============================================================
+   AVALIAÇÕES POR MÓDULO (provas)
+   - Provas vêm de provas.js (8 módulos).
+   - Objetivas corrigidas na hora; dissertativa entregue.
+   - Resultado gravado no servidor (/api/provas).
+   - A média das provas + aproveitamento do caderno formam a
+     nota sugerida de Exercícios (usada no Registro).
+   ============================================================ */
+const PROVAS_STORAGE_KEY = "curso-hardware-provas";
+let provasState = {};
+try { provasState = JSON.parse(localStorage.getItem(PROVAS_STORAGE_KEY) || "{}"); } catch(e){}
+let provasServidor = {};   // modulo -> resultado
+let provasModalModulo = null;
+
+function provasStorageKey(){
+  return alunoNome ? PROVAS_STORAGE_KEY + "-" + alunoNome.toLowerCase().trim() : PROVAS_STORAGE_KEY;
+}
+function provasSaveLocal(){
+  localStorage.setItem(provasStorageKey(), JSON.stringify(provasState));
+}
+
+function provasMedia(){
+  const notas = Object.values(provasServidor).map(p=>p.nota).filter(n=>n!=null);
+  return notas.length ? Math.round(notas.reduce((s,n)=>s+n,0)/notas.length*10)/10 : null;
+}
+
+function provasModuloProgresso(mod){
+  // quantas aulas do módulo o aluno concluiu e quantas existem
+  const m = CURSO.find(m=>m.num === mod);
+  if (!m) return { feitas: 0, total: 0, liberada: false };
+  const aulas = m.aulas;
+  const feitas = aulas.filter(a=>done[lessonId(m,a)]).length;
+  return { feitas, total: aulas.length, liberada: feitas >= aulas.length };
+}
+
+function renderProvas(){
+  const grid = document.getElementById("provas-grid");
+  if (!grid) return;
+  grid.innerHTML = Object.keys(PROVAS).map(mod => {
+    const p = PROVAS[mod];
+    const feito = provasServidor[mod];
+    const nota = feito && feito.nota != null ? feito.nota : null;
+    const prog = provasModuloProgresso(mod);
+    const bloqueada = !prog.liberada;
+    const progLab = prog.feitas + "/" + prog.total + " aulas concluídas";
+    return `
+    <div class="prova-item">
+      <div class="p-mod">Módulo ${mod}</div>
+      <div class="p-tit">${p.titulo}</div>
+      ${nota != null
+        ? `<div class="p-status ok">Concluída</div><div class="p-nota">${nota}/10</div>`
+        : `<div class="p-status">${p.questoes.filter(q=>q.tipo==="obj").length} objetivas + 1 dissertativa</div>`}
+      <div class="p-status ${bloqueada ? "" : "ok"}">${bloqueada ? "🔒 " + progLab : "✅ " + progLab}</div>
+      <button class="prova-btn ${bloqueada ? "ghost" : (nota != null ? "ghost" : "")}" ${bloqueada ? "disabled style='opacity:.5;cursor:not-allowed'" : ""} onclick="${bloqueada ? "" : "provaAbrir('" + mod + "')"}">${nota != null ? "Ver / Refazer" : (bloqueada ? "Conclua as aulas" : "Fazer avaliação")}</button>
+    </div>`;
+  }).join("");
+  const media = provasMedia();
+  const el = document.getElementById("provas-media");
+  if (el) el.innerHTML = media != null ? `Média das provas: <b>${media}/10</b>` : "";
+}
+
+function provaAbrir(mod){
+  const prog = provasModuloProgresso(mod);
+  if (!prog.liberada){
+    alert("Você ainda não concluiu todas as aulas do módulo " + mod + ".\nFaltam " + (prog.total - prog.feitas) + " aula(s) para liberar a avaliação.");
+    return;
+  }
+  provasModalModulo = mod;
+  const p = PROVAS[mod];
+  document.getElementById("prova-modal-titulo").textContent = "Módulo " + mod + " — " + p.titulo;
+  const feito = provasServidor[mod];
+  document.getElementById("prova-modal-sub").textContent = feito && feito.nota != null
+    ? "Nota anterior: " + feito.nota + "/10. Refazer atualiza a nota."
+    : "Responda as questões e envie ao final. As objetivas são corrigidas na hora.";
+  const letras = ["A","B","C","D","E","F"];
+  document.getElementById("prova-modal-body").innerHTML = `
+    <form id="prova-form" onsubmit="return provaEnviar(event)">
+      ${p.questoes.map((q, qi)=>{
+        if (q.tipo === "disc"){
+          return `<div class="exer-q exer-disc">
+            <div class="enunciado">${qi+1}. ${q.q}</div>
+            <textarea id="prova-disc-${qi}" placeholder="Escreva sua resposta..."></textarea>
+          </div>`;
+        }
+        return `<div class="exer-q">
+          <div class="enunciado">${qi+1}. ${q.q}</div>
+          <div class="exer-opcoes">
+            ${q.opcoes.map((op, oi)=>`
+              <label class="exer-op">
+                <span class="letra">${letras[oi]}</span>
+                <span>${op}</span>
+                <input type="radio" name="prova-q${qi}" value="${oi}" style="margin-left:auto;accent-color:var(--primary)">
+              </label>`).join("")}
+          </div>
+        </div>`;
+      }).join("")}
+      <div style="display:flex;gap:10px;margin-top:16px">
+        <button class="btn" type="submit" style="flex:1">Enviar avaliação</button>
+      </div>
+    </form>`;
+  document.getElementById("prova-modal").classList.add("show");
+}
+
+function provaFechar(){
+  document.getElementById("prova-modal").classList.remove("show");
+}
+
+function provaEnviar(ev){
+  ev.preventDefault();
+  if (!provaModalModulo) return;
+  const p = PROVAS[provaModalModulo];
+  const letras = ["A","B","C","D","E","F"];
+  let certas = 0, total = 0;
+  const falhas = [];
+  p.questoes.forEach((q, qi)=>{
+    if (q.tipo === "disc") return;
+    total++;
+    const sel = document.querySelector('input[name="prova-q' + qi + '"]:checked');
+    if (!sel){ falhas.push(qi+1); return; }
+    if (Number(sel.value) === q.correta) certas++;
+  });
+  if (falhas.length){
+    alert("Responda todas as questões objetivas. Faltam: " + falhas.join(", "));
+    return;
+  }
+  const nota = Math.round((certas/total)*100)/10;
+  const discTa = document.getElementById("prova-disc-" + (p.questoes.length-1));
+  const discTexto = discTa ? (discTa.value || "").trim() : "";
+  const discEntregue = discTexto.length > 0;
+
+  // grava local
+  provasState[provaModalModulo] = { nota, certas, total, discEntregue, em: new Date().toISOString() };
+  provasSaveLocal();
+  provasServidor[provaModalModulo] = {
+    nota, objetivas_total: total, objetivas_certas: certas, disc_entregue: discEntregue ? 1 : 0, aplicada_em: new Date().toISOString()
+  };
+
+  // grava no servidor (se houver aluno identificado)
+  const payload = {
+    nome: alunoNome,
+    modulo: provaModalModulo,
+    nota, objetivas_total: total, objetivas_certas: certas, disc_entregue: discEntregue
+  };
+  if (alunoNome){
+    fetch("api/provas", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    }).catch(()=>{});
+    registrarNoAluno({ tipo: "atividade", texto: "Avaliação do módulo " + provaModalModulo + " concluída — nota " + nota + "/10 (" + certas + "/" + total + " objetivas)." });
+  }
+
+  provaFechar();
+  renderProvas();
+  render();
+
+  alert("Avaliação do módulo " + provaModalModulo + " enviada!\n\nObjetivas: " + certas + "/" + total + " corretas\nNota: " + nota + "/10" + (discEntregue ? "\nDissertativa: entregue" : "\nDissertativa: não preenchida"));
+  provasModalModulo = null;
+}
+
+async function provasCarregarServidor(){
+  if (!alunoNome) return;
+  try {
+    const ctl = new AbortController();
+    setTimeout(()=>ctl.abort(), 3000);
+    const r = await fetch("api/provas?aluno=" + encodeURIComponent(alunoNome), { signal: ctl.signal });
+    if (!r.ok) return;
+    const j = await r.json();
+    if (!j.provas) return;
+    provasServidor = j.provas;
+    renderProvas();
+  } catch(e) {}
+}
+
+/* ============================================================
+   FREQUÊNCIA AUTOMÁTICA
+   Ao entrar como aluno, marca a presença da semana atual no
+   servidor (sem sobrescrever marcação manual do instrutor).
+   ============================================================ */
+let semanaAtual = 1;
+async function carregarSemana(){
+  try {
+    const ctl = new AbortController();
+    setTimeout(()=>ctl.abort(), 2500);
+    const r = await fetch("api/config", { signal: ctl.signal });
+    if (r.ok){
+      const j = await r.json();
+      if (j.semana_atual) semanaAtual = j.semana_atual;
+    }
+  } catch(e) {}
+  if (alunoNome){
+    try {
+      fetch("api/presenca", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nome: alunoNome, semana: semanaAtual })
+      }).catch(()=>{});
+    } catch(e) {}
+    const aviso = document.getElementById("semana-aviso");
+    if (aviso){ aviso.textContent = "🗓️ Semana atual: " + semanaAtual + "/43"; aviso.style.display = ""; }
+  }
+}
+
+function toggleTheme(){
+  const html = document.documentElement;
+  html.setAttribute("data-theme", html.getAttribute("data-theme")==="dark" ? "light" : "dark");
+}
+
+/* busca e filtro */
+document.getElementById("search").addEventListener("input", e => { query = e.target.value.trim().toLowerCase(); render(); });
+document.getElementById("seg-filter").addEventListener("click", e => {
+  const btn = e.target.closest("button"); if(!btn) return;
+  document.querySelectorAll("#seg-filter button").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  filter = btn.dataset.filter;
+  render();
+});
+
+/* ============================================================
+   MODO BLINDADO — bloqueio de troca de aba/foco
+   Limitacão técnica: JS não consegue impedir de abrir outra aba.
+   O que este modo faz:
+     - trava em tela cheia;
+     - detecta perda de foco (troca de aba, Alt+Tab, minimizar);
+     - bloqueia a tela e registra a violação (auditoria local);
+     - avisa sobre tentativa de sair da tela cheia.
+   Para blindagem TOTAL (sem abas): use o modo quiosque do
+   navegador (Chrome --kiosk) ou o Safe Exam Browser.
+   ============================================================ */
+const GUARD_KEY = "curso-hardware-guard";
+let guard = false;
+let guardViolations = 0;
+let guardLocked = false;
+let guardStart = null;
+
+function guardLoad(){
+  try {
+    const g = JSON.parse(localStorage.getItem(GUARD_KEY) || "{}");
+    guardViolations = g.violations || 0;
+    guardStart = g.start || null;
+  } catch(e) {}
+}
+function guardSave(){
+  localStorage.setItem(GUARD_KEY, JSON.stringify({ violations: guardViolations, start: guardStart }));
+}
+
+function guardLog(evento){
+  guardViolations++;
+  guardSave();
+  const t = new Date().toLocaleString("pt-BR");
+  console.log("[GUARD] " + t + " — " + evento);
+  registrarNoAluno({ tipo: "disciplina", texto: "⚠️ " + evento + "." });
+}
+
+function guardEnter(){
+  if (document.documentElement.requestFullscreen) {
+    document.documentElement.requestFullscreen().catch(()=>{});
+  } else if (document.documentElement.webkitRequestFullscreen) {
+    document.documentElement.webkitRequestFullscreen();
+  }
+}
+
+function guardExit(){
+  if (document.fullscreenElement) document.exitFullscreen().catch(()=>{});
+  else if (document.webkitFullscreenElement) document.webkitExitFullscreen();
+}
+
+function guardToggle(){
+  guard = !guard;
+  const btn = document.getElementById("btn-guard");
+  if (guard) {
+    guardStart = Date.now();
+    guardSave();
+    btn.innerHTML = "🔓 Desativar modo";
+    btn.style.borderColor = "var(--danger)";
+    btn.style.color = "var(--danger)";
+    document.body.style.pointerEvents = "auto";
+    guardEnter();
+    attachGuardListeners(true);
+    alert("Modo blindado ATIVADO.\n\n- Tela cheia ativada.\n- Se você trocar de aba ou minimizar, o curso será bloqueado e a ocorrência registrada.\n- Use ESC somente com autorização do instrutor.");
+  } else {
+    guardLocked = false;
+    hideGuardOverlay();
+    attachGuardListeners(false);
+    guardExit();
+    guardStart = null;
+    guardSave();
+    btn.innerHTML = "🔒 Modo blindado";
+    btn.style.borderColor = "var(--primary)";
+    btn.style.color = "var(--primary)";
+  }
+}
+
+function attachGuardListeners(on){
+  const add = on ? "addEventListener" : "removeEventListener";
+  const rem = on ? "removeEventListener" : "addEventListener";
+  if (!guard && !on) return;
+
+  window[on?"addEventListener":"removeEventListener"]("blur", guardOnBlur);
+  document[on?"addEventListener":"removeEventListener"]("visibilitychange", guardOnVisibility);
+  document[on?"addEventListener":"removeEventListener"]("fullscreenchange", guardOnFullscreen);
+  window[on?"addEventListener":"removeEventListener"]("keydown", guardOnKey);
+  document[on?"addEventListener":"removeEventListener"]("contextmenu", guardOnContext);
+  document[on?"addEventListener":"removeEventListener"]("copy", guardOnCopy);
+  document[on?"addEventListener":"removeEventListener"]("cut", guardOnCut);
+}
+
+function guardOnBlur(){
+  if (!guard || guardLocked) return;
+  guardLocked = true;
+  guardLog("Perda de foco (troca de aba / Alt+Tab / minimizou)");
+  showGuardOverlay();
+}
+function guardOnVisibility(){
+  if (!guard || guardLocked) return;
+  if (document.hidden) {
+    guardLocked = true;
+    guardLog("Abas ocultadas / troca de aba");
+    showGuardOverlay();
+  }
+}
+function guardOnFullscreen(){
+  if (!guard || guardLocked) return;
+  const fs = document.fullscreenElement || document.webkitFullscreenElement;
+  if (!fs) {
+    guardLocked = true;
+    guardLog("Tentativa de sair da tela cheia (ESC/F11)");
+    showGuardOverlay();
+    guardEnter();
+  }
+}
+function guardOnKey(e){
+  if (!guard) return;
+  if (e.key === "Escape") {
+    if (!guardLocked) {
+      guardLocked = true;
+      guardLog("Tecla ESC pressionada");
+      showGuardOverlay();
+    }
+    e.preventDefault();
+  }
+  if (e.ctrlKey && e.key === "t") { e.preventDefault(); }
+  if (e.ctrlKey && e.key === "n") { e.preventDefault(); }
+  if (e.ctrlKey && e.key === "w") { e.preventDefault(); }
+  if (e.ctrlKey && e.key === "p") { e.preventDefault(); }
+}
+function guardOnContext(e){ if (guard) e.preventDefault(); }
+function guardOnCopy(e){ if (guard) e.preventDefault(); }
+function guardOnCut(e){ if (guard) e.preventDefault(); }
+
+function showGuardOverlay(){
+  const ov = document.getElementById("guard-overlay");
+  document.getElementById("guard-count").textContent = guardViolations;
+  ov.classList.add("show");
+}
+function hideGuardOverlay(){
+  document.getElementById("guard-overlay").classList.remove("show");
+}
+function guardResume(){
+  guardLocked = false;
+  hideGuardOverlay();
+  guardEnter();
+}
+
+guardLoad();
+
+render();
+renderProvas();
+carregarSemana();
+ckCarregarServidor();
+</script>
+</body>
+</html>

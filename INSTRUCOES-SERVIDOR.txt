@@ -1,0 +1,177 @@
+============================================================
+ COMO SUBIR O CURSO NO SEU SERVIDOR (nginx em 177.190.69.20)
+============================================================
+
+Dados do servidor:
+  IP público fixo: 177.190.69.20
+  Domínio próprio: palmarante.com.br
+  Acesso final:    http://palmarante.com.br
+
+Resumo do que vamos fazer:
+  1) Apontar o domínio para o IP do servidor (DNS).
+  2) Enviar os arquivos do curso para o servidor.
+  3) Instalar o servidor Python como serviço (roda sozinho, mesmo
+     depois de fechar o terminal).
+  4) Configurar o nginx para publicar o curso na porta 80.
+  5) (Opcional) Colocar HTTPS com certificado gratuito.
+
+------------------------------------------------------------
+ 1) APONTAR O DOMÍNIO PARA O SEU SERVIDOR (DNS)
+------------------------------------------------------------
+No painel de DNS do seu provedor de domínio, crie estes registros:
+
+  Tipo  Nome           Valor          TTL
+  A     @              177.190.69.20  300
+  A     www            177.190.69.20  300
+
+Confira depois de alguns minutos (pode demorar até 24h):
+  (no seu computador)  nslookup palmarante.com.br
+  (deve mostrar o IP 177.190.69.20)
+
+------------------------------------------------------------
+ 2) ENVIAR OS ARQUIVOS PARA O SERVIDOR
+------------------------------------------------------------
+Do seu computador, na pasta do curso, rode:
+
+    scp -r /home/palmarante/curso-hardware usuario@177.190.69.20:/var/www/
+
+(Substitua "usuario" pelo seu usuário no servidor.)
+Depois, entre no servidor:
+
+    ssh usuario@177.190.69.20
+
+------------------------------------------------------------
+ 3) CRIAR O SERVIÇO (roda sozinho para sempre)
+------------------------------------------------------------
+No servidor, crie o serviço:
+
+    sudo nano /etc/systemd/system/curso-hardware.service
+
+Cole este conteúdo (ajuste o caminho se precisar):
+
+    [Unit]
+    Description=Servidor do Curso de Informatica
+    After=network.target
+
+    [Service]
+    WorkingDirectory=/var/www/curso-hardware
+    ExecStart=/usr/bin/python3 /var/www/curso-hardware/servidor.py 8080
+    Restart=always
+    User=www-data
+
+    [Install]
+    WantedBy=multi-user.target
+
+Salve (Ctrl+O, Enter, Ctrl+X) e ative:
+
+    sudo systemctl daemon-reload
+    sudo systemctl enable curso-hardware
+    sudo systemctl start curso-hardware
+
+Confira se está no ar:
+
+    sudo systemctl status curso-hardware
+    curl http://localhost:8080/
+
+Dica: para ver os erros, use:  journalctl -u curso-hardware -f
+
+------------------------------------------------------------
+ 4) CONFIGURAR O NGINX (publica na porta 80)
+------------------------------------------------------------
+Crie a configuração:
+
+    sudo nano /etc/nginx/sites-available/curso-hardware
+
+Cole:
+
+    server {
+        listen 80;
+        server_name palmarante.com.br www.palmarante.com.br;
+
+        client_max_body_size 20M;
+
+        location / {
+            proxy_pass http://127.0.0.1:8080;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        }
+    }
+
+Ative e recarregue:
+
+    sudo ln -s /etc/nginx/sites-available/curso-hardware /etc/nginx/sites-enabled/
+    sudo nginx -t          # tem que dizer "syntax is ok"
+    sudo systemctl reload nginx
+
+Pronto! Acesse no navegador:
+
+    http://palmarante.com.br
+
+Para o registro de alunos (com senha):
+    http://palmarante.com.br/alunos.html
+
+------------------------------------------------------------
+  BANCO DE DADOS (SQLite)
+------------------------------------------------------------
+Os dados ficam em:  /var/www/curso-hardware/dados/curso.db
+
+Contém alunos, notas, presenças, atividades, o andamento
+(módulos/aulas) de cada aluno e o caderno de exercícios
+(respostas objetivas e dissertativas). Para backup, basta
+copiar esse arquivo (com o serviço parado):
+
+    sudo systemctl stop curso-hardware
+    sudo cp /var/www/curso-hardware/dados/curso.db ~/backup-curso.db
+    sudo systemctl start curso-hardware
+
+Na primeira execução, o arquivo alunos.json antigo é importado
+automaticamente (e renomeado para alunos.json.migrado).
+
+------------------------------------------------------------
+ 5) (OPCIONAL) HTTPS COM CERTIFICADO GRÁTIS (Let's Encrypt)
+------------------------------------------------------------
+Com o certificado, o acesso vira https://palmarante.com.br
+(cadeado de segurança no navegador). Rode no servidor:
+
+    sudo apt install certbot python3-certbot-nginx
+    sudo certbot --nginx -d palmarante.com.br -d www.palmarante.com.br
+
+Siga o assistente (informe seu e-mail, aceite os termos e escolha
+"redirect" para obrigar o HTTPS). O certbot configura e renova o
+certificado sozinho. Para conferir a renovação:
+
+    sudo certbot renew --dry-run
+
+------------------------------------------------------------
+ SENHA DO INSTRUTOR
+------------------------------------------------------------
+Senha padrão: instrutor123
+
+Para trocar, crie o arquivo dados/instrutor.txt com a nova senha
+na 1ª linha e reinicie o serviço:
+
+    sudo nano /var/www/curso-hardware/dados/instrutor.txt
+    sudo systemctl restart curso-hardware
+
+(Ou use: INSTRUTOR_SENHA=minhasenha antes de iniciar o serviço.)
+
+------------------------------------------------------------
+ CAMINHO MAIS SIMPLES (sem nginx, caso um dia queira)
+------------------------------------------------------------
+Se não quiser usar o nginx, basta expor o servidor Python direto:
+
+    cd /var/www/curso-hardware
+    python3 servidor.py 8080 --publico
+
+Aí o acesso fica: http://palmarante.com.br:8080
+
+------------------------------------------------------------
+ SOLUÇÃO DE PROBLEMAS
+------------------------------------------------------------
+- "Erro de permissão": ajuste o dono da pasta:
+    sudo chown -R www-data:www-data /var/www/curso-hardware
+- A página abriu mas o registro de alunos não conecta:
+    confira o passo 3 (nginx -t) e o serviço (curl http://localhost:8080/).
+- Para testar tudo sem mexer no servidor real:
+    python3 servidor.py 8124   (abre em http://localhost:8124)

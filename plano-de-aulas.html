@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Plano de Aulas — Montagem e Manutenção de Computadores</title>
+<style>
+:root{
+  --prim:#0f766e; --sec:#3B82F6; --ink:#1a202c; --mut:#4a5568;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:"Segoe UI",Arial,sans-serif;color:var(--ink);background:#e2e8f0;
+  line-height:1.5;
+}
+.toolbar{
+  position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  padding:12px 20px;background:#0f172a;color:#fff;
+}
+.toolbar h1{font-size:16px;font-weight:700}
+.toolbar .right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.toolbar button{
+  padding:8px 16px;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700;
+  background:var(--prim);color:#fff;border:1px solid var(--prim);
+}
+.toolbar button:hover{filter:brightness(1.1)}
+.toolbar button.ghost{background:transparent;border-color:#475569;color:#cbd5e1}
+.toolbar label{font-size:12px;color:#94a3b8;display:flex;align-items:center;gap:6px}
+.toolbar select{background:#1e293b;color:#fff;border:1px solid #475569;border-radius:6px;padding:6px 8px;font-size:13px}
+.page{
+  width:210mm;min-height:297mm;margin:16px auto;background:#fff;padding:14mm 16mm;
+  box-shadow:0 4px 20px rgba(0,0,0,.2);page-break-after:always;position:relative;
+}
+.page:last-child{page-break-after:auto}
+.page-print-head{text-align:center;margin-bottom:8mm;border-bottom:2px solid var(--prim);padding-bottom:4mm}
+.page-print-head h2{font-size:20px;color:var(--prim);letter-spacing:.5px}
+.page-print-head .sub{font-size:12px;color:var(--mut)}
+.plano-head{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:5mm 0}
+.info-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:4mm 0}
+.info-box{border:1px solid #cbd5e0;border-radius:8px;padding:8px 10px;text-align:center;background:#f8fafc}
+.info-box .lab{font-size:9.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--mut)}
+.info-box .val{font-size:13px;font-weight:700;color:var(--prim)}
+.secao{margin:5mm 0}
+.secao h4{
+  font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--prim);
+  border-left:4px solid var(--prim);padding-left:8px;margin-bottom:3mm;
+}
+.secao p, .secao ul{font-size:12.5px}
+.secao ul{padding-left:6mm}
+.secao li{margin:1mm 0}
+.badge{
+  display:inline-block;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700;color:#fff;
+}
+.badge.teoria{background:#64748b}
+.badge.mista{background:#f59e0b}
+.badge.pratica{background:#0d9488}
+.campo{border:1px dashed #94a3b8;border-radius:8px;padding:8px 10px;min-height:22px;color:var(--mut);font-size:12px}
+.campo.altura{min-height:14mm}
+.campo-grande{min-height:20mm}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.linha-preenchimento{border-bottom:1px solid #94a3b8;height:7mm}
+.rodape{
+  position:absolute;bottom:8mm;left:16mm;right:16mm;
+  display:flex;justify-content:space-between;align-items:flex-end;
+  font-size:10px;color:var(--mut);border-top:1px solid #e2e8f0;padding-top:3mm;
+}
+.rodape .ass{
+  text-align:center;width:70mm;border-top:1px solid #64748b;padding-top:2mm;margin-top:8mm;
+}
+.rodape .ass span{display:block;font-size:11px;font-weight:700;color:var(--ink)}
+.checks-checklist{display:grid;grid-template-columns:1fr 1fr;gap:4px 14px;font-size:12px}
+.checks-checklist label{display:flex;align-items:center;gap:6px}
+.checks-checklist input{margin:0}
+.checkmark{width:5mm;height:5mm;border:1px solid #94a3b8;border-radius:3px;display:inline-block;flex-shrink:0}
+@media print{
+  body{background:#fff}
+  .toolbar{display:none}
+  .page{box-shadow:none;margin:0}
+  @page{size:A4;margin:0}
+}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <h1>📋 Plano de Aulas — Montagem e Manutenção de Computadores</h1>
+  <div class="right">
+    <label>Módulo:
+      <select id="filtro-mod">
+        <option value="">Todos</option>
+      </select>
+    </label>
+    <button onclick="imprimir()">🖨️ Imprimir / PDF</button>
+  </div>
+</div>
+
+<div id="conteudo"></div>
+
+<script src="curso.js"></script>
+<script src="exercicios.js"></script>
+<script src="provas.js"></script>
+<script>
+const VOLUMES = {
+  "01":"Volume 1 — Fundamentos da Informática",
+  "02":"Volume 2 — Hardware",
+  "03":"Volume 3 — Montagem",
+  "04":"Volume 4 — Instalação",
+  "05":"Volume 5 — Manutenção",
+  "06":"Volume 6 — Diagnóstico",
+  "07":"Volume 7 — Laboratório",
+  "08":"Volume 8 — Atendimento Técnico"
+};
+const METODOLOGIA = "15 min revisão · 35 min teoria · 60 min prática · 10 min revisão final";
+
+function esc(s){ return String(s||"").replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function badge(tipo){
+  const nomes = { teoria:"Teoria", mista:"Mista", pratica:"Prática" };
+  return `<span class="badge ${tipo}">${nomes[tipo]||tipo}</span>`;
+}
+function exerciciosDaAula(id){
+  const qs = (EXERCICIOS||{})[id] || [];
+  const obj = qs.filter(q=>q.tipo!=="disc").length;
+  const disc = qs.filter(q=>q.tipo==="disc").length;
+  if (!obj && !disc) return "—";
+  return obj + " objetivas" + (disc ? " + " + disc + " dissertativa" : "");
+}
+function provaDoModulo(mod){
+  const p = (PROVAS||{})[mod];
+  return p ? p.titulo : "—";
+}
+function planoAula(m, a, semanaGlobal){
+  const id = m.num + "|" + a.t;
+  return `
+  <div class="page">
+    <div class="page-print-head">
+      <h2>PLANO DE AULA</h2>
+      <div class="sub">Curso de Montagem e Manutenção de Computadores · Estrutura programática</div>
+    </div>
+
+    <div class="plano-head">
+      <div style="font-size:16px;font-weight:800;color:var(--ink)">Módulo ${m.num} — ${esc(m.titulo)}</div>
+      <div style="font-size:13px;font-weight:700;color:var(--prim)">Aula: ${esc(a.t)}</div>
+    </div>
+
+    <div class="info-grid">
+      <div class="info-box"><div class="lab">Semana</div><div class="val">${semanaGlobal}ª</div></div>
+      <div class="info-box"><div class="lab">Tipo</div><div class="val">${badge(a.tipo)}</div></div>
+      <div class="info-box"><div class="lab">Carga</div><div class="val">2 horas</div></div>
+      <div class="info-box"><div class="lab">Livro</div><div class="val" style="font-size:11px">${VOLUMES[m.num]||"Volume "+m.num}</div></div>
+    </div>
+
+    <div class="secao">
+      <h4>🎯 Objetivo</h4>
+      <p><b>${esc(a.obj)}</b></p>
+    </div>
+
+    <div class="secao">
+      <h4>📘 Conteúdo</h4>
+      <ul>${a.conteudo.map(c=>`<li>${esc(c)}</li>`).join("")}</ul>
+    </div>
+
+    <div class="secao">
+      <h4>🔧 Atividade prática</h4>
+      <p>${esc(a.pratica)}</p>
+    </div>
+
+    <div class="secao">
+      <h4>✅ Exercícios / avaliação da aula</h4>
+      <p>Caderno: <b>${exerciciosDaAula(id)}</b> &nbsp;·&nbsp; Prova do módulo: <b>${esc(provaDoModulo(m.num))}</b></p>
+    </div>
+
+    <div class="secao">
+      <h4>⏱️ Desenvolvimento (metodologia)</h4>
+      <p style="font-size:12px"><b>${METODOLOGIA}</b></p>
+      <div class="row2" style="margin-top:2mm">
+        <div class="campo altura" style="font-weight:600">1. Abertura / revisão da aula anterior</div>
+        <div class="campo altura" style="font-weight:600">2. Teoria (exposição dialogada)</div>
+        <div class="campo altura" style="font-weight:600">3. Demonstração / prática guiada</div>
+        <div class="campo altura" style="font-weight:600">4. Prática dos alunos + checkout</div>
+        <div class="campo altura" style="font-weight:600">5. Correção / fechamento</div>
+        <div class="campo altura" style="font-weight:600">6. Registro de presença e encaminhamentos</div>
+      </div>
+    </div>
+
+    <div class="secao">
+      <h4>🧰 Materiais e equipamentos</h4>
+      <div class="campo-grande campo"></div>
+    </div>
+
+    <div class="secao">
+      <h4>📝 Observações do instrutor</h4>
+      <div class="campo-grande campo"></div>
+    </div>
+
+    <div class="rodape">
+      <div style="font-size:10px">
+        <b>${esc(a.t)}</b> · Semana ${semanaGlobal} · Módulo ${m.num} · ${VOLUMES[m.num]}
+      </div>
+      <div class="ass"><span>Assinatura do instrutor</span></div>
+    </div>
+  </div>`;
+}
+function render(){
+  const filtro = document.getElementById("filtro-mod").value;
+  const container = document.getElementById("conteudo");
+  let semanaGlobal = 0;
+  const pages = [];
+  for (const m of CURSO){
+    if (filtro && m.num !== filtro) { continue; }
+    for (const a of m.aulas){
+      semanaGlobal++;
+      pages.push(planoAula(m, a, semanaGlobal));
+    }
+  }
+  container.innerHTML = pages.join("");
+  if (pages.length === 0) container.innerHTML = '<div style="padding:40px;text-align:center;color:#64748b">Nenhuma aula encontrada para este módulo.</div>';
+}
+function preencherModulos(){
+  const sel = document.getElementById("filtro-mod");
+  for (const m of CURSO){
+    const opt = document.createElement("option");
+    opt.value = m.num;
+    opt.textContent = "Módulo " + m.num + " — " + m.titulo;
+    sel.appendChild(opt);
+  }
+}
+function imprimir(){
+  window.print();
+}
+preencherModulos();
+document.getElementById("filtro-mod").addEventListener("change", render);
+render();
+</script>
+</body>
+</html>
