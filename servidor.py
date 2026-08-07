@@ -426,17 +426,17 @@ def salvar_db(db):
 
 
 def get_progresso(nome):
-    """Retorna o andamento (aulas concluídas) de um aluno."""
+    """Retorna o andamento (aulas concluídas) e a identificação (matrícula/turma) de um aluno."""
     conn = _conn()
     try:
-        row = conn.execute("SELECT id FROM alunos WHERE nome=? COLLATE NOCASE", (nome,)).fetchone()
+        row = conn.execute("SELECT id, turma, matricula FROM alunos WHERE nome=? COLLATE NOCASE", (nome,)).fetchone()
         if row is None:
-            return {"aluno": nome, "progresso": {}}
+            return {"aluno": nome, "matricula": "", "turma": "", "progresso": {}}
         progresso = {r["aula_id"]: bool(r["concluida"])
                      for r in conn.execute("SELECT aula_id, concluida FROM progresso WHERE aluno_id=?", (row["id"],))}
     finally:
         conn.close()
-    return {"aluno": nome, "progresso": progresso}
+    return {"aluno": nome, "matricula": row["matricula"] or "", "turma": row["turma"] or "", "progresso": progresso}
 
 
 def set_progresso(nome, progresso):

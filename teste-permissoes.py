@@ -219,6 +219,10 @@ def main():
                "matrículas: %s" % mats)
         checar("Matrícula presente no GET /api/alunos (todos os alunos)",
                bool(mats) and all(mats.values()), "matrículas: %s" % mats)
+        # aluno consulta a própria matrícula no site do curso (rota aberta)
+        st, _, j = anon.get("/api/progresso?aluno=" + urllib.parse.quote("Aluno Mat A"))
+        checar("Aluno consulta a própria matrícula (GET /api/progresso) = 200",
+               st == 200 and j.get("matricula") == "5502-HWD10-001", "HTTP %d %s" % (st, j))
 
         # ---- 8. Estabilidade e troca de turma ----
         # reenvio do banco com a matrícula já gerada → permanece estável

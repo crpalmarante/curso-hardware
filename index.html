@@ -401,6 +401,7 @@ body{
       <span class="chip"><b id="chip-semanas">43</b> semanas</span>
       <span class="chip"><b id="chip-horas">86</b> horas</span>
       <span class="chip">🛡️ Certificado de conclusão</span>
+      <span class="chip" id="matricula-aviso" style="display:none"></span>
       <span class="chip" id="semana-aviso" style="display:none"></span>
     </div>
   </section>
@@ -682,8 +683,31 @@ async function carregarProgresso(){
     if (!j.progresso) return;
     for (const k in j.progresso) if (j.progresso[k]) done[k] = true;
     localStorage.setItem(storageKey(), JSON.stringify(done));
+    exibirMatricula(j.matricula || "", j.turma || "");
     render();
   } catch(e) {}
+}
+
+let tentouMatricula = false;
+function exibirMatricula(matricula, turma){
+  const el = document.getElementById("matricula-aviso");
+  if (!el) return;
+  if (matricula){
+    el.textContent = "🎫 Matrícula: " + matricula + (turma ? " · Turma " + turma : "");
+    el.style.display = "";
+  } else if (!tentouMatricula){
+    // aluno pode ter sido criado no servidor há pouco (presença/progresso em paralelo)
+    tentouMatricula = true;
+    setTimeout(async ()=>{
+      try {
+        const ctl = new AbortController();
+        setTimeout(()=>ctl.abort(), 3000);
+        const r = await fetch("api/progresso?aluno=" + encodeURIComponent(alunoNome), { signal: ctl.signal });
+        const j = await r.json();
+        exibirMatricula(j.matricula || "", j.turma || "");
+      } catch(e){}
+    }, 2500);
+  }
 }
 
 function registrarAula(id, concluida){
