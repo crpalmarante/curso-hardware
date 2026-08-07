@@ -1455,6 +1455,7 @@ function guardDesativar(){
     alert("O modo quiosque é OBRIGATÓRIO para você. Não é possível desativar — fale com o instrutor.");
     return;
   }
+  guard = false;
   guardLocked = false;
   hideGuardOverlay();
   attachGuardListeners(false);

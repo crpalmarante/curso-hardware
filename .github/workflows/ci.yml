@@ -42,3 +42,6 @@ jobs:
 
       - name: Sintaxe JavaScript (curso, exercícios, provas, QR Code)
         run: node --check curso.js && node --check exercicios.js && node --check provas.js && node --check qrcode.js
+
+      - name: Trava do modo quiosque (lógica real do index.html)
+        run: node teste-trava-quiosque.js
