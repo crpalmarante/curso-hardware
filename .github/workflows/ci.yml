@@ -48,3 +48,6 @@ jobs:
 
       - name: Badge quiosque na lista de alunos (render real do alunos.html)
         run: node teste-badge-quiosque.js
+
+      - name: Badge quiosque na lista de alunos (render real do secretaria.html)
+        run: node teste-badge-secretaria.js
