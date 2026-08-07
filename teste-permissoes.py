@@ -224,7 +224,59 @@ def main():
         checar("Aluno consulta a própria matrícula (GET /api/progresso) = 200",
                st == 200 and j.get("matricula") == "5502-HWD10-001", "HTTP %d %s" % (st, j))
 
-        # ---- 8. Estabilidade e troca de turma ----
+        # ---- 8. Foto do aluno: persiste via /api/alunos e NÃO vaza em rotas públicas ----
+        FOTO_TES = "data:image/jpeg;base64,/9j/4AAQSkZJRg=="  # 1x1 px de exemplo
+        st, j = sec.post("/api/alunos", {"alunos": [
+            {"id": "a4", "nome": "Aluno Foto", "turma": "5502+HWD10", "foto": FOTO_TES}]})
+        checar("Secretaria salva aluno com foto (POST /api/alunos) = 200",
+               st == 200 and j.get("status") == "ok", "HTTP %d %s" % (st, j))
+        st, _, db = sec.get("/api/alunos")
+        foto_salva = ""
+        for a in db.get("alunos", []):
+            if a.get("nome") == "Aluno Foto":
+                foto_salva = a.get("foto") or ""
+        checar("Foto persiste no GET /api/alunos (protegido)",
+               foto_salva == FOTO_TES, "foto: %s" % (foto_salva[:40] + "..." if foto_salva else "(vazia)"))
+        # rotas públicas NÃO devem devolver a foto
+        st, _, j = anon.get("/api/progresso?aluno=" + urllib.parse.quote("Aluno Foto"))
+        checar("Foto NÃO vaza em /api/progresso (rota do aluno)",
+               st == 200 and not j.get("foto"), "HTTP %d %s" % (st, j))
+        # emite o certificado do aluno para o teste de não-vazamento ser real
+        st, j = inst.post("/api/certificado", {"nome": "Aluno Foto"})
+        codigo_foto = j.get("codigo") or ""
+        checar("Emitir certificado do Aluno Foto (instrutor) = 200",
+               st == 200 and j.get("status") == "ok", "HTTP %d %s" % (st, j))
+        st, _, j = anon.get("/api/certificado?aluno=" + urllib.parse.quote("Aluno Foto"))
+        cert = j.get("certificado") or {}
+        checar("Foto NÃO vaza em /api/certificado (público, com cert emitido)",
+               st == 200 and cert.get("nome") == "Aluno Foto" and not cert.get("foto"),
+               "HTTP %d %s" % (st, j))
+        st, _, j = anon.get("/api/verificar-certificado?codigo=" + urllib.parse.quote(codigo_foto))
+        checar("Foto NÃO vaza em /api/verificar-certificado (público)",
+               st == 200 and j.get("valido") and not j.get("foto"), "HTTP %d %s" % (st, j))
+        # remoção: enviar "foto": "" remove; NÃO enviar a chave mantém a foto
+        st, j = sec.post("/api/alunos", {"alunos": [
+            {"id": "a4", "nome": "Aluno Foto", "turma": "5502+HWD10", "foto": ""}]})
+        st, _, db = sec.get("/api/alunos")
+        foto_apos_remover = ""
+        for a in db.get("alunos", []):
+            if a.get("nome") == "Aluno Foto":
+                foto_apos_remover = a.get("foto") or ""
+        checar("Foto removida com campo vazio (\"foto\": \"\")",
+               foto_apos_remover == "", "foto: %r" % foto_apos_remover)
+        st, j = sec.post("/api/alunos", {"alunos": [
+            {"id": "a4", "nome": "Aluno Foto", "turma": "5502+HWD10", "foto": FOTO_TES}]})
+        st, j = sec.post("/api/alunos", {"alunos": [
+            {"id": "a4", "nome": "Aluno Foto", "turma": "5502+HWD10"}]})
+        st, _, db = sec.get("/api/alunos")
+        foto_apos_omissao = ""
+        for a in db.get("alunos", []):
+            if a.get("nome") == "Aluno Foto":
+                foto_apos_omissao = a.get("foto") or ""
+        checar("Sem a chave foto no payload, a foto existente é mantida",
+               foto_apos_omissao == FOTO_TES, "foto: %r" % (foto_apos_omissao[:40] + "..." if foto_apos_omissao else "(vazia)"))
+
+        # ---- 9. Estabilidade e troca de turma ----
         # reenvio do banco com a matrícula já gerada → permanece estável
         st, j = sec.post("/api/alunos", {"alunos": [
             {"id": "a2", "nome": "Aluno Mat A", "turma": "5502+HWD10", "matricula": "5502-HWD10-001"}]})

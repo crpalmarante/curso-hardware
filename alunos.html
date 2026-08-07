@@ -100,6 +100,25 @@ body{
 .panel-head h2{font-size:20px;margin-bottom:4px}
 .panel-head .sub{color:var(--text-secondary);font-size:13px}
 .panel-head .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+
+/* FOTO DO ALUNO (visível só ao instrutor/secretaria) */
+.ficha-top{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.foto-aluno{
+  width:84px;height:84px;border-radius:50%;flex-shrink:0;cursor:pointer;
+  display:grid;place-items:center;overflow:hidden;position:relative;
+  font-size:30px;font-weight:700;color:#fff;
+  background:linear-gradient(135deg,var(--primary),var(--secondary));
+  border:2px solid var(--border-hover);transition:all .2s;
+}
+.foto-aluno:hover{border-color:var(--primary);transform:scale(1.03)}
+.foto-aluno img{width:100%;height:100%;object-fit:cover}
+.foto-aluno .cam{
+  position:absolute;inset:auto 0 0 0;padding:4px 0;font-size:11px;text-align:center;
+  background:rgba(0,0,0,.55);color:#fff;opacity:0;transition:opacity .2s;
+}
+.foto-aluno:hover .cam{opacity:1}
+.foto-acoes{display:flex;gap:8px;align-items:center}
+.foto-acoes .hint{font-size:11.5px;color:var(--text-muted)}
 .chip{
   display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;
   font-size:12px;font-weight:600;background:var(--surface);border:1px solid var(--border);color:var(--text-secondary);
@@ -253,8 +272,22 @@ td b{color:var(--text)}
       <div id="aluno-panel" style="display:none">
 
         <div class="panel-head">
-          <h2 id="p-nome">—</h2>
-          <div class="sub" id="p-turma"></div>
+          <div class="ficha-top">
+            <div class="foto-aluno" id="foto-aluno" onclick="abrirSeletorFoto()" title="Adicionar/alterar foto do aluno">
+              <span id="foto-iniciais"></span>
+              <span class="cam">📷 Foto</span>
+            </div>
+            <div style="flex:1;min-width:220px">
+              <h2 id="p-nome">—</h2>
+              <div class="sub" id="p-turma"></div>
+              <div class="foto-acoes" style="margin-top:10px">
+                <button class="btn ghost" style="padding:6px 12px;font-size:12px" onclick="abrirSeletorFoto()">📷 Adicionar foto</button>
+                <button class="btn ghost" id="btn-remover-foto" style="padding:6px 12px;font-size:12px;display:none" onclick="removerFoto()">🗑 Remover</button>
+                <span class="hint">Só visível ao instrutor e à secretaria</span>
+              </div>
+              <input type="file" id="input-foto" accept="image/*" style="display:none" onchange="lerFoto(this)">
+            </div>
+          </div>
           <div class="chips">
             <span class="chip">Frequência: <b id="p-freq">0%</b></span>
             <span class="chip">Nota final: <b id="p-nota">—</b></span>
@@ -468,6 +501,7 @@ function renderTudo(){
 
   document.getElementById("p-nome").textContent = a.nome;
   document.getElementById("p-turma").textContent = (a.matricula?esc(a.matricula)+" · ":"")+(a.turma?"Turma "+a.turma+" · ":"")+"Matriculado em "+fmt(new Date(a.criadoEm));
+  renderFoto(a);
   const pres = presencasCont(a);
   document.getElementById("p-freq").textContent = Math.round(pres/43*100)+"%";
   document.getElementById("p-pres").textContent = pres;
@@ -487,6 +521,61 @@ function renderTudo(){
   }
 
   renderAba();
+}
+/* ===== FOTO DO ALUNO (visível só ao instrutor/secretaria) ===== */
+function renderFoto(a){
+  const el = document.getElementById("foto-aluno");
+  const btnRem = document.getElementById("btn-remover-foto");
+  if (!el) return;
+  if (a.foto && a.foto.startsWith("data:image/")){
+    el.innerHTML = `<img src="${escAttr(a.foto)}" alt="Foto de ${escAttr(a.nome)}"><span class="cam">📷 Foto</span>`;
+    if (btnRem) btnRem.style.display = "";
+  } else {
+    el.innerHTML = `<span>${initiais(a.nome)}</span><span class="cam">📷 Foto</span>`;
+    if (btnRem) btnRem.style.display = "none";
+  }
+}
+function abrirSeletorFoto(){
+  const a = alunoAtual();
+  if (!a) return;
+  document.getElementById("input-foto").value = "";
+  document.getElementById("input-foto").click();
+}
+function lerFoto(input){
+  const a = alunoAtual();
+  const file = input.files && input.files[0];
+  if (!a || !file) return;
+  if (!/^image\//.test(file.type)){ alert("Envie uma imagem (JPG, PNG, WebP...)."); return; }
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const img = new Image();
+    img.onload = () => {
+      // redimensiona para no máximo 240px (mantém o banco leve)
+      const MAX = 240;
+      let w = img.width, h = img.height;
+      if (w > MAX || h > MAX){
+        const esc = MAX / Math.max(w, h);
+        w = Math.round(w * esc); h = Math.round(h * esc);
+      }
+      const cv = document.createElement("canvas");
+      cv.width = w; cv.height = h;
+      cv.getContext("2d").drawImage(img, 0, 0, w, h);
+      a.foto = cv.toDataURL("image/jpeg", 0.82);
+      logEvento(a, "sistema", "Foto do aluno atualizada.");
+      salvar(); renderTudo();
+    };
+    img.onerror = () => alert("Não foi possível ler a imagem.");
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+function removerFoto(){
+  const a = alunoAtual();
+  if (!a) return;
+  if (!confirm("Remover a foto deste aluno?")) return;
+  a.foto = "";
+  logEvento(a, "sistema", "Foto do aluno removida.");
+  salvar(); renderTudo();
 }
 function abrirAluno(id){ atualId=id; renderTudo(); }
 function abrirCursoDoAluno(){

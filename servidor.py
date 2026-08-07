@@ -43,6 +43,7 @@ CREATE TABLE IF NOT EXISTS alunos(
     nome TEXT NOT NULL UNIQUE COLLATE NOCASE,
     turma TEXT NOT NULL DEFAULT '',
     matricula TEXT,
+    foto TEXT,
     criado_em TEXT
 );
 CREATE TABLE IF NOT EXISTS progresso(
@@ -257,6 +258,10 @@ def init_db():
         cols = [r["name"] for r in conn.execute("PRAGMA table_info(alunos)")]
         if "matricula" not in cols:
             conn.execute("ALTER TABLE alunos ADD COLUMN matricula TEXT")
+        # migração: foto do aluno (data URL base64, visível só ao instrutor/secretaria)
+        cols = [r["name"] for r in conn.execute("PRAGMA table_info(alunos)")]
+        if "foto" not in cols:
+            conn.execute("ALTER TABLE alunos ADD COLUMN foto TEXT")
         for r in conn.execute("SELECT id, turma, matricula FROM alunos ORDER BY id"):
             if not (r["matricula"] or "").strip():
                 conn.execute("UPDATE alunos SET matricula=? WHERE id=?",
@@ -330,11 +335,15 @@ def _upsert_aluno(conn, a):
     if not nome:
         return None
     turma = a.get("turma") or ""
+    # foto: None quando o campo não veio no payload → mantém a foto existente
+    # (COALESCE); "" remove a foto; data URL salva/substitui.
+    foto = a.get("foto")
     criado_em = a.get("criadoEm") or datetime.now().isoformat()
     conn.execute(
-        "INSERT INTO alunos(nome, turma, criado_em) VALUES(?,?,?) "
-        "ON CONFLICT(nome) DO UPDATE SET turma=excluded.turma",
-        (nome, turma, criado_em))
+        "INSERT INTO alunos(nome, turma, criado_em, foto) VALUES(?,?,?,?) "
+        "ON CONFLICT(nome) DO UPDATE SET "
+        "turma=excluded.turma, foto=COALESCE(excluded.foto, alunos.foto)",
+        (nome, turma, criado_em, foto))
     row = conn.execute("SELECT id, matricula FROM alunos WHERE nome=? COLLATE NOCASE", (nome,)).fetchone()
     aid = row["id"]
     # matrícula: deve condizer com a turma atual; senão mantém a gravada; senão gera nova
@@ -375,13 +384,16 @@ def _upsert_aluno(conn, a):
 
 
 def _aluno_dict(conn, aid):
-    """Monta o dicionário de um aluno no formato usado pelo Registro."""
+    """Monta o dicionário de um aluno no formato usado pelo Registro.
+    A foto (data URL) é devolvida apenas aqui — a rota /api/alunos é
+    protegida (login), então a foto nunca sai em rotas públicas."""
     r = conn.execute("SELECT * FROM alunos WHERE id=?", (aid,)).fetchone()
     a = {
         "id": "a%d" % aid,
         "nome": r["nome"],
         "turma": r["turma"] or "",
         "matricula": r["matricula"] or "",
+        "foto": r["foto"] or "",
         "criadoEm": r["criado_em"] or datetime.now().isoformat(),
         "presencas": {},
         "notas": {"participacao": None, "exercicios": None, "montagem": None, "diagnostico": None},
