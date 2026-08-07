@@ -45,3 +45,6 @@ jobs:
 
       - name: Trava do modo quiosque (lógica real do index.html)
         run: node teste-trava-quiosque.js
+
+      - name: Badge quiosque na lista de alunos (render real do alunos.html)
+        run: node teste-badge-quiosque.js

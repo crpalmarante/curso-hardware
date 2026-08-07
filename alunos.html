@@ -93,6 +93,11 @@ body{
 .situ-aprovado{color:var(--success);border:1px solid var(--success)}
 .situ-cursando{color:var(--warning);border:1px solid var(--warning)}
 .situ-reprovado{color:var(--danger);border:1px solid var(--danger)}
+.aluno-qk{
+  font-size:10px;font-weight:800;padding:2px 7px;border-radius:999px;
+  color:var(--danger);border:1px solid var(--danger);background:rgba(239,68,68,.08);
+  margin-left:6px;vertical-align:2px;white-space:nowrap;
+}
 
 /* PAINEL DO ALUNO */
 .panel{background:var(--glass);border:1px solid var(--border);border-radius:var(--radius-xl);overflow:hidden}
@@ -463,7 +468,7 @@ function renderLista(){
     return `<div class="aluno-item ${a.id===atualId?'active':''}" onclick="abrirAluno('${a.id}')">
       <div class="aluno-avatar">${initiais(a.nome)}</div>
       <div class="aluno-info">
-        <b>${esc(a.nome)}</b>
+        <b>${esc(a.nome)}${a.quiosque?` <span class="aluno-qk" title="Modo quiosque obrigatório — aluno travado no modo monitorado">🔒 quiosque</span>`:""}</b>
         <small>${a.matricula?esc(a.matricula)+" · ":""}${esc(a.turma||"Sem turma")} · ${presencasCont(a)}/43</small>
       </div>
       <span class="aluno-situ situ-${sit.classe}">${sit.label}</span>
@@ -546,7 +551,7 @@ function toggleQuiosque(el){
   if (!a) return;
   a.quiosque = el.checked;
   logEvento(a, "disciplina", "Modo quiosque " + (el.checked ? "obrigatório" : "liberado") + " — navegação " + (el.checked ? "trava o aluno" : "fica livre para desativar") + ".");
-  salvar();
+  salvar(); renderTudo();
 }
 function abrirSeletorFoto(){
   const a = alunoAtual();
@@ -987,7 +992,7 @@ async function renderTurma(){
     const prog = data[i];
     return {
       nome: a.nome, turma: a.turma || "", matricula: a.matricula || "", sit: situacao(a), nf: notaFinal(a),
-      pres: presencasCont(a), pct: prog.pct, mods: prog.mods
+      pres: presencasCont(a), pct: prog.pct, mods: prog.mods, qk: !!a.quiosque
     };
   });
   const aprovados = alunos.filter(x=>x.sit.classe==="aprovado").length;
@@ -1016,7 +1021,7 @@ async function renderTurma(){
         <tbody>${ranking.map((x,i)=>`
           <tr style="cursor:pointer" onclick="abrirTurmaAluno('${escAttr(x.nome)}')">
             <td><b>${i+1}º</b></td>
-            <td><b>${esc(x.nome)}</b>${x.turma?` <small style="color:var(--text-muted)">(${esc(x.turma)})</small>`:""}</td>
+            <td><b>${esc(x.nome)}</b>${x.qk?` <span class="aluno-qk" title="Modo quiosque obrigatório — aluno travado no modo monitorado">🔒 quiosque</span>`:""}${x.turma?` <small style="color:var(--text-muted)">(${esc(x.turma)})</small>`:""}</td>
             <td><small style="color:var(--text-muted)">${esc(x.matricula||"—")}</small></td>
             <td><span class="aluno-situ situ-${x.sit.classe}">${x.sit.label}</span></td>
             <td>${x.nf!=null?x.nf:"—"}</td>
