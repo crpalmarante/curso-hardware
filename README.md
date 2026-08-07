@@ -61,12 +61,14 @@ curso-hardware/
 ├── verificar-certificado.html # Página pública de verificação de autenticidade
 ├── qrcode.js             # Biblioteca de QR Code (client-side)
 ├── livro.html            # Página interativa da estrutura do livro
-├── livro/                # Livro completo em Markdown (8 volumes)
+├── livro/                # Livro completo em Markdown (8 volumes + 2 apêndices)
 │   ├── volume-01-fundamentos.md
 │   ├── volume-02-hardware.md
 │   ├── ...
 │   ├── volume-08-atendimento.md
-│   └── LIVRO-COMPLETO.md # Todos os volumes em um arquivo
+│   ├── apendice-a-diskpart.md       # Disco novo no Windows (Diskpart)
+│   ├── apendice-b-gparted-fdisk.md  # Disco novo no Linux (GParted/Fdisk)
+│   └── LIVRO-COMPLETO.md # Todos os volumes e apêndices em um arquivo
 ├── iniciar-curso.sh      # Abre o curso em modo quiosque (Linux)
 ├── iniciar-curso.bat     # Abre o curso em modo quiosque (Windows)
 ├── INSTRUCOES-SERVIDOR.txt # Guia completo de publicação (DNS, nginx, HTTPS)

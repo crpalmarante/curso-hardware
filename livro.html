@@ -207,7 +207,7 @@ body{
     <div class="brand-badge">📕</div>
     <div>
       Livro — Montagem e Manutenção de Computadores
-      <small>Apostila completa em 8 volumes · 350 a 500 páginas</small>
+      <small>Apostila completa em 8 volumes + 2 apêndices · 350 a 500 páginas</small>
     </div>
   </div>
   <div class="topbar-right">
@@ -222,11 +222,11 @@ body{
     <h1>Livro — Apostila Completa</h1>
     <p class="sub">
       Livro completo, totalmente em português, com aproximadamente <strong>350 a 500 páginas</strong>.
-      Dividido em 8 volumes que acompanham o curso: dos fundamentos da informática ao atendimento
+      Dividido em 8 volumes + 2 apêndices que acompanham o curso: dos fundamentos da informática ao atendimento, incluindo expansão de discos no Windows e no Linux
       técnico, com centenas de fotografias, diagramas, tabelas e exercícios.
     </p>
     <div class="chips">
-      <span class="chip"><b id="chip-volumes">8</b> volumes</span>
+      <span class="chip"><b id="chip-volumes">8</b> volumes + <b id="chip-apendices">2</b> apêndices</span>
       <span class="chip"><b id="chip-cap">53</b> capítulos</span>
       <span class="chip">📖 350–500 páginas</span>
       <span class="chip">🇧🇷 100% português</span>
@@ -302,7 +302,7 @@ body{
   </div>
 
   <div class="footer">
-    Livro de Montagem e Manutenção de Computadores — estrutura da apostila em 8 volumes
+    Livro de Montagem e Manutenção de Computadores — estrutura da apostila em 8 volumes + 2 apêndices
   </div>
 </div>
 
@@ -407,6 +407,30 @@ const LIVRO = [
       {t:"LGPD"},
       {t:"Postura profissional"}
     ]
+  },
+  {
+    num:"A", tipo:"apendice", titulo:"Adicionando um novo disco no Windows (Diskpart)", desc:"Particionar, formatar e atribuir letra a um disco novo pela linha de comando.",
+    capitulos:[
+      {t:"Antes de começar"},
+      {t:"Abrindo o Diskpart"},
+      {t:"Identificando o disco certo"},
+      {t:"Criando a partição e formatando"},
+      {t:"Discos acima de 2 TB e GPT"},
+      {t:"Erros comuns"},
+      {t:"Exercícios", tipo:"exercicio"}
+    ]
+  },
+  {
+    num:"B", tipo:"apendice", titulo:"Adicionando um novo disco no Linux (GParted e Fdisk)", desc:"Particionar, formatar e montar um disco novo — gráfico e linha de comando.",
+    capitulos:[
+      {t:"Identificando o disco no Linux"},
+      {t:"Particionando com o fdisk"},
+      {t:"Particionando com o GParted"},
+      {t:"Montando o disco"},
+      {t:"Montagem permanente no fstab"},
+      {t:"Erros comuns"},
+      {t:"Exercícios", tipo:"exercicio"}
+    ]
   }
 ];
 
@@ -424,9 +448,9 @@ function render(){
     return `
     <section class="volume open" data-volume="${v.num}">
       <div class="volume-head" onclick="toggleVolume(this)">
-        <div class="volume-num">${v.num}</div>
+        <div class="volume-num">${v.tipo==='apendice'?'AP':v.num}</div>
         <div class="volume-info">
-          <h3>Volume ${v.num} — ${v.titulo}</h3>
+          <h3>${v.tipo==='apendice'?`Apêndice ${v.num} — ${v.titulo}`:`Volume ${v.num} — ${v.titulo}`}</h3>
           <div class="meta">${caps.length} capítulos · ${v.desc}</div>
         </div>
         <span class="volume-chevron">▶</span>
@@ -451,7 +475,7 @@ function render(){
                   <p style="margin:0">${c.result}</p>
                 </div>` : ""}
               ${c.itens ? `<ul>${c.itens.map(x=>`<li>${x}</li>`).join("")}</ul>` : ""}
-              ${c.tipo==='exercicio' ? `<p style="margin-top:10px">📝 Exercícios de fixação sobre todo o conteúdo do volume.</p>` : ""}
+              ${c.tipo==='exercicio' ? `<p style="margin-top:10px">📝 Exercícios de fixação sobre todo o conteúdo ${v.tipo==='apendice'?'deste apêndice':'do volume'}.</p>` : ""}
               ${c.tipo==='checklist' ? `<p style="margin-top:10px">✅ Lista verificável para conferir cada etapa da montagem.</p>` : ""}
               ${c.tipo==='fluxograma' ? `<p style="margin-top:10px">🔀 Fluxograma visual encartado para uso na bancada.</p>` : ""}
               ${c.exemplo ? `<p style="margin-top:10px">🔎 Exemplo real de entrada do guia de bancada — cada sintoma do volume seguirá este mesmo modelo.</p>` : ""}

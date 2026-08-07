@@ -142,7 +142,7 @@ def slide_visao():
         Spacer(1, 8*mm),
         Paragraph("• <b>43 semanas</b> de formação contínua (um ano letivo completo)<br/>"
                   "• Curso <b>100% prático</b>, com laboratório em cada aula<br/>"
-                  "• Materiais: livro em 8 volumes, caderno de exercícios e roteiros de bancada", st_p),
+                  "• Materiais: livro em 8 volumes + 2 apêndices, caderno de exercícios e roteiros de bancada", st_p),
     ]
 
 # ------------------------------------------------------------

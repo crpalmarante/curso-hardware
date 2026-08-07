@@ -17,7 +17,9 @@ curso-hardware/
     ├── volume-06-diagnostico.md
     ├── volume-07-laboratorio.md
     ├── volume-08-atendimento.md
-    └── LIVRO-COMPLETO.md    # Todos os volumes em um único arquivo
+    ├── apendice-a-diskpart.md        # Disco novo no Windows (Diskpart)
+    ├── apendice-b-gparted-fdisk.md   # Disco novo no Linux (GParted/Fdisk)
+    └── LIVRO-COMPLETO.md    # Todos os volumes e apêndices em um único arquivo
 ```
 
 ## Índice dos volumes
@@ -108,6 +110,18 @@ Mais de 100 exercícios práticos, cada um com **Problema, Sintoma, Ferramentas,
 - Centenas de fotografias, diagramas coloridos, tabelas, fluxogramas, esquemas elétricos simplificados
 - Caixas de curiosidades, dicas do técnico e erros comuns
 - Exercícios ao final de cada capítulo, questionários, checklist de bancada, roteiro de laboratório, estudos de caso
+
+### Apêndice A — Adicionando um novo disco no Windows (Diskpart)
+- Antes de começar, abrindo o Diskpart e identificando o disco certo
+- Criar partição, formatar (NTFS/exFAT) e atribuir letra
+- Discos acima de 2 TB e conversão para GPT
+- Erros comuns e exercícios com gabarito
+
+### Apêndice B — Adicionando um novo disco no Linux (GParted e Fdisk)
+- Identificando o disco no Linux (`lsblk`, `fdisk -l`)
+- Particionar e formatar com o **fdisk** (linha de comando) e com o **GParted** (gráfico)
+- Montagem manual e permanente no `/etc/fstab` com UUID
+- Erros comuns e exercícios com gabarito
 
 ## Material complementar
 

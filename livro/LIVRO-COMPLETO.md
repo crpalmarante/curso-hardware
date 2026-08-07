@@ -3032,13 +3032,502 @@ Inclua na OS um item de ciência de dados:
 - Preencha uma **ordem de serviço completa** para um cenário real de atendimento (invente o equipamento e o problema).
 - Elabore um **orçamento** detalhado para a troca de um SSD + instalação do Windows.
 - Crie um **termo de ciência de dados** (LGPD) para anexar à sua OS.
-- Simule um **atendimento** com um colega interpretando um cliente insatisfeito e apresente a solução com empatia e técnica.
-
----
+- Simule um **atendimento** com um colega interpretando um cliente insatisfeito e apresente a solução com empatia e técnica.---
 
 > **Fim do Volume 8**
 > Parabéns! Você concluiu todos os 8 volumes do livro de Montagem e Manutenção de Computadores.
 > Da fundamentação teórica ao atendimento profissional, você agora tem o caminho completo para atuar como técnico de informática. Continue praticando, registrando e se atualizando — e revise os volumes conforme precisar.
 
 ---
+
+# Apêndice A — Adicionando um novo disco no Windows com o Diskpart
+
+> **Sobre este apêndice**
+> Este apêndice ensina, passo a passo, como adicionar um disco rígido ou SSD extra no Windows usando a ferramenta **Diskpart**, que já vem instalada no sistema. Você aprenderá a identificar o disco, criar partição, formatar e atribuir uma letra — tudo pela linha de comando, sem programas extras.
+>
+> **Objetivos do apêndice**
+> - Abrir o Diskpart com privilégios de administrador.
+> - Identificar o disco novo com segurança (evitar apagar o disco errado!).
+> - Criar partição, formatar e atribuir letra.
+> - Converter para GPT quando necessário (discos acima de 2 TB).
+> - Conhecer os erros mais comuns e como evitá-los.
+
+---
+
+## Sumário
+
+1. [Capítulo 1 — Antes de começar](#capítulo-1--antes-de-começar)
+2. [Capítulo 2 — Abrindo o Diskpart](#capítulo-2--abrindo-o-diskpart)
+3. [Capítulo 3 — Identificando o disco certo](#capítulo-3--identificando-o-disco-certo)
+4. [Capítulo 4 — Criando a partição e formatando](#capítulo-4--criando-a-partição-e-formatando)
+5. [Capítulo 5 — Discos acima de 2 TB e GPT](#capítulo-5--discos-acima-de-2-tb-e-gpt)
+6. [Capítulo 6 — Erros comuns](#capítulo-6--erros-comuns)
+7. [Exercícios](#7-exercícios)
+
+---
+
+## Capítulo 1 — Antes de começar
+
+### 1.1 O que é o Diskpart
+
+O **Diskpart** é o gerenciador de discos por linha de comando do Windows. Com ele é possível listar discos, criar e apagar partições, formatar volumes e atribuir letras de unidade. Ele é o equivalente em texto do "Gerenciamento de Disco" gráfico (`diskmgmt.msc`).
+
+### 1.2 Instalação física do disco
+
+Antes de qualquer comando, o disco precisa estar **fisicamente instalado**:
+
+1. Desligue o computador e desconecte da tomada.
+2. Instale o HD/SSD (SATA ou NVMe, conforme o slot disponível — veja Volume 2 e 3).
+3. Conecte os cabos de dados e de alimentação.
+4. Ligue o computador.
+
+> 💡 **Dica do técnico**
+> Não precisa formatar o disco no momento da instalação: o sistema operacional o enxerga assim que liga, mesmo sem partição. Você só cria partição quando quiser usá-lo.
+
+### 1.3 Disco novo × disco com dados
+
+- **Disco novo (sem dados):** pode criar partição e formatar à vontade.
+- **Disco com dados:** **não** use `clean` — isso apaga tudo! Nesse caso, apenas crie a partição se houver espaço livre, ou use o Gerenciamento de Discos para reduzir/estender partições.
+
+---
+
+## Capítulo 2 — Abrindo o Diskpart
+
+### 2.1 Executar como administrador
+
+1. Pressione **Windows + R**, digite `diskpart` e pressione **Enter**.
+2. Se aparecer o controle de conta de usuário (UAC), clique em **Sim**.
+
+> 🔧 **Erro comum**
+> Abrir o Diskpart sem ser administrador causa erro "Acesso negado" na maioria dos comandos. Sempre confirme a janela com título **"Administrador: Prompt de Comando"**.
+
+### 2.2 O prompt do Diskpart
+
+Depois de aberto, o prompt muda para `DISKPART>`. Todos os comandos abaixo são digitados nesse prompt e finalizados com **Enter**. Para sair a qualquer momento, digite `exit`.
+
+---
+
+## Capítulo 3 — Identificando o disco certo
+
+### 3.1 Listando os discos
+
+Digite:
+
+```
+list disk
+```
+
+O Windows mostra todos os discos com tamanho, tipo e estado. Exemplo:
+
+```
+Disco ###  Status     Tamanho   Livre    Din  Gpt
+--------  ----------  --------  --------  ---  ---
+Disco 0   Online       240 GB    0 B      *
+Disco 1   Online       500 GB    500 GB
+```
+
+> ⚠️ **ATENÇÃO**
+> Anote o **número do disco novo** (ex.: Disco 1). O próximo comando `select disk` usa esse número — escolher o número errado pode apagar o disco do sistema!
+
+### 3.2 Selecionando o disco
+
+Digite (trocando `1` pelo número do seu disco):
+
+```
+select disk 1
+```
+
+Resposta esperada: `O disco 1 agora é o disco selecionado.`
+
+### 3.3 Limpando o disco (somente disco novo/sem dados)
+
+```
+clean
+```
+
+O `clean` remove todas as partições e assinaturas do disco selecionado, deixando-o totalmente vazio. **Só execute se tiver certeza de que é o disco certo e que não há dados importantes.**
+
+---
+
+## Capítulo 4 — Criando a partição e formatando
+
+### 4.1 Criar a partição
+
+```
+create partition primary
+```
+
+Cria uma partição primária ocupando todo o disco. Para usar só parte do espaço, adicione o tamanho em MB:
+
+```
+create partition primary size=100000
+```
+
+### 4.2 Selecionar a partição e formatar
+
+```
+select partition 1
+format fs=ntfs quick
+```
+
+- `fs=ntfs` define o sistema de arquivos (use `fs=exfat` se for usar em TV/câmera ou entre Windows e Linux).
+- `quick` faz a formatação rápida (sem verificar setores).
+
+### 4.3 Atribuir letra e sair
+
+```
+assign
+```
+
+O Windows escolhe automaticamente a próxima letra livre. Para definir uma letra específica:
+
+```
+assign letter=E
+```
+
+Confira o resultado:
+
+```
+list volume
+exit
+```
+
+O novo disco aparece no Explorer com a letra atribuída, pronto para uso.
+
+> 💡 **Dica do técnico**
+> Se a letra atribuída não aparecer no Explorer, pressione F5 para atualizar ou verifique se a letra não está em uso por um pendrive/leitor de cartão.
+
+---
+
+## Capítulo 5 — Discos acima de 2 TB e GPT
+
+### 5.1 Por que GPT?
+
+Discos acima de **2 TB** precisam da tabela de partições **GPT**. Com MBR, o Windows só usa 2 TB do disco. Além disso, GPT é o padrão recomendado para sistemas UEFI (veja Volume 4).
+
+### 5.2 Convertendo para GPT
+
+Com o disco selecionado (antes do `clean` ou logo após):
+
+```
+convert gpt
+```
+
+Depois siga o Capítulo 4 normalmente (criar partição, formatar, atribuir letra).
+
+> 🔧 **Erro comum**
+> Se o comando `convert gpt` falhar, o disco pode ter partições existentes. Execute `clean` antes (apagando tudo) e tente novamente.
+
+---
+
+## Capítulo 6 — Erros comuns
+
+| Erro | Causa provável | Solução |
+|---|---|---|
+| "Acesso negado" | Diskpart sem administrador | Feche e abra como administrador |
+| "Não foi possível encontrar o disco" | Número errado no `select disk` | Rode `list disk` e confira o número |
+| "O disco especificado não é conversível" | Disco MBR com partições | `clean` antes do `convert gpt` |
+| Disco não aparece no Explorer | Letra não atribuída | Rode `assign` e `list volume` |
+| Espaço limitado a 2 TB | Tabela MBR | `convert gpt` |
+
+---
+
+## 7. Exercícios
+
+### 7.1 Questões objetivas
+
+1. Qual comando lista os discos no Diskpart?  
+   a) `list volume`  b) `list disk`  c) `show disk`  d) `dir disk`
+2. O que faz o comando `clean`?  
+   a) Formata o disco  b) Apaga todas as partições do disco selecionado  c) Cria uma partição  d) Atribui letra
+3. Qual tabela de partição usar em um disco de 3 TB?  
+   a) MBR  b) FAT32  c) GPT  d) NTFS
+4. Qual comando atribui uma letra ao volume?  
+   a) `letter`  b) `assign`  c) `label`  d) `mount`
+
+**Gabarito:** 1-b, 2-b, 3-c, 4-b
+
+### 7.2 Questões dissertativas
+
+1. Explique por que é perigoso executar `clean` sem antes conferir o número do disco no `list disk`.
+2. Descreva o passo a passo completo para adicionar um SSD de 500 GB novo em um Windows.
+3. Um cliente tem um HD de 4 TB e o Windows só mostra 2 TB. Qual o problema e como resolver?
+
+### 7.3 Atividade prática
+
+- Em um computador de teste (ou máquina virtual), adicione um disco virtual vazio e faça todo o procedimento: listar, selecionar, limpar, criar partição, formatar em NTFS e atribuir a letra E.
+- Faça o mesmo procedimento em um disco pequeno, mas convertendo para GPT antes de particionar.
+- Anote no caderno o passo a passo com os retornos exatos de cada comando.
+
+---
+
+> **Fim do Apêndice A**
+> Você agora sabe adicionar um disco extra no Windows pela linha de comando, sem depender de programas de terceiros.
+
+---
+
+# Apêndice B — Adicionando um novo disco no Linux (GParted e Fdisk)
+
+> **Sobre este apêndice**
+> Este apêndice ensina a adicionar e formatar um disco extra no Linux de duas formas: pela **interface gráfica do GParted** e pela **linha de comando com o fdisk**. Você aprenderá a identificar o disco, criar a tabela de partições, formatar e montar o volume de forma permanente.
+>
+> **Objetivos do apêndice**
+> - Identificar o disco novo no Linux (`lsblk`, `fdisk -l`).
+> - Particionar e formatar com o **fdisk** (linha de comando).
+> - Particionar e formatar com o **GParted** (gráfico).
+> - Montar o disco e torná-lo permanente no `/etc/fstab`.
+> - Conhecer os riscos de formatar o disco errado.
+
+---
+
+## Sumário
+
+1. [Capítulo 1 — Identificando o disco no Linux](#capítulo-1--identificando-o-disco-no-linux)
+2. [Capítulo 2 — Particionando e formatando com o fdisk](#capítulo-2--particionando-e-formatando-com-o-fdisk)
+3. [Capítulo 3 — Particionando e formatando com o GParted](#capítulo-3--particionando-e-formatando-com-o-gparted)
+4. [Capítulo 4 — Montando o disco](#capítulo-4--montando-o-disco)
+5. [Capítulo 5 — Montagem permanente no fstab](#capítulo-5--montagem-permanente-no-fstab)
+6. [Capítulo 6 — Erros comuns](#capítulo-6--erros-comuns)
+7. [Exercícios](#7-exercícios)
+
+---
+
+## Capítulo 1 — Identificando o disco no Linux
+
+### 1.1 Listando os discos
+
+Abra o terminal e use o `lsblk` (lista block devices):
+
+```
+lsblk
+```
+
+Exemplo:
+
+```
+NAME   MAJ:MIN RM  SIZE RO TYPE MOUNTPOINTS
+sda      8:0    0  240G  0 disk
+├─sda1   8:1    0  240G  0 part /
+sdb      8:1    0  500G  0 disk
+```
+
+- `sda` = disco do sistema (com a partição raiz `/`).
+- `sdb` = disco novo, sem partições (o que vamos usar).
+
+> ⚠️ **ATENÇÃO**
+> No Linux os discos aparecem como `/dev/sda`, `/dev/sdb`, `/dev/sdc`... O `sdb` de hoje pode ser o `sdc` amanhã (depende da ordem de detecção). Confirme **sempre** pelo tamanho e pelo `lsblk` antes de particionar!
+
+### 1.2 Instalando as ferramentas
+
+Debian/Ubuntu:
+
+```
+sudo apt update
+sudo apt install fdisk gparted
+```
+
+Fedora:
+
+```
+sudo dnf install fdisk gparted
+```
+
+---
+
+## Capítulo 2 — Particionando e formatando com o fdisk
+
+### 2.1 Abrindo o fdisk no disco novo
+
+```
+sudo fdisk /dev/sdb
+```
+
+### 2.2 Criando a tabela de partições
+
+Dentro do fdisk:
+
+1. Digite `g` e Enter para criar a tabela **GPT** (recomendada; para MBR use `o`).
+2. Digite `n` e Enter para nova partição.
+3. Aperte Enter nas perguntas de número, primeiro e último setor (usa o disco todo).
+4. Digite `w` e Enter para **gravar** as mudanças e sair.
+
+> 🔧 **Erro comum**
+> Digitar `q` em vez de `w` **descarta** as mudanças. Só use `q` se quiser cancelar; `w` grava.
+
+### 2.3 Formatando a partição
+
+```
+sudo mkfs.ext4 /dev/sdb1
+```
+
+- `mkfs.ext4` cria o sistema de arquivos **ext4** (padrão no Linux).
+- Para compatibilidade com Windows, use `mkfs.ntfs -f /dev/sdb1` (precisa do pacote `ntfs-3g`).
+- Para compartilhar com tudo (TV, câmera, Windows, Linux), use `mkfs.exfat /dev/sdb1` (instale o pacote `exfatprogs` antes: `sudo apt install exfatprogs`).
+
+### 2.4 Conferindo
+
+```
+lsblk -f
+```
+
+Mostra o disco com o sistema de arquivos e o **UUID** (identificador único, usado no fstab).
+
+---
+
+## Capítulo 3 — Particionando e formatando com o GParted
+
+### 3.1 Abrindo o GParted
+
+```
+sudo gparted
+```
+
+### 3.2 Escolhendo o disco
+
+No menu superior direito, selecione o disco novo (`/dev/sdb`). **Confira o tamanho** — é a melhor forma de não mexer no disco do sistema.
+
+### 3.3 Criando a tabela de partições
+
+1. Menu **Dispositivo → Criar tabela de partições**.
+2. Escolha **gpt** (ou msdos/MBR) e confirme.
+
+### 3.4 Criando a partição
+
+1. Clique com o botão direito no espaço cinza e escolha **Novo**.
+2. Defina o tamanho (ou deixe padrão = disco todo).
+3. Escolha o sistema de arquivos: **ext4**, **ntfs** ou **exfat**.
+4. Clique em **Adicionar**.
+
+### 3.5 Aplicando as mudanças
+
+Clique no botão **✔ Aplicar todas as operações** (o checkmark verde) e confirme.
+
+> 💡 **Dica do técnico**
+> O GParted **não aplica nada na hora** — as operações ficam pendentes até você clicar em "Aplicar". Isso permite revisar antes de executar.
+
+---
+
+## Capítulo 4 — Montando o disco
+
+### 4.1 Criando o ponto de montagem
+
+```
+sudo mkdir -p /mnt/disco2
+```
+
+### 4.2 Montagem manual (teste)
+
+```
+sudo mount /dev/sdb1 /mnt/disco2
+```
+
+Verifique com:
+
+```
+df -h
+```
+
+O disco aparece em `/mnt/disco2`. Ele funciona, mas **não sobrevive ao reinício** — para isso, veja o próximo capítulo.
+
+### 4.3 Desmontando
+
+```
+sudo umount /mnt/disco2
+```
+
+---
+
+## Capítulo 5 — Montagem permanente no fstab
+
+### 5.1 Descobrindo o UUID
+
+```
+sudo blkid /dev/sdb1
+```
+
+Exemplo de retorno:
+
+```
+/dev/sdb1: UUID="1a2b3c4d-..." TYPE="ext4"
+```
+
+### 5.2 Editando o /etc/fstab
+
+Abra o arquivo com um editor (ex.: nano):
+
+```
+sudo nano /etc/fstab
+```
+
+Adicione a linha no final:
+
+```
+UUID=1a2b3c4d-...  /mnt/disco2  ext4  defaults  0  2
+```
+
+Campos: dispositivo (UUID), ponto de montagem, sistema de arquivos, opções (`defaults`), dump (0) e fsck (2).
+
+### 5.3 Testando o fstab
+
+```
+sudo mount -a
+```
+
+Se não houver erro, o disco será montado automaticamente a cada inicialização. **Sempre teste com `mount -a` antes de reiniciar** — uma linha errada no fstab pode impedir o sistema de iniciar.
+
+> ⚠️ **ATENÇÃO**
+> Use o **UUID**, e não `/dev/sdb1`, no fstab: os nomes `/dev/sdX` mudam conforme os discos conectados; o UUID não muda.
+
+---
+
+## Capítulo 6 — Erros comuns
+
+| Erro | Causa provável | Solução |
+|---|---|---|
+| `cannot open /dev/sdb` | Sem privilégio | Use `sudo` |
+| Sistema não inicia após editar fstab | Linha errada no fstab | Edite o fstab por um Live USB e corrija/remova a linha |
+| Disco não aparece no gerenciador | Esqueceu de aplicar no GParted | Clique em "Aplicar" |
+| `mount: wrong fs type` | Sistema de arquivos não instalado | Instale `ntfs-3g` ou use ext4 |
+| Formatei o disco errado | Não conferiu o tamanho no `lsblk` | Sempre confira o tamanho antes de particionar |
+
+---
+
+## 7. Exercícios
+
+### 7.1 Questões objetivas
+
+1. Qual comando lista os discos no Linux?  
+   a) `lsusb`  b) `lsblk`  c) `lspci`  d) `df`
+2. Qual tecla do fdisk **grava** as mudanças?  
+   a) `q`  b) `s`  c) `w`  d) `x`
+3. O que é o UUID de uma partição?  
+   a) O tamanho da partição  b) O identificador único do sistema de arquivos  c) A letra da unidade  d) O tipo de conector
+4. Para montar um disco automaticamente ao ligar, editamos:  
+   a) `/etc/hosts`  b) `/etc/fstab`  c) `/boot/grub.cfg`  d) `/etc/passwd`
+
+**Gabarito:** 1-b, 2-c, 3-b, 4-b
+
+### 7.2 Questões dissertativas
+
+1. Explique por que no fstab devemos usar o UUID em vez de `/dev/sdb1`.
+2. Descreva a diferença entre montar com `mount` e configurar o `/etc/fstab`.
+3. Um cliente tem um HD de 4 TB formatado em NTFS e quer usá-lo entre Windows e Linux. O que fazer?
+
+### 7.3 Atividade prática
+
+- Em uma máquina virtual Linux, adicione um disco virtual de 2 GB e repita o procedimento completo com **fdisk** (GPT + ext4).
+- Repita o mesmo procedimento com o **GParted**, criando uma partição NTFS.
+- Monte o disco em `/mnt/disco2`, crie um arquivo de teste e configure o fstab com o UUID.
+- Reinicie a VM e confirme que o disco foi montado automaticamente.
+
+---
+
+> **Fim do Apêndice B**
+> Você agora sabe adicionar, particionar, formatar e montar discos no Linux — tanto pela interface gráfica (GParted) quanto pela linha de comando (fdisk).
+
+---
+
+> **Fim do livro**
+> Com os 8 volumes e os 2 apêndices, você tem o conhecimento completo: da teoria à prática profissional, incluindo a expansão de armazenamento no Windows (Diskpart) e no Linux (GParted/Fdisk). Continue praticando em máquinas reais ou virtuais — prática é o que transforma conhecimento em habilidade.
+
 
