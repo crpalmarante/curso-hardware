@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Relatório de Pendências — Apêndices</title>
+<meta name="theme-color" content="#14b8a6">
+<style>
+:root{
+  --primary:#14b8a6; --primary-hover:#0d9488; --primary-active:#0f766e;
+  --secondary:#3B82F6; --danger:#EF4444; --success:#22C55E; --warning:#F59E0B;
+  --bg:linear-gradient(135deg,#06101f,#101b35,#151044);
+  --text:#FFFFFF; --text-secondary:#DDDDDD; --text-muted:rgba(255,255,255,.5);
+  --border:rgba(255,255,255,.14); --border-hover:rgba(255,255,255,.3);
+  --surface:rgba(255,255,255,.06); --surface-hover:rgba(255,255,255,.12);
+  --glass:rgba(255,255,255,.08);
+  --radius-sm:6px; --radius-md:10px; --radius-lg:16px; --radius-xl:24px;
+  --font-family:"Inter","Segoe UI",Arial,sans-serif;
+}
+[data-theme="light"]{
+  --bg:linear-gradient(135deg,#f0f4f8,#e2e8f0,#cbd5e1);
+  --text:#1a202c; --text-secondary:#4a5568; --text-muted:rgba(0,0,0,.5);
+  --border:rgba(0,0,0,.12); --border-hover:rgba(0,0,0,.25);
+  --surface:rgba(255,255,255,.65); --surface-hover:rgba(255,255,255,.85);
+  --glass:rgba(255,255,255,.7);
+  --primary:#0f766e; --primary-hover:#0d5c55;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:var(--font-family);background:var(--bg);color:var(--text);
+  min-height:100vh;line-height:1.55;
+}
+::selection{background:var(--primary);color:#fff}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(128,128,128,.4);border-radius:20px}
+
+.topbar{
+  position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+  padding:14px 24px;background:var(--glass);backdrop-filter:blur(18px);
+  border-bottom:1px solid var(--border);
+}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:15px}
+.brand-badge{
+  width:38px;height:38px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+  font-size:18px;background:linear-gradient(135deg,var(--primary),var(--secondary));
+}
+.brand small{display:block;font-weight:500;color:var(--text-muted);font-size:11px}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.icon-btn{
+  padding:8px 14px;border-radius:var(--radius-md);cursor:pointer;text-decoration:none;
+  color:var(--text-secondary);font-size:13px;border:1px solid var(--border);
+  background:var(--surface);transition:all .2s;
+}
+.icon-btn:hover{background:var(--surface-hover);color:var(--text);border-color:var(--border-hover)}
+.icon-btn.primary{background:var(--primary);color:#fff;border-color:var(--primary)}
+.icon-btn.primary:hover{background:var(--primary-hover)}
+
+.container{max-width:1080px;margin:0 auto;padding:28px 20px 60px}
+.page-title{font-size:20px;margin-bottom:4px}
+.page-sub{color:var(--text-muted);font-size:13px;margin-bottom:22px}
+
+.sum-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:24px}
+.sum-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);
+  padding:18px;text-align:center;
+}
+.sum-card .val{font-size:26px;font-weight:800;color:var(--primary)}
+.sum-card .lab{font-size:12px;color:var(--text-muted);margin-top:4px}
+
+.filtro{
+  display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:16px;
+}
+.filtro button{
+  padding:8px 14px;border-radius:999px;cursor:pointer;font-size:13px;border:1px solid var(--border);
+  background:var(--surface);color:var(--text-secondary);transition:all .2s;
+}
+.filtro button:hover{background:var(--surface-hover);color:var(--text)}
+.filtro button.active{background:var(--warning);color:#111;border-color:var(--warning);font-weight:700}
+
+.aluno-grupo{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);
+  margin-bottom:18px;overflow:hidden;
+}
+.aluno-cab{
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  padding:14px 18px;background:var(--glass);border-bottom:1px solid var(--border);
+}
+.aluno-cab .nome{font-weight:700;font-size:15px}
+.aluno-cab .meta{font-size:12px;color:var(--text-muted)}
+.aluno-cab .spacer{flex:1}
+.aluno-cab .badge{
+  font-size:11px;padding:4px 10px;border-radius:999px;border:1px solid var(--warning);
+  color:var(--warning);font-weight:700;
+}
+.disc-item{padding:14px 18px;border-bottom:1px solid var(--border)}
+.disc-item:last-child{border-bottom:none}
+.disc-q{font-size:13px;font-weight:700;color:var(--text-secondary);margin-bottom:6px}
+.disc-r{
+  font-size:13px;background:var(--glass);border:1px solid var(--border);
+  border-radius:var(--radius-md);padding:10px 12px;margin-bottom:10px;white-space:pre-wrap;
+}
+.disc-avaliar{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.disc-avaliar label{font-size:12px;color:var(--text-muted);font-weight:600}
+.disc-avaliar input{
+  width:80px;padding:8px 10px;border-radius:var(--radius-md);font-size:13px;
+  background:var(--glass);border:1px solid var(--border);color:var(--text);
+}
+.disc-avaliar .btn{
+  padding:8px 14px;border-radius:var(--radius-md);cursor:pointer;font-size:13px;
+  border:none;background:var(--primary);color:#fff;transition:all .2s;
+}
+.disc-avaliar .btn:hover{background:var(--primary-hover)}
+.disc-avaliar .btn.salvo{background:var(--success);cursor:default}
+.disc-avaliar .btn.salvo:hover{background:var(--success)}
+
+.vazio{
+  text-align:center;color:var(--text-muted);padding:48px 20px;font-size:14px;
+  background:var(--surface);border:1px dashed var(--border);border-radius:var(--radius-lg);
+}
+.loading{text-align:center;color:var(--text-muted);padding:40px;font-size:14px}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-badge">📝</div>
+    <div>
+      Relatório de Pendências — Apêndices
+      <small>Dissertativas do quiz Diskpart/GParted aguardando avaliação</small>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <a class="icon-btn" href="alunos.html" title="Voltar ao Registro de Alunos">👨‍🎓 Registro</a>
+    <button class="icon-btn" onclick="toggleTheme()" title="Alternar tema">◐ Tema</button>
+  </div>
+</div>
+
+<div class="container">
+  <h1 class="page-title">📝 Pendências de avaliação dos apêndices</h1>
+  <p class="page-sub">Todas as dissertativas do quiz dos apêndices (A — Diskpart / B — GParted) entregues pelos alunos e ainda sem nota. Avalie direto aqui — a nota entra no aproveitamento do aluno.</p>
+
+  <div class="sum-cards">
+    <div class="sum-card"><div class="val" id="total-alunos">—</div><div class="lab">Alunos com pendência</div></div>
+    <div class="sum-card"><div class="val" id="total-pendencias">—</div><div class="lab">Dissertativas p/ avaliar</div></div>
+  </div>
+
+  <div class="filtro">
+    <button id="btn-so-pendentes" class="active" onclick="toggleSoPendentes()">📝 Só com pendência</button>
+    <button id="btn-mostrar-todos" onclick="toggleTodos()">👥 Mostrar todos os alunos</button>
+  </div>
+
+  <div id="lista"></div>
+</div>
+
+<script>
+/* ============================================================
+   RELATÓRIO DE PENDÊNCIAS DOS APÊNDICES
+   Lista, em uma única página, os alunos com dissertativas do
+   quiz dos apêndices (AP|) ainda sem nota e permite avaliar
+   direto (POST /api/dissertativa — mesma rota do Registro).
+   ============================================================ */
+// Texto das dissertativas do quiz — fonte: apendice-exercicios.html (AP_EXERCICIOS,
+// última questão de cada apêndice). Se editar o quiz, atualize aqui também.
+const AP_DISC_PERGUNTAS = {
+  "AP|Apêndice A — Diskpart (Windows)": "Explique por que executar clean sem antes conferir o número do disco pode ser desastroso, e descreva o passo a passo seguro.",
+  "AP|Apêndice B — GParted/Fdisk (Linux)": "Explique a diferença entre montar com o comando mount e configurar o /etc/fstab, e por que o UUID é preferido no fstab."
+};
+
+let alunosCompletos = [];   // cache dos alunos vindos de /api/alunos
+let pendentesCache = {};    // nome (lower) -> { aluno, pendencias: [ {aula_id, q, resposta, pergunta} ] }
+let soPendentes = true;
+
+function esc(s){ return String(s||"").replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function escAttr(s){ return String(s).replace(/["']/g, c=>({"'":"&#39;",'"':"&quot;"}[c])); }
+function toggleTheme(){
+  const h = document.documentElement;
+  h.setAttribute("data-theme", h.getAttribute("data-theme")==="dark" ? "light" : "dark");
+}
+function toggleSoPendentes(){ soPendentes = true; document.getElementById("btn-so-pendentes").classList.add("active"); document.getElementById("btn-mostrar-todos").classList.remove("active"); render(); }
+function toggleTodos(){ soPendentes = false; document.getElementById("btn-mostrar-todos").classList.add("active"); document.getElementById("btn-so-pendentes").classList.remove("active"); render(); }
+
+async function api(path, opts){
+  const r = await fetch(path, opts);
+  if (r.status === 401){ window.location.href = "login-alunos.html"; throw new Error("login"); }
+  return r;
+}
+
+async function carregar(){
+  const el = document.getElementById("lista");
+  el.innerHTML = '<div class="loading">Carregando pendências…</div>';
+  try {
+    const r = await api("api/alunos");
+    const j = await r.json();
+    alunosCompletos = j.alunos || [];
+    await montarPendencias();
+    render();
+  } catch(e){
+    if (e.message !== "login") el.innerHTML = '<div class="vazio">Erro ao carregar os dados. Tente novamente.</div>';
+  }
+}
+
+async function montarPendencias(){
+  pendentesCache = {};
+  const comPendencia = alunosCompletos.filter(a => (a.apendices_pendentes||0) > 0);
+  // busca os exercícios de cada aluno com pendência (sequencial, para não sobrecarregar)
+  for (const aluno of comPendencia){
+    try {
+      const r = await api("api/exercicios?aluno=" + encodeURIComponent(aluno.nome));
+      const j = await r.json();
+      const aulas = j.exercicios || {};
+      const pendencias = [];
+      for (const [aulaId, rs] of Object.entries(aulas)){
+        if (aulaId.indexOf("AP|") !== 0) continue;
+        for (const res of rs){
+          if (res.tipo !== "disc" || res.nota != null) continue;
+          pendencias.push({
+            aula_id: aulaId,
+            q: res.q,
+            resposta: res.resposta || "",
+            pergunta: AP_DISC_PERGUNTAS[aulaId] || aulaId.replace(/^AP\|/, "")
+          });
+        }
+      }
+      if (pendencias.length) pendentesCache[aluno.nome.toLowerCase()] = { aluno, pendencias };
+    } catch(e){ if (e.message === "login") throw e; /* aluno offline/erro: ignora */ }
+  }
+}
+
+function render(){
+  const totalAlunos = Object.keys(pendentesCache).length;
+  const totalPend = Object.values(pendentesCache).reduce((s,x)=>s+x.pendencias.length, 0);
+  document.getElementById("total-alunos").textContent = totalAlunos;
+  document.getElementById("total-pendencias").textContent = totalPend;
+
+  const el = document.getElementById("lista");
+  if (totalAlunos === 0 && soPendentes){
+    el.innerHTML = '<div class="vazio">🎉 Nenhuma dissertativa dos apêndices pendente de avaliação. Tudo em dia!</div>';
+    return;
+  }
+
+  // ordem: alunos com pendência primeiro (ou só eles, conforme o filtro)
+  const comPend = alunosCompletos.filter(a => pendentesCache[a.nome.toLowerCase()]);
+  const semPend = alunosCompletos.filter(a => !pendentesCache[a.nome.toLowerCase()]);
+  const ordem = soPendentes ? comPend : comPend.concat(semPend);
+
+  el.innerHTML = ordem.map(a => {
+    const pc = pendentesCache[a.nome.toLowerCase()];
+    if (!pc){
+      return `<div class="aluno-grupo">
+        <div class="aluno-cab">
+          <div class="nome">${esc(a.nome)}</div>
+          <div class="meta">${esc(a.turma||"—")} · ${esc(a.matricula||"—")}</div>
+          <div class="spacer"></div>
+          <span class="badge" style="border-color:var(--success);color:var(--success)">✅ em dia</span>
+        </div>
+      </div>`;
+    }
+    const discHtml = pc.pendencias.map(p => {
+      const qid = "nota-" + cssId(a.nome) + "-" + cssId(p.aula_id) + "-" + p.q;
+      return `<div class="disc-item" id="item-${qid}">
+        <div class="disc-q">${p.q+1}. ${esc(p.pergunta)}</div>
+        <div class="disc-r">${esc(p.resposta) || "<i>(sem resposta)</i>"}</div>
+        <div class="disc-avaliar">
+          <label>Nota (0–10)</label>
+          <input type="number" id="${qid}" min="0" max="10" step="0.5" placeholder="—">
+          <button class="btn" id="btn-${qid}" onclick="avaliar('${escAttr(a.nome)}', '${escAttr(p.aula_id)}', ${p.q})">Salvar nota</button>
+        </div>
+      </div>`;
+    }).join("");
+    return `<div class="aluno-grupo">
+      <div class="aluno-cab">
+        <div class="nome">${esc(a.nome)}</div>
+        <div class="meta">${esc(a.turma||"—")} · ${esc(a.matricula||"—")}</div>
+        <div class="spacer"></div>
+        <span class="badge">📝 ${pc.pendencias.length} p/ avaliar</span>
+      </div>
+      ${discHtml}
+    </div>`;
+  }).join("");
+}
+
+async function avaliar(nome, aulaId, q){
+  const qid = "nota-" + cssId(nome) + "-" + cssId(aulaId) + "-" + q;
+  const inp = document.getElementById(qid);
+  const v = inp ? inp.value : "";
+  if (v === ""){ alert("Informe uma nota de 0 a 10."); return; }
+  const nota = Math.min(10, Math.max(0, parseFloat(v.replace(",", "."))));
+  if (isNaN(nota)){ alert("Nota inválida."); return; }
+  const btn = document.getElementById("btn-" + qid);
+  if (btn) btn.disabled = true;
+  try {
+    const r = await api("api/dissertativa", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nome, aula_id: aulaId, q, nota })
+    });
+    const j = await r.json();
+    if (j.status !== "ok"){ alert(j.erro || "Erro ao salvar a nota."); if (btn) btn.disabled = false; return; }
+    // remove a pendência da lista
+    const ck = nome.toLowerCase();
+    if (pendentesCache[ck]){
+      pendentesCache[ck].pendencias = pendentesCache[ck].pendencias.filter(p => !(p.aula_id === aulaId && p.q === q));
+      if (!pendentesCache[ck].pendencias.length) delete pendentesCache[ck];
+    }
+    render();
+    alert("Nota " + nota + " salva para " + nome + ".");
+  } catch(e){ if (e.message !== "login" && btn) btn.disabled = false; }
+}
+
+function cssId(id){ return id.replace(/[^a-zA-Z0-9_-]/g, "_"); }
+
+carregar();
+</script>
+</body>
+</html>

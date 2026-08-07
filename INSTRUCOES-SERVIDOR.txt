@@ -181,7 +181,7 @@ Se preferir manual, os arquivos que mudam são enviados por scp:
 
     scp servidor.py secretaria.html login-secretaria.html \
         alunos.html plano-de-aulas.html index.html \
-        apendice-exercicios.html setup.py \
+        apendice-exercicios.html relatorio-apendices.html setup.py \
         usuario@177.190.69.20:/var/www/curso-hardware/
     ssh usuario@177.190.69.20 "sudo systemctl restart curso-hardware"
 
