@@ -15,6 +15,7 @@ Acesso online: **http://curso.palmarante.com.br** (subdomínio; enquanto o DNS n
   - [Curso interativo (index.html)](#curso-interativo-indexhtml)
   - [Caderno de exercícios](#caderno-de-exercícios)
   - [Avaliações por módulo](#avaliações-por-módulo)
+  - [Apêndices (Diskpart/GParted)](#apêndices-diskpartgparted)
   - [Frequência automática](#frequência-automática)
   - [Registro do instrutor (alunos.html)](#registro-do-instrutor-alunoshtml)
   - [Painel da turma](#painel-da-turma)
@@ -61,6 +62,7 @@ curso-hardware/
 ├── verificar-certificado.html # Página pública de verificação de autenticidade
 ├── qrcode.js             # Biblioteca de QR Code (client-side)
 ├── livro.html            # Página interativa da estrutura do livro
+├── apendice-exercicios.html # Quiz interativo dos apêndices A e B (Diskpart/GParted)
 ├── livro/                # Livro completo em Markdown (8 volumes + 2 apêndices)
 │   ├── volume-01-fundamentos.md
 │   ├── volume-02-hardware.md
@@ -128,6 +130,15 @@ Os dados do aluno (progresso, respostas, provas) são guardados no navegador e s
 - Objetivas corrigidas na hora; a nota de cada módulo é gravada no servidor (`/api/provas`).
 - A média das provas entra na composição da nota de exercícios.
 
+### Apêndices (Diskpart/GParted)
+
+Dois apêndices extras de **armazenamento (disco novo)** — `livro/apendice-a-diskpart.md` (Windows/Diskpart) e `livro/apendice-b-gparted-fdisk.md` (Linux/GParted/Fdisk) — com **quiz interativo de fixação** e integração completa com o registro do instrutor. Fluxo:
+
+1. **Quiz (aluno)**: a página `apendice-exercicios.html` (botão "📝 Apêndices" no curso e "📝 Exercícios dos apêndices" no livro) tem uma aba por apêndice — **Apêndice A: 9 objetivas + 1 dissertativa**, **Apêndice B: 11 objetivas + 1 dissertativa**. Objetivas corrigidas na hora; quando o aluno está identificado (`?aluno=Nome`), objetivas e dissertativas são **sincronizadas com o servidor** (`/api/exercicios`, `aula_id` no formato `AP|…`) e ficam visíveis ao instrutor na aba 📝 Exercícios. Os apêndices também entram no **Plano de Aulas** como aulas extras de armazenamento.
+2. **Nota**: o servidor separa o aproveitamento dos apêndices no resumo — objetivas (`ap_objetivas`, `ap_certas`, `ap_nota_sugerida`) e dissertativas avaliadas (`ap_disc_avaliadas`, `ap_disc_media`) — **sem misturar com o caderno** (`nota_sugerida` continua só do caderno; o `aproveitamento` global soma os dois). Ambos entram como **componentes próprios na nota sugerida de Exercícios** (o detalhe mostra "apêndices disc X · obj Y"). A dissertativa é avaliada pelo instrutor (0–10), como as do caderno — **avaliação é exclusiva do instrutor** (secretaria só consulta).
+3. **Boletim**: a impressão ganha a seção **"Apêndices — exercícios extras"** com as objetivas (certas/total) e a nota de cada dissertativa ("Nota: X" ou "Entregue — aguardando nota").
+4. **Selo/filtro**: quando um aluno entrega uma dissertativa dos apêndices **sem nota**, aparece o selo âmbar **"📝 N p/ avaliar"** ao lado do nome nas listas do instrutor e da secretaria — e o filtro **"📝 Com pendências"** mostra só esses alunos (combina com o "🔒 Só travados"). O selo some assim que o instrutor avalia.
+
 ### Frequência automática
 
 - O instrutor define a **semana atual do curso** (`dados` → barra "Semana atual", via `POST /api/config`).
@@ -144,7 +155,7 @@ Aba por aba:
 | 🗓️ Presença | Marcação das 43 semanas (presente/falta/justificada) |
 | 🎯 Avaliação | Notas com pesos (ver [Avaliação](#avaliação-e-situação-do-aluno)) |
 | 🔧 Atividades | Atividades práticas com data, nota e observações |
-| 📝 Exercícios | Respostas do caderno, aproveitamento, nota sugerida e **avaliação de dissertativas** |
+| 📝 Exercícios | Respostas do caderno e dos **apêndices**, aproveitamento, nota sugerida e **avaliação de dissertativas** |
 | 🗒️ Provas | Notas por módulo, dissertativas e progresso de aulas |
 | 💪 Comprometimento | Notas 0–5 (pontualidade, dedicação, material, disciplina) |
 | 🕘 Histórico | Registro de eventos do aluno (500 eventos) |
@@ -152,7 +163,7 @@ Aba por aba:
 
 Extras:
 - **Busca** por nome, matrícula ou turma na lista lateral.
-- **Aplicar nota de exercícios**: botão que grava a nota sugerida (caderno + dissertativas + provas) no campo "Exercícios".
+- **Aplicar nota de exercícios**: botão que grava a nota sugerida (caderno + dissertativas + apêndices + checkouts + provas) no campo "Exercícios".
 - **Boletim 🖨️**: abre uma página de impressão/PDF com todas as informações do aluno (incluindo a matrícula).
 - **Abrir curso do aluno**: abre `index.html?aluno=Nome` para ver como o aluno enxerga (incluindo a própria matrícula).
 
@@ -222,6 +233,7 @@ Gera uma página imprimível (Ctrl+P → "Salvar como PDF") com:
 - Dados do aluno, **matrícula**, data de matrícula, turma, situação e frequência.
 - Tabela de notas com pesos e **nota final** em destaque.
 - Comprometimento e lista de atividades registradas.
+- Seção **"Apêndices — exercícios extras"** com objetivas (certas/total) e a nota de cada dissertativa dos apêndices (quando houver respostas).
 
 ### Certificado de Conclusão
 
@@ -240,10 +252,11 @@ O botão **🎓 Certificado** na ficha do aluno emite o certificado oficial (ape
 Nota = Participação × 20% + Exercícios × 20% + Montagem × 30% + Diagnóstico × 30%
 ```
 
-**Nota sugerida de Exercícios** = média de:
-- aproveitamento do caderno (objetivas),
-- dissertativas avaliadas (média das notas do instrutor),
-- média das provas por módulo.
+**Nota sugerida de Exercícios** = média simples dos componentes disponíveis:
+- caderno (nota das objetivas respondidas),
+- dissertativas do caderno avaliadas (média das notas do instrutor),
+- apêndices: objetivas (`ap_nota_sugerida`) e dissertativas avaliadas (`ap_disc_media`),
+- checkouts de aula prática e média das provas por módulo.
 
 **Situação** (alunos.html):
 - **Aprovado**: nota final ≥ 6 **e** presença ≥ 75%.
@@ -269,7 +282,7 @@ python3 servidor.py 8000 --publico  # aceita acesso externo (sem o flag, apenas 
 | GET | `/api/alunos` | sim | Lista completa de alunos (banco) |
 | GET | `/api/alunos.json` | sim | Dados brutos em JSON (backup) |
 | GET | `/api/progresso?aluno=Nome` | — | Andamento das aulas + **matrícula/turma** do aluno (usado pelo site do curso) |
-| GET | `/api/exercicios?aluno=Nome` | — | Respostas do caderno + resumo (nota sugerida, dissertativas) |
+| GET | `/api/exercicios?aluno=Nome` | — | Respostas do caderno e dos apêndices (`AP|…`) + resumo (nota sugerida; médias de objetivas e dissertativas **separadas caderno × apêndices**) |
 | GET | `/api/provas?aluno=Nome` | — | Notas das provas por módulo |
 | GET | `/api/config` | — | Configurações (ex.: `semana_atual`) |
 | GET | `/api/certificado?aluno=Nome` | — | Dados do certificado de um aluno |
@@ -299,6 +312,7 @@ O repositório tem um teste automatizado de **permissões por papel** (`teste-pe
 - A secretaria continua podendo editar dados (`POST /api/alunos`) e consultar provas (GET).
 - O envio de provas pelo aluno (`POST /api/provas`, sem login) segue aberto.
 - **Matrícula**: geração por turma (`5502-HWD10-001/002`), estabilidade no reenvio, troca de turma regenerando e consulta pelo aluno (`GET /api/progresso`).
+- **Apêndices**: resumo separado caderno × apêndices (`teste-resumo-apendices.py`), nota sugerida com os componentes dos apêndices (`teste-nota-apendices.js`), seção no boletim (`teste-boletim-apendices.js`), selo/filtro "📝 Com pendências" (`teste-selo-apendices.js`), quiz (`teste-apendice-exercicios.js`) e plano de aulas (`teste-plano-apendices.js`).
 
 Rodando localmente:
 
