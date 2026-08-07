@@ -278,7 +278,7 @@ def main():
 
         # ---- 9.5. Evento do modo quiosque: /api/evento grava no histórico ----
         st, j = anon.post("/api/evento", {"nome": "Aluno Evento",
-                                           "tipo": "sistema",
+                                           "tipo": "disciplina",
                                            "texto": "Modo quiosque ativado — navegação monitorada pelo instrutor."})
         checar("Aluno registra evento (POST /api/evento) = 200",
                st == 200 and j.get("status") == "ok", "HTTP %d %s" % (st, j))
@@ -287,8 +287,20 @@ def main():
         for a in db.get("alunos", []):
             if a.get("nome") == "Aluno Evento":
                 hist = a.get("historico") or []
-        checar("Evento do quiosque aparece no histórico (GET /api/alunos, protegido)",
-               any(h.get("tipo") == "sistema" and "quiosque" in (h.get("texto") or "") for h in hist),
+        checar("Evento do quiosque aparece no histórico como disciplina (GET /api/alunos, protegido)",
+               any(h.get("tipo") == "disciplina" and "quiosque" in (h.get("texto") or "") for h in hist),
+               "histórico: %r" % hist)
+        # desativação também é registrada como disciplina
+        st, j = anon.post("/api/evento", {"nome": "Aluno Evento",
+                                           "tipo": "disciplina",
+                                           "texto": "Modo quiosque desativado pelo aluno."})
+        st, _, db = sec.get("/api/alunos")
+        hist = []
+        for a in db.get("alunos", []):
+            if a.get("nome") == "Aluno Evento":
+                hist = a.get("historico") or []
+        checar("Desativação do quiosque também vira evento de disciplina",
+               any(h.get("tipo") == "disciplina" and "desativado" in (h.get("texto") or "") for h in hist),
                "histórico: %r" % hist)
         # rotas públicas do aluno NÃO devolvem o histórico
         st, _, j = anon.get("/api/progresso?aluno=" + urllib.parse.quote("Aluno Evento"))

@@ -1402,7 +1402,7 @@ function guardAtivar(silencioso){
   try {
     const chaveQuiosque = "curso-quiosque-registrado-" + (alunoNome||"").toLowerCase().trim();
     if (!silencioso || !sessionStorage.getItem(chaveQuiosque)) {
-      registrarNoAluno({ tipo: "sistema", texto: "Modo quiosque ativado — navegação monitorada pelo instrutor." });
+      registrarNoAluno({ tipo: "disciplina", texto: "Modo quiosque ativado — navegação monitorada pelo instrutor." });
       sessionStorage.setItem(chaveQuiosque, "1");
     }
   } catch(e) {}
@@ -1418,7 +1418,7 @@ function guardDesativar(){
   guardStart = null;
   guardSave();
   guardAviso(false);
-  registrarNoAluno({ tipo: "sistema", texto: "Modo quiosque desativado pelo aluno." });
+  registrarNoAluno({ tipo: "disciplina", texto: "Modo quiosque desativado pelo aluno." });
   const btn = document.getElementById("btn-guard");
   btn.innerHTML = "🔒 " + (alunoNome || "Modo blindado");
   btn.style.borderColor = "var(--primary)";
