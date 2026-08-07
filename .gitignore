@@ -2,6 +2,9 @@
 # — gerados na primeira execução do servidor; NUNCA versionar
 dados/
 
+# Pacote de deploy (artefato gerado por deploy-producao.sh)
+deploy-curso.tar.gz
+
 # Python
 __pycache__/
 *.pyc

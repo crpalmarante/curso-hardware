@@ -70,6 +70,7 @@ curso-hardware/
 ├── iniciar-curso.bat     # Abre o curso em modo quiosque (Windows)
 ├── INSTRUCOES-SERVIDOR.txt # Guia completo de publicação (DNS, nginx, HTTPS)
 ├── teste-permissoes.py   # Teste automatizado de permissões por papel (roda no CI)
+├── deploy-producao.sh    # Deploy no servidor (backup, scp, restart — sem tocar em dados/)
 └── dados/                # Criado automaticamente (banco, senha, segredo)
 ```
 
@@ -352,6 +353,14 @@ Guia completo em [`INSTRUCOES-SERVIDOR.txt`](INSTRUCOES-SERVIDOR.txt). Resumo:
 3. **Serviço systemd** (`curso-hardware.service`): roda `servidor.py 8080` para sempre.
 4. **nginx**: proxy na porta 80 para `127.0.0.1:8080`.
 5. **HTTPS (opcional)**: `certbot --nginx -d palmarante.com.br -d www.palmarante.com.br`.
+
+**Atualizar o curso sem mexer no banco** (recomendado a cada mudança):
+
+```bash
+./deploy-producao.sh usuario@177.190.69.20
+```
+
+O script roda o teste de permissões, gera o pacote `deploy-curso.tar.gz` (sem a pasta `dados/`), faz backup do banco no servidor, envia e reinicia o serviço. A pasta `dados/` (banco, senhas, segredo) **nunca** é enviada — ela pertence ao servidor.
 
 ## Personalização
 

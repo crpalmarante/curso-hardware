@@ -144,6 +144,33 @@ certificado sozinho. Para conferir a renovação:
     sudo certbot renew --dry-run
 
 ------------------------------------------------------------
+ ATUALIZAR O CURSO (deploy incremental)
+------------------------------------------------------------
+Quando o código mudar (novos recursos, correções), atualize o
+servidor SEM mexer no banco de produção. Da pasta do projeto:
+
+    ./deploy-producao.sh usuario@177.190.69.20
+
+O script faz automaticamente:
+  1) Roda o teste de permissões local (cancela se falhar).
+  2) Gera o pacote deploy-curso.tar.gz (arquivos versionados,
+     SEM a pasta dados/ — o banco e as senhas do servidor ficam
+     intactos).
+  3) Faz backup do banco em ~/backup-<data>.db no servidor.
+  4) Envia o pacote e extrai por cima em /var/www/curso-hardware.
+  5) Reinicia o serviço curso-hardware e confere a API.
+
+Se preferir manual, os arquivos que mudam são enviados por scp:
+
+    scp servidor.py secretaria.html login-secretaria.html \
+        alunos.html plano-de-aulas.html index.html \
+        setup.py usuario@177.190.69.20:/var/www/curso-hardware/
+    ssh usuario@177.190.69.20 "sudo systemctl restart curso-hardware"
+
+NUNCA envie a pasta dados/ (banco, senhas, segredo) — ela é
+criada no servidor e não deve ser sobrescrita pelo seu computador.
+
+------------------------------------------------------------
  SENHA DO INSTRUTOR E DA SECRETARIA
 ------------------------------------------------------------
 Senha padrão do instrutor:  instrutor123
