@@ -182,8 +182,8 @@ body{font-family:var(--font-family);background:var(--bg);color:var(--text);min-h
    - tipo "obj": múltipla escolha (opcoes + correta = índice)
    - tipo "disc": dissertativa (resposta livre)
    Respostas salvas no localStorage por apêndice. Quando o aluno está
-   identificado (?aluno=Nome), as dissertativas são sincronizadas com o
-   servidor e ficam visíveis ao instrutor (aba Exercícios).
+   identificado (?aluno=Nome), objetivas e dissertativas são sincronizadas
+   com o servidor e ficam visíveis ao instrutor (aba Exercícios).
    ============================================================ */
 const AP_EXERCICIOS = {
   "A": [
@@ -220,8 +220,8 @@ try { apState = JSON.parse(localStorage.getItem(AP_STORAGE_KEY) || "{}"); } catc
 function apSave(){ localStorage.setItem(AP_STORAGE_KEY, JSON.stringify(apState)); }
 
 /* Identificação do aluno (modo blindado do curso: ?aluno=Nome) e
-   sincronização das dissertativas com o servidor — o instrutor as vê
-   na aba Exercícios de alunos.html e pode avaliá-las com nota 0–10. */
+   sincronização das respostas com o servidor — o instrutor vê objetivas
+   (aproveitamento) e dissertativas na aba Exercícios de alunos.html. */
 let AP_ALUNO = "";
 try {
   AP_ALUNO = (new URLSearchParams((typeof window !== "undefined" && window.location && window.location.search) || "").get("aluno") || "").trim();
@@ -232,17 +232,23 @@ const AP_AULA_ID = {
 };
 let AP_SYNC_TIMER = null;
 
-function apSyncDisc(){
-  // Coleta as entregues de AMBOS os apêndices: como o debounce é único,
-  // entregar A e B em sequência rápida não pode perder nenhuma resposta.
+function apSync(){
+  // Sincroniza TODAS as respostas (objetivas respondidas + dissertativas
+  // entregues) de ambos os apêndices: o debounce é único, então responder
+  // A e B em sequência rápida não pode perder nenhuma resposta.
   if (!AP_ALUNO) return;
   const respostas = [];
   for (const ap of ["A","B"]){
     const st = apState[ap] || {};
+    const qs = AP_EXERCICIOS[ap];
     for (const qi in st){
       const r = st[qi];
-      if (!r || !r.entregue) continue;
-      respostas.push({ aula_id: AP_AULA_ID[ap], q: Number(qi), tipo: "disc", resposta: r.resposta || "" });
+      if (!r) continue;
+      if (r.entregue){
+        respostas.push({ aula_id: AP_AULA_ID[ap], q: Number(qi), tipo: "disc", resposta: r.resposta || "" });
+      } else if (r.respondido && qs[qi] && qs[qi].tipo !== "disc" && typeof r.escolha !== "undefined"){
+        respostas.push({ aula_id: AP_AULA_ID[ap], q: Number(qi), tipo: "obj", resposta: String(r.escolha), correta: r.acertou === true });
+      }
     }
   }
   if (!respostas.length) return;
@@ -271,14 +277,20 @@ async function apCarregarServidor(){
       const ap = aulaId.indexOf("Apêndice A") !== -1 ? "A" : aulaId.indexOf("Apêndice B") !== -1 ? "B" : null;
       if (!ap) continue;
       for (const resp of j.exercicios[aulaId]){
-        if (!resp || resp.tipo !== "disc" || !resp.resposta) continue;
+        if (!resp) continue;
         if (!apState[ap]) apState[ap] = {};
         const prev = apState[ap][resp.q];
-        // Resposta já entregue neste navegador é a fonte da sessão (pode ser
-        // mais nova que a do servidor, com o POST ainda no debounce).
-        if (prev && prev.entregue) continue;
-        apState[ap][resp.q] = { respondido: true, entregue: true, resposta: resp.resposta, em: resp.em || new Date().toISOString() };
-        mudou = true;
+        // Resposta já registrada neste navegador é a fonte da sessão (pode
+        // ser mais nova que a do servidor, com o POST ainda no debounce).
+        if (resp.tipo === "disc"){
+          if (!resp.resposta || (prev && prev.entregue)) continue;
+          apState[ap][resp.q] = { respondido: true, entregue: true, resposta: resp.resposta, em: resp.em || new Date().toISOString() };
+          mudou = true;
+        } else if (resp.tipo === "obj"){
+          if (prev && prev.respondido) continue;
+          apState[ap][resp.q] = { respondido: true, escolha: Number(resp.resposta), acertou: !!resp.correta, em: resp.em || new Date().toISOString() };
+          mudou = true;
+        }
       }
     }
     if (mudou){
@@ -345,6 +357,7 @@ function apResponder(ap, qi, escolha){
   apState[ap][qi] = { respondido: true, escolha, acertou: escolha === q.correta, em: new Date().toISOString() };
   apSave();
   renderApendice(ap);
+  apSync();
 }
 
 function apEnviarDisc(ap, qi){
@@ -355,7 +368,7 @@ function apEnviarDisc(ap, qi){
   apState[ap][qi] = { respondido: true, entregue: true, resposta: texto, em: new Date().toISOString() };
   apSave();
   renderApendice(ap);
-  apSyncDisc();
+  apSync();
 }
 
 function atualizarChips(){
