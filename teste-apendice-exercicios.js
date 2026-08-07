@@ -1,4 +1,5 @@
 // Harness: executa o JS real de apendice-exercicios.html e valida o quiz interativo
+// + sincronização das dissertativas com o servidor (visíveis ao instrutor).
 const fs = require('fs');
 const html = fs.readFileSync('apendice-exercicios.html', 'utf-8');
 const scripts = [...html.matchAll(/<script(?:[^>]*)>([\s\S]*?)<\/script>/g)]
@@ -11,9 +12,25 @@ global.document = { getElementById(id){ return elements[id] || (elements[id] = m
 global.localStorage = { getItem(){ return null; }, setItem(){}, removeItem(){} };
 global.alert = () => {};
 global.window = global;
+global.location = { search: "" };
+
+// --- fetch stubado: registra chamadas e devolve um GET com dissertativa do apêndice A ---
+const fetchCalls = [];
+global.fetch = (url, opts) => {
+  const method = (opts && opts.method) || "GET";
+  fetchCalls.push({ url, method, body: opts && opts.body ? JSON.parse(opts.body) : null });
+  if (method === "POST") return Promise.resolve({ ok: true });
+  return Promise.resolve({ ok: true, json: () => Promise.resolve({
+    exercicios: {
+      "AP|Apêndice A — Diskpart (Windows)": [
+        { q: 9, tipo: "disc", resposta: "Conferir o numero do disco no list disk antes do clean.", em: "2026-01-01T00:00:00" }
+      ]
+    }
+  }) });
+};
 
 const testCode = `
-;(function(){
+;(async function(){
   let falhas = 0;
   const ok = (n,c) => { console.log((c?'[OK] ':'[FALHA] ') + n); if(!c) falhas++; };
 
@@ -34,16 +51,47 @@ const testCode = `
   ok('resposta errada: chip continua 1/9', elements['chip-a'].textContent === '1/9');
   ok('feedback errado com gabarito', elements['quiz-a'].innerHTML.includes('A resposta certa é:') && elements['quiz-a'].innerHTML.includes('O número do disco no list disk'));
 
-  // ===== dissertativa =====
+  // ===== dissertativa SEM aluno identificado: só local, sem fetch =====
+  const antesSemAluno = fetchCalls.length;
   elements['ap-disc-a-9'] = makeEl('ap-disc-a-9');
   elements['ap-disc-a-9'].value = 'Conferir o numero do disco no list disk antes do clean.';
   apEnviarDisc('A', 9);
-  ok('dissertativa entregue', elements['quiz-a'].innerHTML.includes('✓ Entregue') && elements['quiz-a'].innerHTML.includes('Resposta entregue'));
+  ok('dissertativa entregue (local)', elements['quiz-a'].innerHTML.includes('✓ Entregue') && elements['quiz-a'].innerHTML.includes('Resposta entregue'));
+  ok('sem aluno identificado: não envia ao servidor', fetchCalls.length === antesSemAluno);
 
   // ===== apêndice B =====
   apResponder('B', 0, 1);
   ok('resposta B certa: chip B vira 1/11', elements['chip-b'].textContent === '1/11');
   ok('feedback B', elements['quiz-b'].innerHTML.includes('✅ Correto!'));
+
+  // ===== dissertativa COM aluno identificado: POST ao servidor =====
+  // Cenário do race: a dissertativa A (entregue acima) ainda está pendente no
+  // debounce quando B é entregue — o POST final precisa conter as DUAS.
+  AP_ALUNO = "Fulana";
+  elements['ap-disc-b-11'] = makeEl('ap-disc-b-11');
+  elements['ap-disc-b-11'].value = 'O fstab monta automaticamente ao ligar; o mount só vale na sessão. O UUID é preferido porque os nomes sdX mudam.';
+  apEnviarDisc('B', 11);
+  await new Promise(r=>setTimeout(r, 600)); // aguarda o debounce de 400ms
+  const post = fetchCalls.filter(c=>c.method === "POST").pop();
+  ok('aluno identificado: envia POST api/exercicios', !!post && String(post.url).includes('api/exercicios'));
+  ok('POST com o nome do aluno', post && post.body && post.body.nome === 'Fulana');
+  ok('POST não perde a dissertativa do apêndice A (race do debounce)', post && post.body && post.body.respostas.some(r=>r.aula_id === 'AP|Apêndice A — Diskpart (Windows)' && r.resposta.indexOf('list disk') !== -1));
+  ok('POST com aula_id do apêndice B', post && post.body && post.body.respostas.some(r=>r.aula_id === 'AP|Apêndice B — GParted/Fdisk (Linux)'));
+  ok('POST com tipo disc e resposta', post && post.body && post.body.respostas.some(r=>r.tipo === 'disc' && r.resposta.indexOf('fstab') !== -1));
+  ok('mensagem reflete envio ao instrutor', elements['quiz-b'].innerHTML.includes('enviada ao instrutor'));
+
+  // ===== carregar dissertativa do servidor (troca de navegador/quiosque) =====
+  apState['A'] = {};
+  apSave();
+  await apCarregarServidor();
+  ok('carrega dissertativa do servidor (apêndice A entregue)', apState['A'] && apState['A'][9] && apState['A'][9].entregue && apState['A'][9].resposta.indexOf('list disk') !== -1);
+  ok('render reflete resposta vinda do servidor', elements['quiz-a'].innerHTML.includes('Resposta entregue'));
+
+  // merge não sobrescreve resposta local já entregue (mais nova)
+  apState['B'] = { 11: { respondido: true, entregue: true, resposta: 'Resposta nova deste navegador', em: '2026-08-07T12:00:00' } };
+  apSave();
+  await apCarregarServidor();
+  ok('merge preserva resposta local entregue (não sobrescreve pela do servidor)', apState['B'][11] && apState['B'][11].resposta === 'Resposta nova deste navegador');
 
   console.log(falhas === 0 ? 'RESULTADO: TODOS OS CHECKS OK' : 'RESULTADO: ' + falhas + ' FALHA(S)');
   process.exit(falhas === 0 ? 0 : 1);

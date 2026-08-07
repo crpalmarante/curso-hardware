@@ -144,7 +144,7 @@ body{font-family:var(--font-family);background:var(--bg);color:var(--text);min-h
 <div class="container">
   <div class="hero">
     <h1>📝 Exercícios de fixação — Apêndices A e B</h1>
-    <p>Teste o que você aprendeu nos apêndices do livro: <b style="color:var(--primary)">adicionar discos no Windows (Diskpart)</b> e <b style="color:var(--secondary)">adicionar discos no Linux (GParted/Fdisk)</b>. As respostas ficam salvas no seu navegador.</p>
+    <p>Teste o que você aprendeu nos apêndices do livro: <b style="color:var(--primary)">adicionar discos no Windows (Diskpart)</b> e <b style="color:var(--secondary)">adicionar discos no Linux (GParted/Fdisk)</b>. As respostas ficam salvas no seu navegador e, se você estiver identificado, são enviadas ao instrutor para avaliação.</p>
     <div class="chips">
       <span class="chip">Apêndice A — <b id="chip-a">0/0</b></span>
       <span class="chip">Apêndice B — <b id="chip-b">0/0</b></span>
@@ -181,7 +181,9 @@ body{font-family:var(--font-family);background:var(--bg);color:var(--text);min-h
    EXERCÍCIOS DOS APÊNDICES
    - tipo "obj": múltipla escolha (opcoes + correta = índice)
    - tipo "disc": dissertativa (resposta livre)
-   Respostas salvas no localStorage por apêndice.
+   Respostas salvas no localStorage por apêndice. Quando o aluno está
+   identificado (?aluno=Nome), as dissertativas são sincronizadas com o
+   servidor e ficam visíveis ao instrutor (aba Exercícios).
    ============================================================ */
 const AP_EXERCICIOS = {
   "A": [
@@ -216,6 +218,78 @@ const AP_STORAGE_KEY = "curso-hardware-apendice-exercicios";
 let apState = {};
 try { apState = JSON.parse(localStorage.getItem(AP_STORAGE_KEY) || "{}"); } catch(e){}
 function apSave(){ localStorage.setItem(AP_STORAGE_KEY, JSON.stringify(apState)); }
+
+/* Identificação do aluno (modo blindado do curso: ?aluno=Nome) e
+   sincronização das dissertativas com o servidor — o instrutor as vê
+   na aba Exercícios de alunos.html e pode avaliá-las com nota 0–10. */
+let AP_ALUNO = "";
+try {
+  AP_ALUNO = (new URLSearchParams((typeof window !== "undefined" && window.location && window.location.search) || "").get("aluno") || "").trim();
+} catch(e){}
+const AP_AULA_ID = {
+  A: "AP|Apêndice A — Diskpart (Windows)",
+  B: "AP|Apêndice B — GParted/Fdisk (Linux)"
+};
+let AP_SYNC_TIMER = null;
+
+function apSyncDisc(){
+  // Coleta as entregues de AMBOS os apêndices: como o debounce é único,
+  // entregar A e B em sequência rápida não pode perder nenhuma resposta.
+  if (!AP_ALUNO) return;
+  const respostas = [];
+  for (const ap of ["A","B"]){
+    const st = apState[ap] || {};
+    for (const qi in st){
+      const r = st[qi];
+      if (!r || !r.entregue) continue;
+      respostas.push({ aula_id: AP_AULA_ID[ap], q: Number(qi), tipo: "disc", resposta: r.resposta || "" });
+    }
+  }
+  if (!respostas.length) return;
+  if (AP_SYNC_TIMER) clearTimeout(AP_SYNC_TIMER);
+  AP_SYNC_TIMER = setTimeout(()=>{
+    fetch("api/exercicios", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nome: AP_ALUNO, respostas })
+    }).catch(()=>{});
+  }, 400);
+}
+
+async function apCarregarServidor(){
+  if (!AP_ALUNO) return;
+  try {
+    const ctl = new AbortController();
+    setTimeout(()=>ctl.abort(), 3000);
+    const r = await fetch("api/exercicios?aluno=" + encodeURIComponent(AP_ALUNO), { signal: ctl.signal });
+    if (!r.ok) return;
+    const j = await r.json();
+    if (!j.exercicios) return;
+    let mudou = false;
+    for (const aulaId in j.exercicios){
+      if (aulaId.indexOf("AP|") !== 0) continue;
+      const ap = aulaId.indexOf("Apêndice A") !== -1 ? "A" : aulaId.indexOf("Apêndice B") !== -1 ? "B" : null;
+      if (!ap) continue;
+      for (const resp of j.exercicios[aulaId]){
+        if (!resp || resp.tipo !== "disc" || !resp.resposta) continue;
+        if (!apState[ap]) apState[ap] = {};
+        const prev = apState[ap][resp.q];
+        // Resposta já entregue neste navegador é a fonte da sessão (pode ser
+        // mais nova que a do servidor, com o POST ainda no debounce).
+        if (prev && prev.entregue) continue;
+        apState[ap][resp.q] = { respondido: true, entregue: true, resposta: resp.resposta, em: resp.em || new Date().toISOString() };
+        mudou = true;
+      }
+    }
+    if (mudou){
+      apSave();
+      renderApendice("A");
+      renderApendice("B");
+      atualizarChips();
+    }
+  } catch(e){}
+}
+
 const LETRAS = ["A","B","C","D","E","F"];
 
 function renderApendice(ap){
@@ -234,7 +308,7 @@ function renderApendice(ap){
         <div class="enunciado">${qi+1}. ${q.q}</div>
         <textarea id="ap-disc-${apId}-${qi}" ${resp && resp.entregue ? "disabled" : ""} placeholder="Escreva sua resposta aqui...">${resp && resp.resposta ? esc(resp.resposta) : ""}</textarea>
         <button class="exer-enviar" onclick="apEnviarDisc('${ap}', ${qi})" ${resp && resp.entregue ? "disabled" : ""}>${resp && resp.entregue ? "✓ Entregue" : "Entregar resposta"}</button>
-        <div class="exer-entrega ${resp && resp.entregue ? "show" : ""}" id="ap-entrega-${apId}-${qi}">📨 Resposta entregue — salva neste navegador.</div>
+        <div class="exer-entrega ${resp && resp.entregue ? "show" : ""}" id="ap-entrega-${apId}-${qi}">📨 Resposta entregue — ${AP_ALUNO ? "enviada ao instrutor" : "salva neste navegador"}.</div>
         ${resp && resp.entregue ? `<p class="dica">💡 Compare com o gabarito no Apêndice do livro (seção 7.2).</p>` : ""}
       </div>`;
     }
@@ -281,6 +355,7 @@ function apEnviarDisc(ap, qi){
   apState[ap][qi] = { respondido: true, entregue: true, resposta: texto, em: new Date().toISOString() };
   apSave();
   renderApendice(ap);
+  apSyncDisc();
 }
 
 function atualizarChips(){
@@ -312,6 +387,7 @@ function toggleTheme(){
 
 renderApendice("A");
 renderApendice("B");
+apCarregarServidor();
 </script>
 </body>
 </html>

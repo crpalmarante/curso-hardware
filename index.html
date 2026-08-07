@@ -681,6 +681,8 @@ let alunoNome = null;
     const btnAluno = document.getElementById("btn-login-aluno");
     btnAluno.textContent = "👤 " + alunoNome;
     btnAluno.title = "Trocar de aluno";
+    const linkAp = document.querySelector('a[href="apendice-exercicios.html"]');
+    if (linkAp) linkAp.href = "apendice-exercicios.html?aluno=" + encodeURIComponent(alunoNome);
     btnAluno.href = "login-aluno.html";
     btnAluno.onclick = function(e){
       if (quiosqueObrigatorio){

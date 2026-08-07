@@ -500,6 +500,17 @@ function toggleTheme(){
 
 document.getElementById("search").addEventListener("input", e => { query = e.target.value.trim().toLowerCase(); render(); });
 
+// Propaga o aluno identificado (?aluno=) para os exercícios dos apêndices
+(function(){
+  try {
+    const ap = new URLSearchParams(window.location.search).get("aluno");
+    if (ap){
+      const link = document.querySelector('a[href="apendice-exercicios.html"]');
+      if (link) link.href = "apendice-exercicios.html?aluno=" + encodeURIComponent(ap);
+    }
+  } catch(e){}
+})();
+
 render();
 </script>
 </body>
