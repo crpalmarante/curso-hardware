@@ -307,6 +307,29 @@ def main():
         checar("Histórico NÃO vaza em /api/progresso (rota do aluno)",
                st == 200 and not j.get("historico"), "HTTP %d %s" % (st, j))
 
+        # ---- 8.5. Modo quiosque obrigatório (config do instrutor) ----
+        st, j = sec.post("/api/alunos", {"alunos": [
+            {"id": "a5", "nome": "Aluno Quiosque", "turma": "5502+HWD10", "quiosque": True}]})
+        checar("Instrutor/secretaria marca quiosque obrigatório (POST /api/alunos) = 200",
+               st == 200 and j.get("status") == "ok", "HTTP %d %s" % (st, j))
+        st, _, db = sec.get("/api/alunos")
+        qk = None
+        for a in db.get("alunos", []):
+            if a.get("nome") == "Aluno Quiosque":
+                qk = a.get("quiosque")
+        checar("Quiosque obrigatório persiste no GET /api/alunos (protegido)",
+               qk is True, "quiosque: %r" % qk)
+        # o site do aluno consulta a própria config (rota aberta /api/progresso)
+        st, _, j = anon.get("/api/progresso?aluno=" + urllib.parse.quote("Aluno Quiosque"))
+        checar("Aluno recebe quiosque obrigatório via /api/progresso",
+               st == 200 and j.get("quiosque") is True, "HTTP %d %s" % (st, j))
+        # desmarcar (quiosque: False) libera o aluno
+        st, j = sec.post("/api/alunos", {"alunos": [
+            {"id": "a5", "nome": "Aluno Quiosque", "turma": "5502+HWD10", "quiosque": False}]})
+        st, _, j = anon.get("/api/progresso?aluno=" + urllib.parse.quote("Aluno Quiosque"))
+        checar("Desmarcar quiosque libera o aluno (/api/progresso quiosque=False)",
+               st == 200 and j.get("quiosque") is False, "HTTP %d %s" % (st, j))
+
         # ---- 9. Estabilidade e troca de turma ----
         # reenvio do banco com a matrícula já gerada → permanece estável
         st, j = sec.post("/api/alunos", {"alunos": [

@@ -682,6 +682,11 @@ let alunoNome = null;
     btnAluno.title = "Trocar de aluno";
     btnAluno.href = "login-aluno.html";
     btnAluno.onclick = function(e){
+      if (quiosqueObrigatorio){
+        alert("O modo quiosque é OBRIGATÓRIO para você. Não é possível trocar de aluno — fale com o instrutor.");
+        e.preventDefault();
+        return false;
+      }
       if (!confirm("Sair de " + alunoNome + " e trocar de aluno?")) {
         e.preventDefault();
         return false;
@@ -700,6 +705,8 @@ let alunoNome = null;
   }
 })();
 
+let quiosqueObrigatorio = false;
+
 async function carregarProgresso(){
   if (!alunoNome) return;
   try {
@@ -712,8 +719,39 @@ async function carregarProgresso(){
     for (const k in j.progresso) if (j.progresso[k]) done[k] = true;
     localStorage.setItem(storageKey(), JSON.stringify(done));
     exibirMatricula(j.matricula || "", j.turma || "");
+    aplicarQuiosqueObrigatorio(!!j.quiosque);
     render();
   } catch(e) {}
+}
+
+function aplicarQuiosqueObrigatorio(obrigatorio){
+  quiosqueObrigatorio = !!obrigatorio;
+  const btn = document.getElementById("btn-guard");
+  if (!btn) return;
+  if (quiosqueObrigatorio){
+    // quiosque obrigatório: garante ativo e trava (só instrutor/secretaria libera)
+    if (!guard) guardAtivar(true);
+    btn.innerHTML = "🔒 " + (alunoNome || "Modo blindado");
+    btn.title = "Modo quiosque OBRIGATÓRIO — não é possível desativar (fale com o instrutor)";
+    btn.style.borderColor = "var(--danger)";
+    btn.style.color = "var(--danger)";
+    const aviso = document.getElementById("guard-aviso");
+    if (aviso){
+      const txt = aviso.querySelector("span:last-child");
+      if (txt && !txt.dataset.orig) txt.dataset.orig = txt.textContent;
+      if (txt) txt.textContent = "🔒 Modo monitorado OBRIGATÓRIO — você não pode desativar este modo.";
+    }
+  } else {
+    // liberado: restaura título/estilo padrão do botão e o texto do aviso
+    btn.title = "Modo blindado — aluno " + (alunoNome || "");
+    btn.style.borderColor = guard ? "var(--danger)" : "var(--primary)";
+    btn.style.color = guard ? "var(--danger)" : "var(--primary)";
+    const aviso = document.getElementById("guard-aviso");
+    if (aviso){
+      const txt = aviso.querySelector("span:last-child");
+      if (txt && txt.dataset.orig) txt.textContent = txt.dataset.orig;
+    }
+  }
 }
 
 let tentouMatricula = false;
@@ -1411,6 +1449,12 @@ function guardAtivar(silencioso){
   }
 }
 function guardDesativar(){
+  // Quiosque obrigatório: o aluno NÃO pode desativar (só instrutor/secretaria,
+  // desmarcando no painel — que redefine quiosqueObrigatorio e chama esta função).
+  if (quiosqueObrigatorio){
+    alert("O modo quiosque é OBRIGATÓRIO para você. Não é possível desativar — fale com o instrutor.");
+    return;
+  }
   guardLocked = false;
   hideGuardOverlay();
   attachGuardListeners(false);

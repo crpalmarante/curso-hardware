@@ -39,13 +39,13 @@ SECRETARIO_FILE = os.path.join(DATA_DIR, "secretario.txt")
 # ---- esquema do banco SQLite ----
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS alunos(
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    nome TEXT NOT NULL UNIQUE COLLATE NOCASE,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,    nome TEXT NOT NULL UNIQUE COLLATE NOCASE,
     turma TEXT NOT NULL DEFAULT '',
     matricula TEXT,
     foto TEXT,
+    quiosque INTEGER NOT NULL DEFAULT 0,
     criado_em TEXT
-);
+  );
 CREATE TABLE IF NOT EXISTS progresso(
     aluno_id INTEGER NOT NULL,
     aula_id TEXT NOT NULL,
@@ -262,6 +262,10 @@ def init_db():
         cols = [r["name"] for r in conn.execute("PRAGMA table_info(alunos)")]
         if "foto" not in cols:
             conn.execute("ALTER TABLE alunos ADD COLUMN foto TEXT")
+        # migração: modo quiosque obrigatório (0/1) — ativa sozinho e trava o aluno
+        cols = [r["name"] for r in conn.execute("PRAGMA table_info(alunos)")]
+        if "quiosque" not in cols:
+            conn.execute("ALTER TABLE alunos ADD COLUMN quiosque INTEGER NOT NULL DEFAULT 0")
         for r in conn.execute("SELECT id, turma, matricula FROM alunos ORDER BY id"):
             if not (r["matricula"] or "").strip():
                 conn.execute("UPDATE alunos SET matricula=? WHERE id=?",
@@ -338,12 +342,24 @@ def _upsert_aluno(conn, a):
     # foto: None quando o campo não veio no payload → mantém a foto existente
     # (COALESCE); "" remove a foto; data URL salva/substitui.
     foto = a.get("foto")
+    # quiosque: quando o campo não veio (None) não toca na coluna (clientes
+    # antigos não zeram a config); True/False grava o valor pedido.
+    quiosque = a.get("quiosque")
     criado_em = a.get("criadoEm") or datetime.now().isoformat()
-    conn.execute(
-        "INSERT INTO alunos(nome, turma, criado_em, foto) VALUES(?,?,?,?) "
-        "ON CONFLICT(nome) DO UPDATE SET "
-        "turma=excluded.turma, foto=COALESCE(excluded.foto, alunos.foto)",
-        (nome, turma, criado_em, foto))
+    if quiosque is None:
+        conn.execute(
+            "INSERT INTO alunos(nome, turma, criado_em, foto) VALUES(?,?,?,?) "
+            "ON CONFLICT(nome) DO UPDATE SET "
+            "turma=excluded.turma, foto=COALESCE(excluded.foto, alunos.foto)",
+            (nome, turma, criado_em, foto))
+    else:
+        qk = 1 if quiosque else 0
+        conn.execute(
+            "INSERT INTO alunos(nome, turma, criado_em, foto, quiosque) VALUES(?,?,?,?,?) "
+            "ON CONFLICT(nome) DO UPDATE SET "
+            "turma=excluded.turma, foto=COALESCE(excluded.foto, alunos.foto), "
+            "quiosque=excluded.quiosque",
+            (nome, turma, criado_em, foto, qk))
     row = conn.execute("SELECT id, matricula FROM alunos WHERE nome=? COLLATE NOCASE", (nome,)).fetchone()
     aid = row["id"]
     # matrícula: deve condizer com a turma atual; senão mantém a gravada; senão gera nova
@@ -394,6 +410,7 @@ def _aluno_dict(conn, aid):
         "turma": r["turma"] or "",
         "matricula": r["matricula"] or "",
         "foto": r["foto"] or "",
+        "quiosque": bool(r["quiosque"]),
         "criadoEm": r["criado_em"] or datetime.now().isoformat(),
         "presencas": {},
         "notas": {"participacao": None, "exercicios": None, "montagem": None, "diagnostico": None},
@@ -441,14 +458,15 @@ def get_progresso(nome):
     """Retorna o andamento (aulas concluídas) e a identificação (matrícula/turma) de um aluno."""
     conn = _conn()
     try:
-        row = conn.execute("SELECT id, turma, matricula FROM alunos WHERE nome=? COLLATE NOCASE", (nome,)).fetchone()
+        row = conn.execute("SELECT id, turma, matricula, quiosque FROM alunos WHERE nome=? COLLATE NOCASE", (nome,)).fetchone()
         if row is None:
             return {"aluno": nome, "matricula": "", "turma": "", "progresso": {}}
         progresso = {r["aula_id"]: bool(r["concluida"])
                      for r in conn.execute("SELECT aula_id, concluida FROM progresso WHERE aluno_id=?", (row["id"],))}
     finally:
         conn.close()
-    return {"aluno": nome, "matricula": row["matricula"] or "", "turma": row["turma"] or "", "progresso": progresso}
+    return {"aluno": nome, "matricula": row["matricula"] or "", "turma": row["turma"] or "",
+            "quiosque": bool(row["quiosque"]), "progresso": progresso}
 
 
 def set_progresso(nome, progresso):
