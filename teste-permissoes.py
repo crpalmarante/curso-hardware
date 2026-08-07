@@ -276,6 +276,25 @@ def main():
         checar("Sem a chave foto no payload, a foto existente é mantida",
                foto_apos_omissao == FOTO_TES, "foto: %r" % (foto_apos_omissao[:40] + "..." if foto_apos_omissao else "(vazia)"))
 
+        # ---- 9.5. Evento do modo quiosque: /api/evento grava no histórico ----
+        st, j = anon.post("/api/evento", {"nome": "Aluno Evento",
+                                           "tipo": "sistema",
+                                           "texto": "Modo quiosque ativado — navegação monitorada pelo instrutor."})
+        checar("Aluno registra evento (POST /api/evento) = 200",
+               st == 200 and j.get("status") == "ok", "HTTP %d %s" % (st, j))
+        st, _, db = sec.get("/api/alunos")
+        hist = []
+        for a in db.get("alunos", []):
+            if a.get("nome") == "Aluno Evento":
+                hist = a.get("historico") or []
+        checar("Evento do quiosque aparece no histórico (GET /api/alunos, protegido)",
+               any(h.get("tipo") == "sistema" and "quiosque" in (h.get("texto") or "") for h in hist),
+               "histórico: %r" % hist)
+        # rotas públicas do aluno NÃO devolvem o histórico
+        st, _, j = anon.get("/api/progresso?aluno=" + urllib.parse.quote("Aluno Evento"))
+        checar("Histórico NÃO vaza em /api/progresso (rota do aluno)",
+               st == 200 and not j.get("historico"), "HTTP %d %s" % (st, j))
+
         # ---- 9. Estabilidade e troca de turma ----
         # reenvio do banco com a matrícula já gerada → permanece estável
         st, j = sec.post("/api/alunos", {"alunos": [

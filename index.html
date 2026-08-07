@@ -1395,6 +1395,17 @@ function guardAtivar(silencioso){
   guardEnter();
   attachGuardListeners(true);
   guardAviso(true);
+  // Registra a ativação no histórico (1x por sessão de navegação de cada
+  // aluno — evita poluir o histórico a cada recarga; a desativação é sempre
+  // registrada em guardDesativar). A chave é escopada por aluno para que a
+  // troca de aluno na mesma aba registre a ativação do próximo aluno.
+  try {
+    const chaveQuiosque = "curso-quiosque-registrado-" + (alunoNome||"").toLowerCase().trim();
+    if (!silencioso || !sessionStorage.getItem(chaveQuiosque)) {
+      registrarNoAluno({ tipo: "sistema", texto: "Modo quiosque ativado — navegação monitorada pelo instrutor." });
+      sessionStorage.setItem(chaveQuiosque, "1");
+    }
+  } catch(e) {}
   if (!silencioso){
     alert("Modo blindado ATIVADO.\n\n- Tela cheia ativada.\n- Se você trocar de aba ou minimizar, o curso será bloqueado e a ocorrência registrada.\n- Use ESC somente com autorização do instrutor.");
   }
@@ -1407,6 +1418,7 @@ function guardDesativar(){
   guardStart = null;
   guardSave();
   guardAviso(false);
+  registrarNoAluno({ tipo: "sistema", texto: "Modo quiosque desativado pelo aluno." });
   const btn = document.getElementById("btn-guard");
   btn.innerHTML = "🔒 " + (alunoNome || "Modo blindado");
   btn.style.borderColor = "var(--primary)";
