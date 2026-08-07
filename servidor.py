@@ -1058,10 +1058,13 @@ class Handler(BaseHTTPRequestHandler):
                 self._json(500, {"erro": str(e)})
             return
 
-        # --- API: avaliar dissertativa (nota 0–10) — exige login ---
+        # --- API: avaliar dissertativa (nota 0–10) — só instrutor ---
         if path == "/api/dissertativa":
             if not self._autenticado():
                 self._negar_acesso(json_=True)
+                return
+            if _sess_papel(self._sess_cookie()) != "instrutor":
+                self._json(403, {"erro": "Apenas o instrutor pode avaliar dissertativas"})
                 return
             try:
                 body = json.loads(self._read_body().decode("utf-8") or "{}")
@@ -1163,10 +1166,13 @@ class Handler(BaseHTTPRequestHandler):
                 self._json(500, {"erro": str(e)})
             return
 
-        # --- API: avaliar checkout (nota 0–10) — exige login ---
+        # --- API: avaliar checkout (nota 0–10) — só instrutor ---
         if path == "/api/checkout-avaliar":
             if not self._autenticado():
                 self._negar_acesso(json_=True)
+                return
+            if _sess_papel(self._sess_cookie()) != "instrutor":
+                self._json(403, {"erro": "Apenas o instrutor pode avaliar checkouts"})
                 return
             try:
                 body = json.loads(self._read_body().decode("utf-8") or "{}")
