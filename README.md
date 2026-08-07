@@ -19,6 +19,7 @@ Acesso online: **http://palmarante.com.br**
   - [Registro do instrutor (alunos.html)](#registro-do-instrutor-alunoshtml)
   - [Painel da turma](#painel-da-turma)
   - [Boletim](#boletim)
+- [Matrícula automática](#matrícula-automática)
 - [Avaliação e situação do aluno](#avaliação-e-situação-do-aluno)
 - [Servidor e API](#servidor-e-api)
 - [Banco de dados](#banco-de-dados)
@@ -79,7 +80,7 @@ curso-hardware/
 ### Aluno
 
 1. Abre o curso e clica em **👤 Aluno** (ou entra em `login-aluno.html`).
-2. Digita o nome completo → é direcionado para `index.html?aluno=Nome`.
+2. Digita o nome completo → é direcionado para `index.html?aluno=Nome` (a matrícula do aluno aparece em um chip "🎫 Matrícula: …" no topo — veja [Matrícula automática](#matrícula-automática)).
 3. Acessa as aulas: cada aula marcada como concluída libera os **exercícios** da aula e a **próxima aula** (progressão por ordem global de 43 aulas).
 4. Ao concluir todas as aulas de um módulo, a **prova do módulo** é liberada.
 5. Ao entrar, a **presença é registrada automaticamente** na semana atual do curso (definida pelo instrutor).
@@ -148,9 +149,10 @@ Aba por aba:
 | 🏫 Turma | Painel geral (ranking, estatísticas, módulos difíceis) |
 
 Extras:
+- **Busca** por nome, matrícula ou turma na lista lateral.
 - **Aplicar nota de exercícios**: botão que grava a nota sugerida (caderno + dissertativas + provas) no campo "Exercícios".
-- **Boletim 🖨️**: abre uma página de impressão/PDF com todas as informações do aluno.
-- **Abrir curso do aluno**: abre `index.html?aluno=Nome` para ver como o aluno enxerga.
+- **Boletim 🖨️**: abre uma página de impressão/PDF com todas as informações do aluno (incluindo a matrícula).
+- **Abrir curso do aluno**: abre `index.html?aluno=Nome` para ver como o aluno enxerga (incluindo a própria matrícula).
 
 ### Painel da turma
 
@@ -159,13 +161,24 @@ Extras:
 - **Módulos com mais dificuldade**: aproveitamento médio por aula entre toda a turma.
 - Funciona mesmo sem um aluno selecionado.
 
+### Matrícula automática
+
+Cada aluno recebe uma **matrícula única** no formato `TURMA-###`, gerada automaticamente pelo servidor — ninguém precisa preencher nada.
+
+- **Formato**: código da turma + sequência de 3 dígitos (ex.: turma `5502+HWD10` → `5502-HWD10-001`, `5502-HWD10-002`…). Sinais no código da turma viram hífen (`+` → `-`).
+- **Sequência por turma**: reinicia em `001` a cada turma (duas turmas diferentes podem ter `-001`).
+- **Sem turma**: enquanto o aluno não tem turma, a matrícula é provisória (`SEMTURMA-001`); ao receber uma turma, a matrícula é **regenerada automaticamente**.
+- **Geração**: em todos os pontos de criação de aluno no servidor (`/api/alunos`, `/api/progresso`, `/api/presenca`, `/api/exercicios`, `/api/evento`, …). Bancos antigos são **migrados na primeira subida** (backfill por ordem de id) e um **índice único** no banco impede matrículas duplicadas.
+- **Onde aparece**: busca por **nome, matrícula ou turma** e matrícula na lista, no cabeçalho e na tabela da turma (secretaria e instrutor); no **boletim**; no **certificado**; e na **verificação pública**.
+- **O aluno vê a própria matrícula**: ao entrar no curso (`login-aluno.html` → `index.html?aluno=Nome`), o chip "🎫 Matrícula: …" aparece no topo — o valor vem do `GET /api/progresso` (rota aberta, devolve `matricula` e `turma`).
+
 ### Secretaria Pedagógica
 
 Página `secretaria.html` (link "🗂️ Secretaria" no topo do curso, login em `login-secretaria.html`) — painel da secretaria para acompanhar o curso e atender os pais:
 
 - **Painel da turma**: cards de resumo (total, aprovados, cursando, reprovados, média), ranking de progresso e módulos com mais dificuldade.
 - **Aba por aluno**: Resumo (situação, nota final, frequência), Presença (43 semanas, editável), Avaliação (notas com pesos), Atividades (registrar/listar), Exercícios (aproveitamento + avaliação de dissertativas), Provas por módulo e Histórico.
-- **Busca por nome, matrícula ou turma** na lista lateral. A **matrícula é gerada automaticamente por turma** no formato `TURMA-###` (ex.: turma `5502+HWD10` → `5502-HWD10-001`, `5502-HWD10-002`…), com a sequência reiniciando a cada turma — aparece na lista, no cabeçalho do aluno e na tabela da turma.
+- **Busca por nome, matrícula ou turma** na lista lateral; a matrícula (`TURMA-###`, automática por turma) aparece na lista, no cabeçalho do aluno e na tabela da turma — veja [Matrícula automática](#matrícula-automática).
 - **Semana atual do curso** (frequência automática) também disponível na secretaria.
 - Senha própria em `dados/secretario.txt` (ou env `SECRETARIO_SENHA`), separada da do instrutor.
 
@@ -204,7 +217,7 @@ python3 gerar-slides.py     # gera APRESENTACAO-CURSO.pdf
 ### Boletim
 
 Gera uma página imprimível (Ctrl+P → "Salvar como PDF") com:
-- Dados do aluno, turma, situação e frequência.
+- Dados do aluno, **matrícula**, data de matrícula, turma, situação e frequência.
 - Tabela de notas com pesos e **nota final** em destaque.
 - Comprometimento e lista de atividades registradas.
 
@@ -212,9 +225,9 @@ Gera uma página imprimível (Ctrl+P → "Salvar como PDF") com:
 
 O botão **🎓 Certificado** na ficha do aluno emite o certificado oficial (apenas para alunos **aprovados** — nota ≥ 6 e frequência ≥ 75%). **Só o instrutor pode emitir** — a rota `POST /api/certificado` e o painel `alunos.html` são restritos por papel (a secretaria recebe 403/redirecionamento):
 
-- Página **A4 paisagem** caprichada com nome, curso, carga horária (86h), período, nota final, frequência e assinaturas.
+- Página **A4 paisagem** caprichada com nome, **matrícula**, curso, carga horária (86h), período, nota final, frequência e assinaturas.
 - **QR Code único** com código de verificação gravado no servidor (`certificados` no banco). Cada aluno tem um código permanente (reemitir não duplica).
-- **Verificação pública**: escaneie o QR ou abra `verificar-certificado.html?codigo=XXXX` para conferir autenticidade em `palmarante.com.br` — mostra "CERTIFICADO VÁLIDO" com dados do aluno, ou inválido se o código não existir.
+- **Verificação pública**: escaneie o QR ou abra `verificar-certificado.html?codigo=XXXX` para conferir autenticidade em `palmarante.com.br` — mostra "CERTIFICADO VÁLIDO" com os dados do aluno (incluindo **matrícula**), ou inválido se o código não existir.
 - Sem impressões falsas: códigos são gerados com token aleatório seguro no servidor.
 
 ## Avaliação e situação do aluno
@@ -253,7 +266,7 @@ python3 servidor.py 8000 --publico  # aceita acesso externo (sem o flag, apenas 
 |---|---|---|---|
 | GET | `/api/alunos` | sim | Lista completa de alunos (banco) |
 | GET | `/api/alunos.json` | sim | Dados brutos em JSON (backup) |
-| GET | `/api/progresso?aluno=Nome` | — | Andamento das aulas do aluno |
+| GET | `/api/progresso?aluno=Nome` | — | Andamento das aulas + **matrícula/turma** do aluno (usado pelo site do curso) |
 | GET | `/api/exercicios?aluno=Nome` | — | Respostas do caderno + resumo (nota sugerida, dissertativas) |
 | GET | `/api/provas?aluno=Nome` | — | Notas das provas por módulo |
 | GET | `/api/config` | — | Configurações (ex.: `semana_atual`) |
@@ -283,6 +296,7 @@ O repositório tem um teste automatizado de **permissões por papel** (`teste-pe
 - `alunos.html` redireciona a secretaria (302 → `secretaria.html`); sem sessão, redireciona para o login.
 - A secretaria continua podendo editar dados (`POST /api/alunos`) e consultar provas (GET).
 - O envio de provas pelo aluno (`POST /api/provas`, sem login) segue aberto.
+- **Matrícula**: geração por turma (`5502-HWD10-001/002`), estabilidade no reenvio, troca de turma regenerando e consulta pelo aluno (`GET /api/progresso`).
 
 Rodando localmente:
 
@@ -299,7 +313,7 @@ SQLite em `dados/curso.db` (criado automaticamente na primeira execução). Tabe
 
 | Tabela | Conteúdo |
 |---|---|
-| `alunos` | Nome, turma, data de criação |
+| `alunos` | Nome, turma, matrícula, data de criação |
 | `progresso` | Aulas concluídas por aluno |
 | `notas` | Notas por critério (participação, exercícios, montagem, diagnóstico) |
 | `presencas` | Status por semana (presente/falta/justificada) |
