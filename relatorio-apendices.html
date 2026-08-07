@@ -132,14 +132,16 @@ body{
     </div>
   </div>
   <div class="topbar-right">
-    <a class="icon-btn" href="alunos.html" title="Voltar ao Registro de Alunos">👨‍🎓 Registro</a>
+    <a class="icon-btn" id="link-voltar" href="alunos.html" title="Voltar ao painel">👨‍🎓 Registro</a>
     <button class="icon-btn" onclick="toggleTheme()" title="Alternar tema">◐ Tema</button>
   </div>
 </div>
 
 <div class="container">
   <h1 class="page-title">📝 Pendências de avaliação dos apêndices</h1>
-  <p class="page-sub">Todas as dissertativas do quiz dos apêndices (A — Diskpart / B — GParted) entregues pelos alunos e ainda sem nota. Avalie direto aqui — a nota entra no aproveitamento do aluno.</p>
+  <div id="modo-leitura" class="aviso" style="display:none;margin-bottom:14px;padding:12px 16px;border-radius:var(--radius-md);border:1px solid var(--warning);color:var(--warning);font-size:13px">🔒 <b>Somente leitura</b> — a avaliação das dissertativas é exclusiva do instrutor. Você pode consultar as pendências, mas não lançar notas aqui.</div>
+  <div id="pode-avaliar" class="aviso" style="display:none;margin-bottom:14px;padding:12px 16px;border-radius:var(--radius-md);border:1px solid var(--border);color:var(--text-secondary);font-size:13px">✅ Você está no modo <b>avaliação</b> — pode lançar a nota direto aqui; a pendência sai da fila automaticamente.</div>
+  <p class="page-sub">Todas as dissertativas do quiz dos apêndices (A — Diskpart / B — GParted) entregues pelos alunos e ainda sem nota.</p>
 
   <div class="sum-cards">
     <div class="sum-card"><div class="val" id="total-alunos">—</div><div class="lab">Alunos com pendência</div></div>
@@ -171,6 +173,7 @@ const AP_DISC_PERGUNTAS = {
 let alunosCompletos = [];   // cache dos alunos vindos de /api/alunos
 let pendentesCache = {};    // nome (lower) -> { aluno, pendencias: [ {aula_id, q, resposta, pergunta} ] }
 let soPendentes = true;
+let papelAtual = null;      // 'instrutor' (avalia) ou 'secretario' (somente leitura)
 
 function esc(s){ return String(s||"").replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
 function escAttr(s){ return String(s).replace(/["']/g, c=>({"'":"&#39;",'"':"&quot;"}[c])); }
@@ -191,6 +194,18 @@ async function carregar(){
   const el = document.getElementById("lista");
   el.innerHTML = '<div class="loading">Carregando pendências…</div>';
   try {
+    const rm = await api("api/me");
+    const jm = await rm.json();
+    papelAtual = jm.papel || "secretario";
+    const somenteLeitura = papelAtual !== "instrutor";
+    // link de volta papel-aware: a secretaria volta para o painel dela
+    const linkVoltar = document.getElementById("link-voltar");
+    if (linkVoltar && somenteLeitura){
+      linkVoltar.href = "secretaria.html";
+      linkVoltar.textContent = "🗂️ Secretaria";
+    }
+    document.getElementById("modo-leitura").style.display = somenteLeitura ? "" : "none";
+    document.getElementById("pode-avaliar").style.display = somenteLeitura ? "none" : "";
     const r = await api("api/alunos");
     const j = await r.json();
     alunosCompletos = j.alunos || [];
@@ -200,6 +215,7 @@ async function carregar(){
     if (e.message !== "login") el.innerHTML = '<div class="vazio">Erro ao carregar os dados. Tente novamente.</div>';
   }
 }
+function podeAvaliar(){ return papelAtual === "instrutor"; }
 
 async function montarPendencias(){
   pendentesCache = {};
@@ -259,14 +275,17 @@ function render(){
     }
     const discHtml = pc.pendencias.map(p => {
       const qid = "nota-" + cssId(a.nome) + "-" + cssId(p.aula_id) + "-" + p.q;
+      const avaliar = podeAvaliar()
+        ? `<div class="disc-avaliar">
+            <label>Nota (0–10)</label>
+            <input type="number" id="${qid}" min="0" max="10" step="0.5" placeholder="—">
+            <button class="btn" id="btn-${qid}" onclick="avaliar('${escAttr(a.nome)}', '${escAttr(p.aula_id)}', ${p.q})">Salvar nota</button>
+          </div>`
+        : `<div class="disc-avaliar"><label style="color:var(--text-muted)">🔒 Avaliação exclusiva do instrutor</label></div>`;
       return `<div class="disc-item" id="item-${qid}">
         <div class="disc-q">${p.q+1}. ${esc(p.pergunta)}</div>
         <div class="disc-r">${esc(p.resposta) || "<i>(sem resposta)</i>"}</div>
-        <div class="disc-avaliar">
-          <label>Nota (0–10)</label>
-          <input type="number" id="${qid}" min="0" max="10" step="0.5" placeholder="—">
-          <button class="btn" id="btn-${qid}" onclick="avaliar('${escAttr(a.nome)}', '${escAttr(p.aula_id)}', ${p.q})">Salvar nota</button>
-        </div>
+        ${avaliar}
       </div>`;
     }).join("");
     return `<div class="aluno-grupo">

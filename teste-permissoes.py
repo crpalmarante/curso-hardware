@@ -102,7 +102,8 @@ def main():
     try:
         # copia o servidor e as páginas que serão acessadas nos testes
         for arquivo in ("servidor.py", "alunos.html", "secretaria.html",
-                        "login-alunos.html", "login-secretaria.html"):
+                        "login-alunos.html", "login-secretaria.html",
+                        "relatorio-apendices.html"):
             shutil.copy(os.path.join(BASE_DIR, arquivo), tmp)
         env = dict(os.environ)
         env["INSTRUTOR_SENHA"] = SENHA_INSTRUTOR
@@ -181,6 +182,14 @@ def main():
         checar("Instrutor acessa alunos.html = 200", st == 200, "HTTP %d" % st)
         st, loc, _ = sec.get("/secretaria.html")
         checar("Secretaria acessa secretaria.html = 200", st == 200, "HTTP %d" % st)
+        st, _, _ = sec.get("/relatorio-apendices.html")
+        checar("Secretaria acessa relatorio-apendices.html = 200 (somente leitura)", st == 200, "HTTP %d" % st)
+        st, _, j = sec.get("/api/me")
+        checar("Secretaria vê papel via /api/me = secretario", st == 200 and j.get("papel") == "secretario",
+               "HTTP %d %s" % (st, j))
+        st, _, j = inst.get("/api/me")
+        checar("Instrutor vê papel via /api/me = instrutor", st == 200 and j.get("papel") == "instrutor",
+               "HTTP %d %s" % (st, j))
 
         st, loc, _ = anon.get("/secretaria.html")
         checar("Sem sessão acessa secretaria.html = 302 (login)", st == 302 and "login-secretaria" in loc,

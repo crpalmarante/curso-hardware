@@ -22,10 +22,14 @@ global.alert = (m) => { global.__alertMsg = m; };
 global.window = global;
 global.location = { href: '' };
 
-// --- fetch stubado: api/alunos + api/exercicios por aluno + api/dissertativa ---
+// --- fetch stubado: api/me + api/alunos + api/exercicios por aluno + api/dissertativa ---
 let __postDissertativa = null;
+let __papel = 'instrutor';
 global.fetch = (url, opts) => {
   const u = String(url);
+  if (u.includes("api/me")){
+    return Promise.resolve({ status:200, json: () => Promise.resolve({ papel: __papel }) });
+  }
   if (u.includes("api/alunos")){
     return Promise.resolve({ status:200, json: () => Promise.resolve({ alunos: [
       { id:'a1', nome:'Maria Silva', turma:'5502-HWD10', matricula:'5502-HWD10-001', apendices_pendentes:1 },
@@ -69,6 +73,8 @@ const testCode = `
   // aguarda o carregar() inicial disparado no fim do script
   await new Promise(r=>setTimeout(r, 200));
 
+  ok('papel instrutor → aviso de avaliação visível', elements['pode-avaliar'].style.display === '');
+  ok('papel instrutor → aviso de somente-leitura oculto', elements['modo-leitura'].style.display === 'none');
   ok('contador de alunos com pendência = 2', elements['total-alunos'].textContent === 2);
   ok('contador de dissertativas p/ avaliar = 3', elements['total-pendencias'].textContent === 3);
 
@@ -80,6 +86,7 @@ const testCode = `
   ok('pergunta do Apêndice B presente', out.includes('configurar o /etc/fstab'));
   ok('resposta da Maria presente', out.includes('Conferir o número do disco no list disk antes do clean.'));
   ok('badge "3 p/ avaliar" no João', out.includes('📝 2 p/ avaliar') && out.includes('badge'));
+  ok('instrutor vê o campo de nota', out.includes('Nota (0–10)') && out.includes('Salvar nota'));
 
   // filtro "mostrar todos" → Ana Clara aparece como "em dia"
   toggleTodos();
@@ -111,11 +118,26 @@ const testCode = `
   ok('zero pendências + mostrar todos → lista os alunos em dia', out3.includes('Maria Silva') && out3.includes('✅ em dia') && !out3.includes('Nenhuma dissertativa'));
   toggleSoPendentes();
 
+  // ===== modo secretaria (somente leitura) =====
+  __papel = 'secretario';
+  global.location.href = '';
+  await carregar();
+  ok('secretaria → aviso de somente-leitura visível', elements['modo-leitura'].style.display === '');
+  ok('secretaria → aviso de avaliação oculto', elements['pode-avaliar'].style.display === 'none');
+  ok('secretaria → link de volta aponta para secretaria.html', elements['link-voltar'].href === 'secretaria.html' && elements['link-voltar'].textContent === '🗂️ Secretaria');
+  const outSec = elements['lista'].innerHTML;
+  ok('secretaria vê a pendência (lista)', outSec.includes('Maria Silva') && outSec.includes('Conferir o número do disco'));
+  ok('secretaria NÃO vê campo de nota', !outSec.includes('Nota (0–10)') && !outSec.includes('Salvar nota'));
+  ok('secretaria vê aviso de avaliação exclusiva', outSec.includes('Avaliação exclusiva do instrutor'));
+  ok('secretaria NÃO tem contadores zerados (vê 2/3)', elements['total-alunos'].textContent === 2 && elements['total-pendencias'].textContent === 3);
+  __papel = 'instrutor';
+
   // sem pendências: 401 redireciona para o login
   global.location.href = '';
   global.fetch = (url) => {
-    if (String(url).includes("api/alunos")) return Promise.resolve({ status:401 });
-    return Promise.reject(new Error('url inesperada'));
+    const u = String(url);
+    if (u.includes("api/me") || u.includes("api/alunos")) return Promise.resolve({ status:401 });
+    return Promise.reject(new Error('url inesperada: ' + u));
   };
   try { await carregar(); } catch(e){}
   ok('401 → redireciona para login-alunos.html', global.location.href === 'login-alunos.html');

@@ -235,7 +235,7 @@ def _sess_papel(token):
 # rotas que exigem autenticação (instrutor ou secretaria)
 ROTAS_PROTEGIDAS = ("/alunos.html", "/api/alunos", "/api/alunos.json",
                     "/secretaria.html", "/plano-de-aulas.html",
-                    "/relatorio-apendices.html")
+                    "/relatorio-apendices.html", "/api/me")
 
 
 
@@ -971,9 +971,9 @@ class Handler(BaseHTTPRequestHandler):
             self._negar_acesso(json_=False, destino="/secretaria.html")
             return
 
-        # --- relatório de pendências dos apêndices é exclusivo do instrutor ---
-        if path == "/relatorio-apendices.html" and _sess_papel(self._sess_cookie()) != "instrutor":
-            self._negar_acesso(json_=False, destino="/secretaria.html")
+        # --- API: papel da sessão (instrutor/secretario) para o frontend ---
+        if path == "/api/me":
+            self._json(200, {"papel": _sess_papel(self._sess_cookie())})
             return
 
         # --- API: lista de alunos ---
