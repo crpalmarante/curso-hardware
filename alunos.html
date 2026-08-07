@@ -386,7 +386,7 @@ function toggleFiltroQk(){
   const b = document.getElementById("btn-filtro-qk");
   b.classList.toggle("active", filtroQk);
   b.setAttribute("aria-pressed", String(filtroQk));
-  renderLista();
+  renderTudo();
 }
 let MODO_SERVIDOR = false;   // true quando conectado ao servidor central
 let SYNC_TIMER = null;
@@ -1015,26 +1015,29 @@ async function renderTurma(){
       pres: presencasCont(a), pct: prog.pct, mods: prog.mods, qk: !!a.quiosque
     };
   });
-  const aprovados = alunos.filter(x=>x.sit.classe==="aprovado").length;
-  const cursando = alunos.filter(x=>x.sit.classe==="cursando").length;
-  const reprovados = alunos.filter(x=>x.sit.classe==="reprovado").length;
-  const comNota = alunos.filter(x=>x.nf!=null).length;
-  const mediaTurma = comNota? (alunos.filter(x=>x.nf!=null).reduce((s,x)=>s+x.nf,0)/comNota).toFixed(1) : "—";
-  const ranking = alunos.slice().sort((a,b)=>b.pct - a.pct);
+  // filtro 'só travados': quando ativo, cards + ranking mostram apenas alunos com quiosque obrigatório
+  const visiveis = filtroQk ? alunos.filter(x=>x.qk) : alunos;
+  const aprovados = visiveis.filter(x=>x.sit.classe==="aprovado").length;
+  const cursando = visiveis.filter(x=>x.sit.classe==="cursando").length;
+  const reprovados = visiveis.filter(x=>x.sit.classe==="reprovado").length;
+  const comNota = visiveis.filter(x=>x.nf!=null).length;
+  const mediaTurma = comNota? (visiveis.filter(x=>x.nf!=null).reduce((s,x)=>s+x.nf,0)/comNota).toFixed(1) : "—";
+  const ranking = visiveis.slice().sort((a,b)=>b.pct - a.pct);
 
   // módulos mais fracos (média de objetivas certas por módulo)
   const mods = await turmaModulosFracos();
 
   body.innerHTML = `
     <div class="sum-cards">
-      <div class="sum-card"><div class="val">${alunos.length}</div><div class="lab">Total de alunos</div></div>
+      <div class="sum-card"><div class="val">${visiveis.length}</div><div class="lab">${filtroQk?'Travados 🔒':'Total de alunos'}</div></div>
       <div class="sum-card"><div class="val" style="color:var(--success)">${aprovados}</div><div class="lab">Aprovados</div></div>
       <div class="sum-card"><div class="val" style="color:var(--warning)">${cursando}</div><div class="lab">Cursando</div></div>
       <div class="sum-card"><div class="val" style="color:var(--danger)">${reprovados}</div><div class="lab">Reprovados</div></div>
       <div class="sum-card"><div class="val">${mediaTurma}</div><div class="lab">Nota média da turma</div></div>
     </div>
 
-    <h3 style="font-size:15px;margin:18px 0 10px">🏆 Ranking de progresso</h3>
+    ${visiveis.length===0?`<div class="vazio" style="margin-top:14px">${filtroQk?'Nenhum aluno travado na turma.':'Nenhum aluno.'}</div>`:`
+    <h3 style="font-size:15px;margin:18px 0 10px">🏆 Ranking de progresso${filtroQk?' <small style="color:var(--danger);font-weight:800">(só travados 🔒)</small>':''}</h3>
     <div class="table-wrap">
       <table>
         <thead><tr><th>#</th><th>Aluno</th><th>Matrícula</th><th>Situação</th><th>Nota</th><th>Presenças</th><th>Progresso</th></tr></thead>
@@ -1053,7 +1056,7 @@ async function renderTurma(){
           </tr>`).join("")}
         </tbody>
       </table>
-    </div>
+    </div>`}
 
     <h3 style="font-size:15px;margin:22px 0 10px">📉 Módulos com mais dificuldade (acerto de exercícios)</h3>
     <div class="table-wrap">
