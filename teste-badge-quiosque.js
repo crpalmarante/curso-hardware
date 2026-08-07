@@ -53,6 +53,17 @@ const testCode = `
   ok('item do aluno travado TEM o badge', itemTravado.includes('🔒 quiosque'));
   ok('item do aluno livre NAO TEM o badge', !itemLivre.includes('🔒 quiosque'));
 
+  // ===== filtro 'Só travados' =====
+  filtroQk = true;
+  renderLista();
+  const filtrada = elements['aluno-list'].innerHTML;
+  ok('filtro ativo mostra so o aluno travado', filtrada.includes('Aluno Travado Badge') && !filtrada.includes('Aluno Livre Badge'));
+  ok('filtro ativo mostra contagem de travados no item', filtrada.includes('🔒 quiosque'));
+  filtroQk = false;
+  renderLista();
+  const semFiltro = elements['aluno-list'].innerHTML;
+  ok('filtro desativado volta a mostrar todos', semFiltro.includes('Aluno Travado Badge') && semFiltro.includes('Aluno Livre Badge'));
+
   // ===== ranking da aba Turma =====
   try {
     atualId = 'a1';
