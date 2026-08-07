@@ -133,8 +133,9 @@ Para o registro de alunos (com senha):
 Os dados ficam em:  /var/www/curso-hardware/dados/curso.db
 
 Contém alunos, notas, presenças, atividades, o andamento
-(módulos/aulas) de cada aluno e o caderno de exercícios
-(respostas objetivas e dissertativas). Para backup, basta
+(módulos/aulas) de cada aluno, o caderno de exercícios e o
+quiz dos apêndices (respostas objetivas e dissertativas).
+Para backup, basta
 copiar esse arquivo (com o serviço parado):
 
     sudo systemctl stop curso-hardware
@@ -180,7 +181,8 @@ Se preferir manual, os arquivos que mudam são enviados por scp:
 
     scp servidor.py secretaria.html login-secretaria.html \
         alunos.html plano-de-aulas.html index.html \
-        setup.py usuario@177.190.69.20:/var/www/curso-hardware/
+        apendice-exercicios.html setup.py \
+        usuario@177.190.69.20:/var/www/curso-hardware/
     ssh usuario@177.190.69.20 "sudo systemctl restart curso-hardware"
 
 NUNCA envie a pasta dados/ (banco, senhas, segredo) — ela é
@@ -225,8 +227,54 @@ corrija com:  sudo chown www-data:www-data /var/www/curso-hardware/dados/*.txt
 
 A Secretaria Pedagógica acessa em: http://curso.palmarante.com.br/secretaria.html
 O Plano de Aulas agora exige login (instrutor ou secretaria).
-Restrição por papel: só o INSTRUTOR emite certificados (a secretaria recebe 403
-na API e é redirecionada ao tentar abrir alunos.html).
+Restrição por papel: só o INSTRUTOR emite certificados, avalia dissertativas
+(inclusive as dos apêndices), provas e checkouts — a secretaria recebe 403 nas
+rotas de lançar nota e é redirecionada ao tentar abrir alunos.html (ela só consulta).
+
+------------------------------------------------------------
+ APÊNDICES (DISKPART/GPARTED) E RESUMO DE EXERCÍCIOS
+------------------------------------------------------------
+Dois apêndices extras de armazenamento (disco novo) foram adicionados ao
+curso: Apêndice A (Windows/Diskpart) e Apêndice B (Linux/GParted/Fdisk),
+com quiz interativo de fixação em apendice-exercicios.html (link
+"📝 Apêndices" no curso e "📝 Exercícios dos apêndices" no livro).
+
+- Cada apêndice tem objetivas corrigidas na hora + 1 dissertativa
+  (A = 9 + 1 questões; B = 11 + 1). Quando o aluno está identificado
+  (?aluno=Nome), as respostas são sincronizadas com o servidor via
+  /api/exercicios com aula_id no formato "AP|Apêndice A — ...".
+- Os apêndices também entram no Plano de Aulas como aulas extras de
+  armazenamento.
+
+NO BANCO: as respostas ficam na MESMA tabela exercicios (aula_id
+começando com "AP|") — NÃO precisa migração nem nenhuma ação no
+deploy. O resumo do GET /api/exercicios separa os apêndices do caderno:
+
+  nota_sugerida           -> objetivas só do CADERNO (aulas não-AP)
+  ap_objetivas / ap_certas / ap_nota_sugerida -> objetivas dos apêndices
+  disc_media              -> dissertativas avaliadas do caderno
+  ap_disc_avaliadas / ap_disc_media -> dissertativas avaliadas dos apêndices
+  aproveitamento          -> global (caderno + apêndices)
+
+Todos esses valores entram como componentes próprios na "nota sugerida
+de Exercícios" (a aba 📝 Exercícios do instrutor mostra, no detalhe,
+"caderno X + dissertativas Y + apêndices disc Z · obj W + checkouts + provas").
+
+ONDE APARECE EM PRODUÇÃO:
+- Aba 📝 Exercícios do instrutor: objetivas e dissertativas dos apêndices
+  e avaliação das dissertativas (nota 0–10). AVALIAÇÃO É SÓ DO INSTRUTOR:
+  a secretaria apenas consulta (POST /api/dissertativa retorna 403 para
+  o papel secretaria).
+- Boletim impresso (🖨️ Boletim): seção "Apêndices — exercícios extras"
+  com as objetivas (certas/total) e a nota de cada dissertativa
+  ("Nota: X" ou "Entregue — aguardando nota").
+- Selo âmbar "📝 N p/ avaliar" ao lado do nome quando há dissertativa de
+  apêndice sem nota + filtro "📝 Com pendências" nas listas (combina com
+  o "🔒 Só travados"). O selo some assim que o instrutor avalia.
+
+Para conferir se um aluno respondeu o quiz dos apêndices, rode:
+  curl -s 'http://localhost:8081/api/exercicios?aluno=NOME'
+(o resumo trará os campos ap_* acima quando houver respostas de apêndice).
 
 ------------------------------------------------------------
  ACESSO TEMPORÁRIO / SOLUÇÃO DE PROBLEMAS DE REDE
