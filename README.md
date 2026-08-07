@@ -69,6 +69,7 @@ curso-hardware/
 ├── iniciar-curso.sh      # Abre o curso em modo quiosque (Linux)
 ├── iniciar-curso.bat     # Abre o curso em modo quiosque (Windows)
 ├── INSTRUCOES-SERVIDOR.txt # Guia completo de publicação (DNS, nginx, HTTPS)
+├── teste-permissoes.py   # Teste automatizado de permissões por papel (roda no CI)
 └── dados/                # Criado automaticamente (banco, senha, segredo)
 ```
 
@@ -270,6 +271,25 @@ python3 servidor.py 8000 --publico  # aceita acesso externo (sem o flag, apenas 
 | POST | `/api/provas` | — | Salva nota de prova de um módulo |
 | POST | `/api/evento` | — | Registra evento (ex.: violação do modo blindado) |
 | POST | `/api/progresso` | — | Salva andamento das aulas do aluno |
+
+## Testes (CI)
+
+O repositório tem um teste automatizado de **permissões por papel** (`teste-permissoes.py`) que sobe o servidor isolado (diretório temporário, senhas de teste via env) e valida via HTTP real:
+
+- Login do instrutor e da secretaria (senha correta/errada).
+- Rotas exclusivas do instrutor retornam **403** para a secretaria (`POST /api/certificado`, `/api/dissertativa`, `/api/checkout-avaliar`).
+- `alunos.html` redireciona a secretaria (302 → `secretaria.html`); sem sessão, redireciona para o login.
+- A secretaria continua podendo editar dados (`POST /api/alunos`) e consultar provas (GET).
+- O envio de provas pelo aluno (`POST /api/provas`, sem login) segue aberto.
+
+Rodando localmente:
+
+```bash
+python3 teste-permissoes.py        # esperado: todas as permissões OK
+TESTE_PORTA=8199 python3 teste-permissoes.py
+```
+
+O GitHub Actions (`.github/workflows/ci.yml`) roda esse teste **a cada push** junto com a checagem de sintaxe (Python e JavaScript) e o smoke test do servidor.
 
 ## Banco de dados
 

@@ -17,8 +17,8 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Sintaxe Python (servidor, setup, slides)
-        run: python -m py_compile servidor.py setup.py gerar-slides.py
+      - name: Sintaxe Python (servidor, setup, slides, teste de permissões)
+        run: python -m py_compile servidor.py setup.py gerar-slides.py teste-permissoes.py
 
       - name: Smoke test — servidor sobe e responde
         run: |
@@ -28,6 +28,9 @@ jobs:
           curl -fsS -o /dev/null http://localhost:8124/
           curl -fsS http://localhost:8124/api/config
           kill $SRV
+
+      - name: Teste de permissões por papel (secretaria vs instrutor)
+        run: python teste-permissoes.py
 
       - name: Sintaxe JavaScript (curso, exercícios, provas, QR Code)
         run: node --check curso.js && node --check exercicios.js && node --check provas.js && node --check qrcode.js
