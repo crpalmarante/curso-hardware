@@ -152,8 +152,9 @@ def main():
             {"aula_id": "01|A", "q": 0, "tipo": "disc", "resposta": "Resposta de teste"}]})
         checar("Registra dissertativa do aluno (POST /api/exercicios) = 200", st == 200, "HTTP %d" % st)
         st, j = inst.post("/api/certificado", {"nome": "Aluno Positivo"})
+        codigo = j.get("codigo") or ""
         checar("Instrutor emite certificado com sucesso = 200 + código",
-               st == 200 and j.get("status") == "ok" and j.get("codigo"), "HTTP %d %s" % (st, j))
+               st == 200 and j.get("status") == "ok" and codigo, "HTTP %d %s" % (st, j))
         st, j = inst.post("/api/dissertativa", {"nome": "Aluno Positivo", "aula_id": "01|A", "q": 0, "nota": 8})
         checar("Instrutor avalia dissertativa com sucesso = 200", st == 200 and j.get("status") == "ok", "HTTP %d %s" % (st, j))
         st, j = anon.post("/api/checkout", {"nome": "Aluno Positivo", "aula_id": "02|B", "dados": {"ok": 1}})
@@ -163,6 +164,14 @@ def main():
         # secretaria continua bloqueada mesmo com dados reais
         st, j = sec.post("/api/certificado", {"nome": "Aluno Positivo"})
         checar("Secretaria emite certificado com dados reais = 403", st == 403, "HTTP %d" % st)
+        # matrícula aparece nos dados do certificado e na verificação pública
+        st, _, j = anon.get("/api/certificado?aluno=" + urllib.parse.quote("Aluno Positivo"))
+        checar("Certificado retorna a matrícula do aluno",
+               st == 200 and j.get("certificado") and bool(j["certificado"].get("matricula")),
+               "HTTP %d %s" % (st, j))
+        st, _, j = anon.get("/api/verificar-certificado?codigo=" + urllib.parse.quote(codigo))
+        checar("Verificação pública retorna a matrícula",
+               st == 200 and j.get("valido") and bool(j.get("matricula")), "HTTP %d %s" % (st, j))
 
         # ---- 3. Páginas protegidas ----
         st, loc, _ = sec.get("/alunos.html")

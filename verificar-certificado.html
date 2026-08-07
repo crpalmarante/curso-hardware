@@ -82,6 +82,7 @@ async function verificar(){
           <div class="row"><b>Aluno(a)</b><span>${esc(j.nome)}</span></div>
           <div class="row"><b>Curso</b><span>Montagem e Manutenção de Computadores</span></div>
           ${j.turma ? `<div class="row"><b>Turma</b><span>${esc(j.turma)}</span></div>` : ""}
+          <div class="row"><b>Matrícula</b><span>${j.matricula ? esc(j.matricula) : "—"}</span></div>
           <div class="row"><b>Nota final</b><span>${j.nota_final != null ? j.nota_final + " / 10" : "—"}</span></div>
           <div class="row"><b>Frequência</b><span>${j.frequencia != null ? j.frequencia + "%" : "—"}</span></div>
           <div class="row"><b>Emitido em</b><span>${fmt(j.emitido_em)}</span></div>

@@ -682,7 +682,7 @@ def get_certificado(nome):
     try:
         row = conn.execute(
             "SELECT c.codigo, c.nota_final, c.frequencia, c.emitido_em, c.emitido_por, "
-            "a.nome, a.turma, a.criado_em "
+            "a.nome, a.turma, a.matricula, a.criado_em "
             "FROM certificados c JOIN alunos a ON a.id=c.aluno_id "
             "WHERE a.nome=? COLLATE NOCASE", (nome,)).fetchone()
     finally:
@@ -690,7 +690,7 @@ def get_certificado(nome):
     if row is None:
         return {"certificado": None}
     return {"certificado": {
-        "nome": row["nome"], "turma": row["turma"],
+        "nome": row["nome"], "turma": row["turma"], "matricula": row["matricula"] or "",
         "codigo": row["codigo"], "nota_final": row["nota_final"],
         "frequencia": row["frequencia"], "emitido_em": row["emitido_em"],
         "emitido_por": row["emitido_por"], "criado_em": row["criado_em"]
@@ -703,7 +703,7 @@ def verificar_certificado(codigo):
     try:
         row = conn.execute(
             "SELECT c.codigo, c.nota_final, c.frequencia, c.emitido_em, "
-            "a.nome, a.turma "
+            "a.nome, a.turma, a.matricula "
             "FROM certificados c JOIN alunos a ON a.id=c.aluno_id "
             "WHERE c.codigo=? COLLATE NOCASE", (codigo,)).fetchone()
     finally:
@@ -711,6 +711,7 @@ def verificar_certificado(codigo):
     if row is None:
         return {"valido": False}
     return {"valido": True, "nome": row["nome"], "turma": row["turma"],
+            "matricula": row["matricula"] or "",
             "codigo": row["codigo"], "nota_final": row["nota_final"],
             "frequencia": row["frequencia"], "emitido_em": row["emitido_em"]}
 

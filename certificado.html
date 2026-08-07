@@ -41,6 +41,9 @@ body{font-family:Georgia,"Times New Roman",serif;background:#e2e8f0;color:var(--
 .titulo{
   font-size:30px;font-weight:800;color:var(--dark);letter-spacing:1px;text-align:center;
 }
+.sub-titulo{
+  font-size:13px;color:#555;letter-spacing:2px;text-align:center;margin-top:1mm;
+}
 .linha-ouro{width:70mm;height:2px;background:var(--gold);margin:5mm 0}
 .texto{
   font-size:15px;line-height:1.9;text-align:center;max-width:190mm;color:#333;
@@ -101,6 +104,7 @@ body{font-family:Georgia,"Times New Roman",serif;background:#e2e8f0;color:var(--
 
     <div class="faixa">Certificado de Conclusão</div>
     <div class="titulo" id="c-nome">—</div>
+    <div class="sub-titulo" id="c-matricula"></div>
     <div class="linha-ouro"></div>
     <div class="texto">
       Concluiu com aproveitamento o curso de <b>Montagem e Manutenção de Computadores</b>,
@@ -156,6 +160,9 @@ async function carregar(){
     const emitido = new Date(c.emitido_em).toLocaleDateString("pt-BR");
     const criado = new Date(c.criado_em).toLocaleDateString("pt-BR");
     document.getElementById("c-nome").textContent = c.nome;
+    const matEl = document.getElementById("c-matricula");
+    matEl.textContent = c.matricula ? "MATRÍCULA " + c.matricula : "";
+    matEl.style.display = c.matricula ? "" : "none";
     document.getElementById("c-nome2").textContent = c.nome;
     document.getElementById("c-nota").textContent = c.nota_final != null ? c.nota_final : "—";
     document.getElementById("c-freq").textContent = c.frequencia != null ? c.frequencia + "%" : "—";
