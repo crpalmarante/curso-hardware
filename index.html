@@ -363,9 +363,34 @@ body{
   display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;
   font-size:11px;font-weight:700;color:#fff;background:var(--danger);margin-left:8px;
 }
+/* ===== AVISO DO MODO QUIOSQUE (modo blindado ativo) ===== */
+.guard-aviso{
+  position:sticky;top:0;z-index:60;
+  display:none;align-items:center;justify-content:center;gap:8px;
+  padding:7px 16px;font-size:12px;font-weight:600;letter-spacing:.3px;
+  background:linear-gradient(90deg,#b91c1c,#b45309);
+  color:#fff;text-align:center;text-shadow:0 1px 2px rgba(0,0,0,.35);
+  border-bottom:1px solid rgba(255,255,255,.18);
+  animation:guardAvisoIn .35s ease;
+}
+.guard-aviso.show{display:flex}
+/* ao mostrar o aviso, a topbar cola logo abaixo dele (sem sobrepor) */
+.guard-aviso.show + .topbar{top:31px}
+.guard-aviso .dot{
+  width:8px;height:8px;border-radius:50%;flex-shrink:0;
+  background:#fff;animation:guardPulse 1.2s ease-in-out infinite;
+}
+@keyframes guardAvisoIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+@keyframes guardPulse{0%,100%{opacity:1}50%{opacity:.35}}
 </style>
 </head>
 <body>
+
+<!-- AVISO DO MODO QUIOSQUE (modo blindado ativo) -->
+<div class="guard-aviso" id="guard-aviso" role="status">
+  <span class="dot"></span>
+  <span>🔒 Modo monitorado ativo — suas ações neste curso estão sendo registradas.</span>
+</div>
 
 <div class="topbar">
   <div class="brand">
@@ -1369,6 +1394,7 @@ function guardAtivar(silencioso){
   document.body.style.pointerEvents = "auto";
   guardEnter();
   attachGuardListeners(true);
+  guardAviso(true);
   if (!silencioso){
     alert("Modo blindado ATIVADO.\n\n- Tela cheia ativada.\n- Se você trocar de aba ou minimizar, o curso será bloqueado e a ocorrência registrada.\n- Use ESC somente com autorização do instrutor.");
   }
@@ -1380,6 +1406,7 @@ function guardDesativar(){
   guardExit();
   guardStart = null;
   guardSave();
+  guardAviso(false);
   const btn = document.getElementById("btn-guard");
   btn.innerHTML = "🔒 " + (alunoNome || "Modo blindado");
   btn.style.borderColor = "var(--primary)";
@@ -1388,6 +1415,12 @@ function guardDesativar(){
 function guardToggle(){
   if (guard) guardDesativar();
   else guardAtivar(false);
+}
+
+function guardAviso(ativo){
+  const av = document.getElementById("guard-aviso");
+  if (!av) return;
+  av.classList.toggle("show", !!ativo);
 }
 
 function attachGuardListeners(on){
