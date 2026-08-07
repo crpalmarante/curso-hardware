@@ -238,7 +238,7 @@ td b{color:var(--text)}
         <h3>Alunos (<span id="total-alunos">0</span>)</h3>
         <div class="side-search">
           <span>🔍</span>
-          <input type="text" id="search-aluno" placeholder="Buscar aluno...">
+          <input type="text" id="search-aluno" placeholder="Buscar por nome, matrícula ou turma...">
         </div>
         <button class="btn" style="width:100%;margin-top:10px" onclick="novoAluno()">+ Novo aluno</button>
       </div>
@@ -417,7 +417,7 @@ function alunoAtual(){ return DB.alunos.find(a=>a.id===atualId); }
 /* ===== RENDER LISTA ===== */
 function renderLista(){
   const q = busca.toLowerCase();
-  const list = DB.alunos.filter(a=>!q || a.nome.toLowerCase().includes(q) || (a.turma||"").toLowerCase().includes(q));
+  const list = DB.alunos.filter(a=>!q || a.nome.toLowerCase().includes(q) || (a.matricula||"").toLowerCase().includes(q) || (a.turma||"").toLowerCase().includes(q));
   document.getElementById("total-alunos").textContent = DB.alunos.length;
   const el = document.getElementById("aluno-list");
   if (list.length === 0){ el.innerHTML = '<div class="vazio" style="padding:24px">Nenhum aluno.</div>'; return; }
@@ -427,7 +427,7 @@ function renderLista(){
       <div class="aluno-avatar">${initiais(a.nome)}</div>
       <div class="aluno-info">
         <b>${esc(a.nome)}</b>
-        <small>${esc(a.turma||"Sem turma")} · ${presencasCont(a)}/43</small>
+        <small>${a.matricula?esc(a.matricula)+" · ":""}${esc(a.turma||"Sem turma")} · ${presencasCont(a)}/43</small>
       </div>
       <span class="aluno-situ situ-${sit.classe}">${sit.label}</span>
     </div>`;
@@ -467,7 +467,7 @@ function renderTudo(){
   empty.style.display="none"; panel.style.display="block";
 
   document.getElementById("p-nome").textContent = a.nome;
-  document.getElementById("p-turma").textContent = (a.turma?"Turma "+a.turma+" · ":"")+"Matriculado em "+fmt(new Date(a.criadoEm));
+  document.getElementById("p-turma").textContent = (a.matricula?esc(a.matricula)+" · ":"")+(a.turma?"Turma "+a.turma+" · ":"")+"Matriculado em "+fmt(new Date(a.criadoEm));
   const pres = presencasCont(a);
   document.getElementById("p-freq").textContent = Math.round(pres/43*100)+"%";
   document.getElementById("p-pres").textContent = pres;
@@ -884,7 +884,7 @@ async function renderTurma(){
   const alunos = DB.alunos.map((a,i)=>{
     const prog = data[i];
     return {
-      nome: a.nome, turma: a.turma || "", sit: situacao(a), nf: notaFinal(a),
+      nome: a.nome, turma: a.turma || "", matricula: a.matricula || "", sit: situacao(a), nf: notaFinal(a),
       pres: presencasCont(a), pct: prog.pct, mods: prog.mods
     };
   });
@@ -910,11 +910,12 @@ async function renderTurma(){
     <h3 style="font-size:15px;margin:18px 0 10px">🏆 Ranking de progresso</h3>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>#</th><th>Aluno</th><th>Situação</th><th>Nota</th><th>Presenças</th><th>Progresso</th></tr></thead>
+        <thead><tr><th>#</th><th>Aluno</th><th>Matrícula</th><th>Situação</th><th>Nota</th><th>Presenças</th><th>Progresso</th></tr></thead>
         <tbody>${ranking.map((x,i)=>`
           <tr style="cursor:pointer" onclick="abrirTurmaAluno('${escAttr(x.nome)}')">
             <td><b>${i+1}º</b></td>
             <td><b>${esc(x.nome)}</b>${x.turma?` <small style="color:var(--text-muted)">(${esc(x.turma)})</small>`:""}</td>
+            <td><small style="color:var(--text-muted)">${esc(x.matricula||"—")}</small></td>
             <td><span class="aluno-situ situ-${x.sit.classe}">${x.sit.label}</span></td>
             <td>${x.nf!=null?x.nf:"—"}</td>
             <td>${x.pres}/43</td>

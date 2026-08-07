@@ -42,6 +42,7 @@ CREATE TABLE IF NOT EXISTS alunos(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     nome TEXT NOT NULL UNIQUE COLLATE NOCASE,
     turma TEXT NOT NULL DEFAULT '',
+    matricula TEXT,
     criado_em TEXT
 );
 CREATE TABLE IF NOT EXISTS progresso(
@@ -252,9 +253,23 @@ def init_db():
         if "nota" not in cols:
             conn.execute("ALTER TABLE exercicios ADD COLUMN nota REAL")
             conn.execute("ALTER TABLE exercicios ADD COLUMN corrigida_em TEXT")
+        # migração: matrícula automática por turma (TURMA-###, sequência reinicia por turma)
+        cols = [r["name"] for r in conn.execute("PRAGMA table_info(alunos)")]
+        if "matricula" not in cols:
+            conn.execute("ALTER TABLE alunos ADD COLUMN matricula TEXT")
+        for r in conn.execute("SELECT id, turma, matricula FROM alunos ORDER BY id"):
+            if not (r["matricula"] or "").strip():
+                conn.execute("UPDATE alunos SET matricula=? WHERE id=?",
+                             (_gerar_matricula(conn, r["turma"] or ""), r["id"]))
         conn.commit()
-    except Exception:
-        pass
+        # índice único: impede matrículas duplicadas (ex.: cadastros simultâneos)
+        try:
+            conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_alunos_matricula ON alunos(matricula)")
+            conn.commit()
+        except Exception as e:
+            sys.stderr.write("[aviso] indice de matricula: %s\n" % e)
+    except Exception as e:
+        sys.stderr.write("[aviso] init_db: %s\n" % e)
     finally:
         conn.close()
     _migrar_json()
@@ -284,6 +299,31 @@ def _migrar_json():
         pass
 
 
+def _base_matricula(turma):
+    """Normaliza o código da turma para o prefixo da matrícula (5502+HWD10 → 5502-HWD10)."""
+    base = "".join(c if c.isalnum() else "-" for c in (turma or "").strip())
+    return "-".join(p for p in base.split("-") if p) or "SEMTURMA"
+
+
+def _gerar_matricula(conn, turma):
+    """Próxima matrícula da turma no formato TURMA-### (sequência reinicia por turma)."""
+    base = _base_matricula(turma)
+    maior = 0
+    for r in conn.execute("SELECT matricula FROM alunos WHERE matricula LIKE ?", (base + "-%",)):
+        suf = (r["matricula"] or "")[len(base) + 1:]
+        if suf.isdigit():
+            maior = max(maior, int(suf))
+    return "%s-%03d" % (base, maior + 1)
+
+
+def _inserir_aluno(conn, nome, turma=""):
+    """Insere um aluno novo e retorna o id (gerando a matrícula da turma)."""
+    cur = conn.execute(
+        "INSERT INTO alunos(nome, turma, criado_em, matricula) VALUES(?,?,?,?)",
+        (nome, turma, datetime.now().isoformat(), _gerar_matricula(conn, turma)))
+    return cur.lastrowid
+
+
 def _upsert_aluno(conn, a):
     """Cria/atualiza um aluno e seus dados no SQLite (não mexe no progresso)."""
     nome = (a.get("nome") or "").strip()
@@ -295,8 +335,18 @@ def _upsert_aluno(conn, a):
         "INSERT INTO alunos(nome, turma, criado_em) VALUES(?,?,?) "
         "ON CONFLICT(nome) DO UPDATE SET turma=excluded.turma",
         (nome, turma, criado_em))
-    row = conn.execute("SELECT id FROM alunos WHERE nome=? COLLATE NOCASE", (nome,)).fetchone()
+    row = conn.execute("SELECT id, matricula FROM alunos WHERE nome=? COLLATE NOCASE", (nome,)).fetchone()
     aid = row["id"]
+    # matrícula: deve condizer com a turma atual; senão mantém a gravada; senão gera nova
+    matricula = (a.get("matricula") or "").strip()
+    base = _base_matricula(turma)
+    atual = row["matricula"] or ""
+    if matricula.startswith(base + "-") and matricula[len(base) + 1:].isdigit():
+        if matricula != atual:
+            conn.execute("UPDATE alunos SET matricula=? WHERE id=?", (matricula, aid))
+    elif not (atual.startswith(base + "-") and atual[len(base) + 1:].isdigit()):
+        conn.execute("UPDATE alunos SET matricula=? WHERE id=?",
+                     (_gerar_matricula(conn, turma), aid))
     conn.execute("DELETE FROM notas WHERE aluno_id=?", (aid,))
     conn.execute("DELETE FROM presencas WHERE aluno_id=?", (aid,))
     conn.execute("DELETE FROM atividades WHERE aluno_id=?", (aid,))
@@ -331,6 +381,7 @@ def _aluno_dict(conn, aid):
         "id": "a%d" % aid,
         "nome": r["nome"],
         "turma": r["turma"] or "",
+        "matricula": r["matricula"] or "",
         "criadoEm": r["criado_em"] or datetime.now().isoformat(),
         "presencas": {},
         "notas": {"participacao": None, "exercicios": None, "montagem": None, "diagnostico": None},
@@ -394,9 +445,7 @@ def set_progresso(nome, progresso):
     try:
         row = conn.execute("SELECT id FROM alunos WHERE nome=? COLLATE NOCASE", (nome,)).fetchone()
         if row is None:
-            cur = conn.execute("INSERT INTO alunos(nome, turma, criado_em) VALUES(?,?,?)",
-                               (nome, "", datetime.now().isoformat()))
-            aid = cur.lastrowid
+            aid = _inserir_aluno(conn, nome)
         else:
             aid = row["id"]
         conn.execute("DELETE FROM progresso WHERE aluno_id=?", (aid,))
@@ -506,9 +555,7 @@ def set_checkout(nome, aula_id, dados):
     try:
         row = conn.execute("SELECT id FROM alunos WHERE nome=? COLLATE NOCASE", (nome,)).fetchone()
         if row is None:
-            cur = conn.execute("INSERT INTO alunos(nome, turma, criado_em) VALUES(?,?,?)",
-                               (nome, "", datetime.now().isoformat()))
-            aid = cur.lastrowid
+            aid = _inserir_aluno(conn, nome)
         else:
             aid = row["id"]
         conn.execute(
@@ -545,9 +592,7 @@ def set_exercicios(nome, respostas):
     try:
         row = conn.execute("SELECT id FROM alunos WHERE nome=? COLLATE NOCASE", (nome,)).fetchone()
         if row is None:
-            cur = conn.execute("INSERT INTO alunos(nome, turma, criado_em) VALUES(?,?,?)",
-                               (nome, "", datetime.now().isoformat()))
-            aid = cur.lastrowid
+            aid = _inserir_aluno(conn, nome)
         else:
             aid = row["id"]
         agora = datetime.now().isoformat()
@@ -599,9 +644,7 @@ def set_prova(nome, modulo, nota, objetivas_total, objetivas_certas, disc_entreg
     try:
         row = conn.execute("SELECT id FROM alunos WHERE nome=? COLLATE NOCASE", (nome,)).fetchone()
         if row is None:
-            cur = conn.execute("INSERT INTO alunos(nome, turma, criado_em) VALUES(?,?,?)",
-                               (nome, "", datetime.now().isoformat()))
-            aid = cur.lastrowid
+            aid = _inserir_aluno(conn, nome)
         else:
             aid = row["id"]
         agora = datetime.now().isoformat()
@@ -714,9 +757,7 @@ def marcar_presenca_automatica(nome, semana):
     try:
         row = conn.execute("SELECT id FROM alunos WHERE nome=? COLLATE NOCASE", (nome,)).fetchone()
         if row is None:
-            cur = conn.execute("INSERT INTO alunos(nome, turma, criado_em) VALUES(?,?,?)",
-                               (nome, "", datetime.now().isoformat()))
-            aid = cur.lastrowid
+            aid = _inserir_aluno(conn, nome)
         else:
             aid = row["id"]
         sem = int(semana)
@@ -740,9 +781,7 @@ def registrar_evento(nome, tipo, texto):
     try:
         row = conn.execute("SELECT id FROM alunos WHERE nome=? COLLATE NOCASE", (nome,)).fetchone()
         if row is None:
-            cur = conn.execute("INSERT INTO alunos(nome, turma, criado_em) VALUES(?,?,?)",
-                               (nome, "", datetime.now().isoformat()))
-            aid = cur.lastrowid
+            aid = _inserir_aluno(conn, nome)
         else:
             aid = row["id"]
         conn.execute("INSERT INTO historico(aluno_id, data, tipo, texto) VALUES(?,?,?,?)",

@@ -197,6 +197,36 @@ def main():
         checar("Aluno envia prova sem login (POST /api/provas) = 200", st == 200 and j.get("status") == "ok",
                "HTTP %d %s" % (st, j))
 
+        # ---- 7. Matrícula automática por turma (5502+HWD10 → 5502-HWD10-001...) ----
+        st, j = sec.post("/api/alunos", {"alunos": [
+            {"id": "a2", "nome": "Aluno Mat A", "turma": "5502+HWD10"},
+            {"id": "a3", "nome": "Aluno Mat B", "turma": "5502+HWD10"}]})
+        checar("Secretaria cadastra alunos com turma (POST /api/alunos) = 200",
+               st == 200 and j.get("status") == "ok", "HTTP %d %s" % (st, j))
+        st, _, db = sec.get("/api/alunos")
+        mats = {a["nome"]: a.get("matricula") or "" for a in db.get("alunos", [])}
+        checar("Matrícula por turma: 5502-HWD10-001 e 5502-HWD10-002",
+               mats.get("Aluno Mat A") == "5502-HWD10-001" and mats.get("Aluno Mat B") == "5502-HWD10-002",
+               "matrículas: %s" % mats)
+        checar("Matrícula presente no GET /api/alunos (todos os alunos)",
+               bool(mats) and all(mats.values()), "matrículas: %s" % mats)
+
+        # ---- 8. Estabilidade e troca de turma ----
+        # reenvio do banco com a matrícula já gerada → permanece estável
+        st, j = sec.post("/api/alunos", {"alunos": [
+            {"id": "a2", "nome": "Aluno Mat A", "turma": "5502+HWD10", "matricula": "5502-HWD10-001"}]})
+        st, _, db = sec.get("/api/alunos")
+        mats = {a["nome"]: a.get("matricula") or "" for a in db.get("alunos", [])}
+        checar("Matrícula estável no reenvio do banco",
+               mats.get("Aluno Mat A") == "5502-HWD10-001", "matrículas: %s" % mats)
+        # aluno SEMTURMA que recebe turma → matrícula regenerada (não fica velha)
+        st, j = sec.post("/api/alunos", {"alunos": [
+            {"id": "a2", "nome": "Aluno Mat A", "turma": "5502+HWD10", "matricula": "SEMTURMA-001"}]})
+        st, _, db = sec.get("/api/alunos")
+        mats = {a["nome"]: a.get("matricula") or "" for a in db.get("alunos", [])}
+        checar("Troca de turma regenera matrícula (SEMTURMA → turma)",
+               mats.get("Aluno Mat A", "").startswith("5502-HWD10-"), "matrículas: %s" % mats)
+
         print()
         if falhas:
             print("RESULTADO: %d FALHA(S)" % len(falhas))

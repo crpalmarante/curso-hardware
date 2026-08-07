@@ -165,6 +165,7 @@ Página `secretaria.html` (link "🗂️ Secretaria" no topo do curso, login em 
 
 - **Painel da turma**: cards de resumo (total, aprovados, cursando, reprovados, média), ranking de progresso e módulos com mais dificuldade.
 - **Aba por aluno**: Resumo (situação, nota final, frequência), Presença (43 semanas, editável), Avaliação (notas com pesos), Atividades (registrar/listar), Exercícios (aproveitamento + avaliação de dissertativas), Provas por módulo e Histórico.
+- **Busca por nome, matrícula ou turma** na lista lateral. A **matrícula é gerada automaticamente por turma** no formato `TURMA-###` (ex.: turma `5502+HWD10` → `5502-HWD10-001`, `5502-HWD10-002`…), com a sequência reiniciando a cada turma — aparece na lista, no cabeçalho do aluno e na tabela da turma.
 - **Semana atual do curso** (frequência automática) também disponível na secretaria.
 - Senha própria em `dados/secretario.txt` (ou env `SECRETARIO_SENHA`), separada da do instrutor.
 
