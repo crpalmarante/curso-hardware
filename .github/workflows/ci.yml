@@ -51,3 +51,6 @@ jobs:
 
       - name: Badge quiosque na lista de alunos (render real do secretaria.html)
         run: node teste-badge-secretaria.js
+
+      - name: Quiz dos apêndices A e B (render real do apendice-exercicios.html)
+        run: node teste-apendice-exercicios.js

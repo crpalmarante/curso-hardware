@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Exercícios dos Apêndices — Curso de Montagem e Manutenção</title>
+<meta name="theme-color" content="#14b8a6">
+<style>
+:root{
+  --primary:#14b8a6; --primary-hover:#0d9488; --primary-active:#0f766e;
+  --secondary:#3B82F6; --danger:#EF4444; --success:#22C55E; --warning:#F59E0B;
+  --bg:linear-gradient(135deg,#06101f,#101b35,#151044);
+  --text:#FFFFFF; --text-secondary:#DDDDDD; --text-muted:rgba(255,255,255,.5);
+  --border:rgba(255,255,255,.14); --border-hover:rgba(255,255,255,.3);
+  --surface:rgba(255,255,255,.06); --surface-hover:rgba(255,255,255,.12);
+  --glass:rgba(255,255,255,.08);
+  --radius-sm:6px; --radius-md:10px; --radius-lg:16px; --radius-xl:24px;
+  --font-family:"Inter","Segoe UI",Arial,sans-serif;
+}
+[data-theme="light"]{
+  --bg:linear-gradient(135deg,#f0f4f8,#e2e8f0,#cbd5e1);
+  --text:#1a202c; --text-secondary:#4a5568; --text-muted:rgba(0,0,0,.5);
+  --border:rgba(0,0,0,.12); --border-hover:rgba(0,0,0,.25);
+  --surface:rgba(255,255,255,.65); --surface-hover:rgba(255,255,255,.85);
+  --glass:rgba(255,255,255,.7);
+  --primary:#0f766e; --primary-hover:#0d5c55;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font-family);background:var(--bg);color:var(--text);min-height:100vh;line-height:1.55}
+::selection{background:var(--primary);color:#fff}
+::-webkit-scrollbar{width:10px}
+::-webkit-scrollbar-thumb{background:rgba(128,128,128,.4);border-radius:20px}
+
+/* ===== TOPO ===== */
+.topbar{
+  position:sticky;top:0;z-index:50;
+  display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+  padding:14px 24px;
+  background:var(--glass);
+  backdrop-filter:blur(18px);
+  border-bottom:1px solid var(--border);
+}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:15px}
+.brand-badge{
+  width:34px;height:34px;border-radius:10px;display:grid;place-items:center;
+  background:linear-gradient(135deg,var(--primary),var(--secondary));
+  color:#fff;font-size:17px;flex-shrink:0;
+}
+.brand small{display:block;font-weight:500;color:var(--text-muted);font-size:11px}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.icon-btn{
+  padding:8px 12px;border-radius:var(--radius-md);cursor:pointer;
+  color:var(--text-secondary);font-size:13px;
+  border:1px solid var(--border);background:var(--surface);
+  transition:all .2s;text-decoration:none;display:inline-flex;align-items:center;gap:6px;
+}
+.icon-btn:hover{background:var(--surface-hover);color:var(--text);border-color:var(--border-hover)}
+
+/* ===== CONTEÚDO ===== */
+.container{max-width:880px;margin:0 auto;padding:28px 20px 60px}
+.hero{padding:26px 6px 6px}
+.hero h1{font-size:24px;line-height:1.3}
+.hero p{color:var(--text-secondary);font-size:14px;margin-top:8px}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.chip{
+  font-size:11.5px;font-weight:700;padding:5px 11px;border-radius:999px;
+  background:var(--surface);border:1px solid var(--border);color:var(--text-secondary);
+}
+.chip b{color:var(--primary)}
+
+/* abas dos apêndices */
+.tabs{display:flex;gap:10px;margin:22px 0 6px;flex-wrap:wrap}
+.tab-btn{
+  padding:10px 16px;border-radius:var(--radius-md);cursor:pointer;font-size:13px;font-weight:700;
+  border:1px solid var(--border);background:var(--surface);color:var(--text-secondary);
+  transition:all .2s;display:inline-flex;align-items:center;gap:8px;
+}
+.tab-btn:hover{border-color:var(--primary);color:var(--text)}
+.tab-btn.active{background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;border-color:transparent}
+.ap-body{display:none}
+.ap-body.show{display:block;animation:fadeIn .25s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.ap-header{margin:18px 0 4px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.ap-header h2{font-size:18px}
+.ap-header .ap-prog{font-size:12px;color:var(--text-muted);font-weight:600}
+.ap-desc{font-size:13.5px;color:var(--text-secondary);margin-bottom:6px}
+
+/* ===== EXERCÍCIOS (mesmo padrão do curso) ===== */
+.exer-block{margin-top:16px}
+.exer-score{font-size:11.5px;color:var(--text-muted);letter-spacing:0;font-weight:600}
+.exer-q{margin-bottom:16px;padding:12px 14px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--surface)}
+.exer-q .enunciado{font-size:13.5px;color:var(--text);font-weight:600;margin-bottom:10px}
+.exer-opcoes{display:flex;flex-direction:column;gap:8px}
+.exer-op{
+  display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--radius-md);
+  border:1px solid var(--border);cursor:pointer;transition:all .15s;font-size:13px;
+  color:var(--text-secondary);background:var(--glass);
+}
+.exer-op:hover{border-color:var(--primary);color:var(--text)}
+.exer-op .letra{
+  width:24px;height:24px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;
+  font-size:12px;font-weight:800;border:1px solid var(--border);color:var(--text-muted);
+}
+.exer-op.certa{border-color:var(--success);color:var(--success);background:rgba(34,197,94,.08)}
+.exer-op.certa .letra{border-color:var(--success);background:var(--success);color:#fff}
+.exer-op.errada{border-color:var(--danger);color:var(--danger);background:rgba(239,68,68,.08)}
+.exer-op.errada .letra{border-color:var(--danger);background:var(--danger);color:#fff}
+.exer-op.bloqueada{cursor:default;opacity:.9}
+.exer-feedback{font-size:12px;margin-top:8px;display:none;padding:8px 10px;border-radius:var(--radius-md)}
+.exer-feedback.show{display:block;animation:fadeIn .2s ease}
+.exer-feedback.ok{background:rgba(34,197,94,.12);border:1px solid var(--success);color:var(--success)}
+.exer-feedback.nok{background:rgba(239,68,68,.1);border:1px solid var(--danger);color:var(--danger)}
+.exer-disc textarea{
+  width:100%;min-height:80px;padding:10px 12px;border-radius:var(--radius-md);font-size:13.5px;
+  background:var(--surface);border:1px solid var(--border);color:var(--text);resize:vertical;font-family:inherit;
+}
+.exer-disc textarea:focus{border-color:var(--primary);outline:none}
+.exer-disc textarea:disabled{opacity:.6}
+.exer-enviar{
+  margin-top:8px;padding:8px 16px;border-radius:var(--radius-md);cursor:pointer;
+  background:var(--primary);color:#fff;font-size:12.5px;font-weight:700;border:none;transition:background .2s;
+}
+.exer-enviar:hover{background:var(--primary-hover)}
+.exer-enviar:disabled{opacity:.5;cursor:not-allowed}
+.exer-entrega{font-size:12px;margin-top:8px;color:var(--success);display:none;align-items:center;gap:6px}
+.exer-entrega.show{display:flex}
+.dica{font-size:12px;color:var(--text-muted);margin-top:6px}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <span class="brand-badge">📝</span>
+    <span>Exercícios dos Apêndices<small>Curso de Montagem e Manutenção de Computadores</small></span>
+  </div>
+  <div class="topbar-right">
+    <a class="icon-btn" href="index.html" title="Ir para o curso">▶ Curso</a>
+    <a class="icon-btn" href="livro.html" title="Ver o livro">📖 Livro</a>
+    <button class="icon-btn" onclick="toggleTheme()" title="Alternar tema">◐ Tema</button>
+  </div>
+</div>
+
+<div class="container">
+  <div class="hero">
+    <h1>📝 Exercícios de fixação — Apêndices A e B</h1>
+    <p>Teste o que você aprendeu nos apêndices do livro: <b style="color:var(--primary)">adicionar discos no Windows (Diskpart)</b> e <b style="color:var(--secondary)">adicionar discos no Linux (GParted/Fdisk)</b>. As respostas ficam salvas no seu navegador.</p>
+    <div class="chips">
+      <span class="chip">Apêndice A — <b id="chip-a">0/0</b></span>
+      <span class="chip">Apêndice B — <b id="chip-b">0/0</b></span>
+      <span class="chip">Total — <b id="chip-total">0/0</b></span>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" id="tab-a" onclick="mostrarAba('a')">💾 Apêndice A — Diskpart (Windows)</button>
+    <button class="tab-btn" id="tab-b" onclick="mostrarAba('b')">🐧 Apêndice B — GParted/Fdisk (Linux)</button>
+  </div>
+
+  <div class="ap-body show" id="corpo-a">
+    <div class="ap-header">
+      <h2>💾 Apêndice A — Adicionando um disco no Windows</h2>
+      <span class="ap-prog" id="prog-a"></span>
+    </div>
+    <p class="ap-desc">Comandos do <b>Diskpart</b>: identificar o disco certo, criar partição, formatar e atribuir letra — sem apagar dados por engano.</p>
+    <div id="quiz-a"></div>
+  </div>
+
+  <div class="ap-body" id="corpo-b">
+    <div class="ap-header">
+      <h2>🐧 Apêndice B — Adicionando um disco no Linux</h2>
+      <span class="ap-prog" id="prog-b"></span>
+    </div>
+    <p class="ap-desc">Particionar e formatar com o <b>fdisk</b> (linha de comando) e o <b>GParted</b> (gráfico), montar e configurar o <b>/etc/fstab</b> com UUID.</p>
+    <div id="quiz-b"></div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   EXERCÍCIOS DOS APÊNDICES
+   - tipo "obj": múltipla escolha (opcoes + correta = índice)
+   - tipo "disc": dissertativa (resposta livre)
+   Respostas salvas no localStorage por apêndice.
+   ============================================================ */
+const AP_EXERCICIOS = {
+  "A": [
+    { q: "Qual comando do Diskpart lista todos os discos do computador?", opcoes: ["list volume", "list disk", "show disk", "dir disk"], correta: 1 },
+    { q: "Antes de executar o comando clean, o que é fundamental conferir?", opcoes: ["A letra da unidade", "O número do disco no list disk", "O tamanho do arquivo de página", "A versão do Windows"], correta: 1 },
+    { q: "O que o comando clean faz no disco selecionado?", opcoes: ["Formata em NTFS", "Apaga todas as partições e assinaturas do disco", "Cria uma partição primária", "Atribui uma letra à unidade"], correta: 1 },
+    { q: "Qual sequência de comandos cria a partição e a formata em NTFS?", opcoes: ["create partition primary → format fs=ntfs quick", "format fs=ntfs quick → create partition primary", "assign → format fs=ntfs quick", "select partition 1 → assign"], correta: 0 },
+    { q: "Qual comando atribui uma letra ao volume recém-criado?", opcoes: ["letter", "assign", "label", "mount"], correta: 1 },
+    { q: "Em um disco de 3 TB, qual tabela de partições o Windows exige para usar todo o espaço?", opcoes: ["MBR", "FAT32", "GPT", "NTFS"], correta: 2 },
+    { q: "Qual comando converte o disco selecionado para GPT?", opcoes: ["convert gpt", "make gpt", "set gpt", "gpt on"], correta: 0 },
+    { q: "Você abriu o Diskpart e qualquer comando retorna 'Acesso negado'. Qual é a causa mais provável?", opcoes: ["O disco está com defeito", "O Diskpart foi aberto sem administrador", "A letra já está em uso", "O disco está com GPT"], correta: 1 },
+    { q: "Para formatar uma partição pensando em usar o disco em uma TV ou câmera (e também no Windows), qual sistema de arquivos é indicado?", opcoes: ["NTFS", "ext4", "exFAT", "FAT16"], correta: 2 },
+    { q: "Dissertativa: Explique por que executar clean sem antes conferir o número do disco pode ser desastroso, e descreva o passo a passo seguro.", tipo: "disc" }
+  ],
+  "B": [
+    { q: "Qual comando lista os discos e partições no Linux?", opcoes: ["lsusb", "lsblk", "lspci", "df -i"], correta: 1 },
+    { q: "No fdisk, qual tecla cria uma nova partição?", opcoes: ["g", "n", "w", "p"], correta: 1 },
+    { q: "No fdisk, qual tecla GRAVA as mudanças no disco?", opcoes: ["q", "s", "w", "x"], correta: 2 },
+    { q: "No fdisk, qual tecla cancela as mudanças sem gravar?", opcoes: ["q", "w", "p", "t"], correta: 0 },
+    { q: "Qual comando formata a partição /dev/sdb1 com o sistema de arquivos ext4?", opcoes: ["format /dev/sdb1", "mkfs.ext4 /dev/sdb1", "fdisk -f /dev/sdb1", "mount /dev/sdb1"], correta: 1 },
+    { q: "No GParted, as operações de particionamento só são executadas quando você:", opcoes: ["Salva o arquivo", "Clica em 'Aplicar'", "Fecha o programa", "Reinicia o computador"], correta: 1 },
+    { q: "Para montar manualmente o disco /dev/sdb1 em /mnt/disco2, o comando é:", opcoes: ["mount /mnt/disco2 /dev/sdb1", "mount /dev/sdb1 /mnt/disco2", "fdisk /mnt/disco2", "mkfs /mnt/disco2"], correta: 1 },
+    { q: "Para montar o disco automaticamente ao ligar, editamos o arquivo:", opcoes: ["/etc/hosts", "/etc/fstab", "/boot/grub.cfg", "/etc/passwd"], correta: 1 },
+    { q: "No /etc/fstab, o ideal é usar o __________ do sistema de arquivos em vez de /dev/sdb1, porque os nomes sdX mudam.", opcoes: ["UUID", "tamanho", "tipo", "letra"], correta: 0 },
+    { q: "Qual comando mostra o UUID da partição /dev/sdb1?", opcoes: ["uuid /dev/sdb1", "blkid /dev/sdb1", "fdisk -u /dev/sdb1", "lsblk -t /dev/sdb1"], correta: 1 },
+    { q: "Qual comando testa as linhas do fstab sem reiniciar?", opcoes: ["mount -a", "fstab -t", "fsck -a", "mount -f"], correta: 0 },
+    { q: "Dissertativa: Explique a diferença entre montar com o comando mount e configurar o /etc/fstab, e por que o UUID é preferido no fstab.", tipo: "disc" }
+  ]
+};
+
+const AP_STORAGE_KEY = "curso-hardware-apendice-exercicios";
+let apState = {};
+try { apState = JSON.parse(localStorage.getItem(AP_STORAGE_KEY) || "{}"); } catch(e){}
+function apSave(){ localStorage.setItem(AP_STORAGE_KEY, JSON.stringify(apState)); }
+const LETRAS = ["A","B","C","D","E","F"];
+
+function renderApendice(ap){
+  const apId = ap.toLowerCase();
+  const qs = AP_EXERCICIOS[ap];
+  const st = apState[ap] || {};
+  const certas = qs.filter((q,i)=>q.tipo!=="disc" && st[i] && st[i].acertou).length;
+  const totObj = qs.filter(q=>q.tipo!=="disc").length;
+  const respondidas = Object.keys(st).filter(k=>st[k].respondido).length;
+  document.getElementById("prog-"+apId).textContent = `${certas}/${totObj} objetivas certas · ${respondidas}/${qs.length} respondidas`;
+  document.getElementById("quiz-"+apId).innerHTML = qs.map((q, qi)=>{
+    const resp = st[qi];
+    if (q.tipo === "disc"){
+      return `
+      <div class="exer-q exer-disc">
+        <div class="enunciado">${qi+1}. ${q.q}</div>
+        <textarea id="ap-disc-${apId}-${qi}" ${resp && resp.entregue ? "disabled" : ""} placeholder="Escreva sua resposta aqui...">${resp && resp.resposta ? esc(resp.resposta) : ""}</textarea>
+        <button class="exer-enviar" onclick="apEnviarDisc('${ap}', ${qi})" ${resp && resp.entregue ? "disabled" : ""}>${resp && resp.entregue ? "✓ Entregue" : "Entregar resposta"}</button>
+        <div class="exer-entrega ${resp && resp.entregue ? "show" : ""}" id="ap-entrega-${apId}-${qi}">📨 Resposta entregue — salva neste navegador.</div>
+        ${resp && resp.entregue ? `<p class="dica">💡 Compare com o gabarito no Apêndice do livro (seção 7.2).</p>` : ""}
+      </div>`;
+    }
+    return `
+    <div class="exer-q">
+      <div class="enunciado">${qi+1}. ${q.q}</div>
+      <div class="exer-opcoes">
+        ${q.opcoes.map((op, oi)=>{
+          let cls = "exer-op", onclick = "";
+          if (resp && resp.respondido){
+            cls += " bloqueada";
+            if (oi === q.correta) cls += " certa";
+            else if (oi === resp.escolha) cls += " errada";
+          } else {
+            onclick = `onclick="apResponder('${ap}', ${qi}, ${oi})"`;
+          }
+          return `<div class="${cls}" ${onclick}><span class="letra">${LETRAS[oi]}</span><span>${op}</span></div>`;
+        }).join("")}
+      </div>
+      <div class="exer-feedback ${resp && resp.respondido ? "show " + (resp.acertou ? "ok" : "nok") : ""}" id="ap-fb-${apId}-${qi}">
+        ${resp && resp.respondido
+          ? (resp.acertou ? "✅ Correto!" : `❌ Não foi dessa vez. A resposta certa é: <b>${LETRAS[q.correta]} — ${esc(q.opcoes[q.correta])}</b>`)
+          : ""}
+      </div>
+    </div>`;
+  }).join("");
+  atualizarChips();
+}
+
+function apResponder(ap, qi, escolha){
+  const q = AP_EXERCICIOS[ap][qi];
+  if (!q || q.tipo === "disc") return;
+  if (!apState[ap]) apState[ap] = {};
+  apState[ap][qi] = { respondido: true, escolha, acertou: escolha === q.correta, em: new Date().toISOString() };
+  apSave();
+  renderApendice(ap);
+}
+
+function apEnviarDisc(ap, qi){
+  const ta = document.getElementById("ap-disc-" + ap.toLowerCase() + "-" + qi);
+  const texto = (ta.value || "").trim();
+  if (!texto){ alert("Escreva sua resposta antes de entregar."); return; }
+  if (!apState[ap]) apState[ap] = {};
+  apState[ap][qi] = { respondido: true, entregue: true, resposta: texto, em: new Date().toISOString() };
+  apSave();
+  renderApendice(ap);
+}
+
+function atualizarChips(){
+  const total = { objCertas: 0, objTot: 0 };
+  for (const ap of ["A","B"]){
+    const qs = AP_EXERCICIOS[ap];
+    const st = apState[ap] || {};
+    const certas = qs.filter((q,i)=>q.tipo!=="disc" && st[i] && st[i].acertou).length;
+    const tot = qs.filter(q=>q.tipo!=="disc").length;
+    document.getElementById("chip-"+ap.toLowerCase()).textContent = certas + "/" + tot;
+    total.objCertas += certas; total.objTot += tot;
+  }
+  document.getElementById("chip-total").textContent = total.objCertas + "/" + total.objTot;
+}
+
+function mostrarAba(ap){
+  const apId = ap.toLowerCase();
+  document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));
+  document.getElementById("tab-"+apId).classList.add("active");
+  document.querySelectorAll(".ap-body").forEach(b=>b.classList.remove("show"));
+  document.getElementById("corpo-"+apId).classList.add("show");
+}
+
+function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function toggleTheme(){
+  const html = document.documentElement;
+  html.setAttribute("data-theme", html.getAttribute("data-theme")==="dark" ? "light" : "dark");
+}
+
+renderApendice("A");
+renderApendice("B");
+</script>
+</body>
+</html>
