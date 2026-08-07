@@ -1017,7 +1017,8 @@ function boletimAluno(){
   <h2>Dados do aluno</h2>
   <div class="row"><b>Nome:</b> ${esc(a.nome)}</div>
   <div class="row"><b>Turma:</b> ${esc(a.turma||"—")}</div>
-  <div class="row"><b>Matrícula:</b> ${fmt(new Date(a.criadoEm))}</div>
+  <div class="row"><b>Matrícula:</b> ${a.matricula ? esc(a.matricula) : "—"}</div>
+  <div class="row"><b>Matriculado em:</b> ${fmt(new Date(a.criadoEm))}</div>
   <div class="row"><b>Situação:</b> <span class="sit sit-${sit.classe}">${sit.label}</span></div>
   <div class="row"><b>Frequência:</b> ${pres}/43 (${freq}%)</div>
   <h2>Notas (0–10)</h2>
