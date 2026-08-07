@@ -53,6 +53,17 @@ const testCode = `
   ok('item do aluno travado TEM o badge', itemTravado.includes('🔒 quiosque'));
   ok('item do aluno livre NAO TEM o badge', !itemLivre.includes('🔒 quiosque'));
 
+  // ===== filtro 'Só travados' =====
+  filtroQk = true;
+  renderLista();
+  const filtrada = elements['aluno-list'].innerHTML;
+  ok('filtro ativo mostra so o aluno travado', filtrada.includes('Aluno Travado Secret') && !filtrada.includes('Aluno Livre Secret'));
+  ok('filtro ativo mostra contagem de travados no item', filtrada.includes('🔒 quiosque'));
+  filtroQk = false;
+  renderLista();
+  const semFiltro = elements['aluno-list'].innerHTML;
+  ok('filtro desativado volta a mostrar todos', semFiltro.includes('Aluno Travado Secret') && semFiltro.includes('Aluno Livre Secret'));
+
   console.log(falhas === 0 ? 'RESULTADO: TODOS OS CHECKS OK' : 'RESULTADO: ' + falhas + ' FALHA(S)');
   process.exit(falhas === 0 ? 0 : 1);
 })();
