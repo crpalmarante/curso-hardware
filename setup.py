@@ -8,9 +8,10 @@
 #
 #  Uso (prefira o modo interativo ou a variável de ambiente —
 #  evite --senha, que deixa a senha visível no histórico do shell):
-#    python3 setup.py                    # pergunta a nova senha
-#    INSTRUTOR_SENHA=x python3 setup.py  # senha via variável
-#    python3 setup.py --gerar            # gera senha aleatória
+#    python3 setup.py                    # pergunta as senhas
+#    INSTRUTOR_SENHA=x SECRETARIO_SENHA=y python3 setup.py
+#    python3 setup.py --gerar            # gera senhas aleatórias
+#    python3 setup.py --senha X --senha-secretario Y
 # ============================================================
 
 import argparse
@@ -23,6 +24,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, "dados")
 SECRET_FILE = os.path.join(DATA_DIR, "secret.txt")
 PASSWORD_FILE = os.path.join(DATA_DIR, "instrutor.txt")
+SECRETARIO_FILE = os.path.join(DATA_DIR, "secretario.txt")
 
 SENHA_MIN = 6  # tamanho mínimo da senha do instrutor
 
@@ -66,10 +68,10 @@ def gerar_secret():
     ok("Segredo de sessão gerado (dados/secret.txt).")
 
 
-def perguntar_senha():
+def perguntar_senha(rotulo="Nova senha do instrutor: "):
     """Pede a senha interativamente (com confirmação)."""
     while True:
-        s1 = getpass.getpass("Nova senha do instrutor: ")
+        s1 = getpass.getpass(rotulo)
         if len(s1) < SENHA_MIN:
             print("Senha muito curta (mínimo %d caracteres)." % SENHA_MIN)
             continue
@@ -98,15 +100,35 @@ def obter_senha(args):
         "INSTRUTOR_SENHA ou rode interativamente.")
 
 
-def definir_senha(senha):
+def definir_senha(arquivo, senha, rotulo):
     """Grava a senha na 1ª linha — mesmo formato que servidor.py lê
-    em _carregar_senha() (strip da primeira linha)."""
+    em _carregar_senha()/_carregar_secretario() (strip da 1ª linha)."""
     if len(senha) < SENHA_MIN:
         raise SystemExit("A senha deve ter ao menos %d caracteres." % SENHA_MIN)
-    with open(PASSWORD_FILE, "w", encoding="utf-8") as f:
+    with open(arquivo, "w", encoding="utf-8") as f:
         f.write(senha + "\n")
-    _restringir(PASSWORD_FILE)
-    ok("Senha do instrutor definida em dados/instrutor.txt.")
+    _restringir(arquivo)
+    ok("%s definida em %s." % (rotulo, os.path.basename(arquivo)))
+
+
+def obter_senha_secretario(args):
+    """Senha da secretaria: --gerar > --senha-secretario > SECRETARIO_SENHA > prompt > gerada."""
+    if args.gerar:
+        s = secrets.token_urlsafe(12)
+        print("Senha da secretaria gerada: %s" % cor(s, "1;33"))
+        return s
+    env = os.environ.get("SECRETARIO_SENHA", "").strip()
+    if env:
+        return env
+    if args.senha_secretario:
+        return args.senha_secretario
+    if sys.stdin.isatty():
+        print()
+        print("Secretaria Pedagógica")
+        return perguntar_senha("Nova senha da secretaria: ")
+    s = secrets.token_urlsafe(12)
+    print("Senha da secretaria gerada: %s" % cor(s, "1;33"))
+    return s
 
 
 def inicializar_banco():
@@ -125,6 +147,8 @@ def main():
                                            "prefira o modo interativo ou INSTRUTOR_SENHA."))
     parser.add_argument("--gerar", action="store_true",
                         help="Gera uma senha aleatória segura e a exibe na tela.")
+    parser.add_argument("--senha-secretario",
+                        help="Define a senha da secretaria pedagógica (idem aviso do --senha).")
     parser.add_argument("--nao-iniciar-banco", action="store_true",
                         help="Não inicializa o banco SQLite.")
     args = parser.parse_args()
@@ -136,7 +160,9 @@ def main():
         criar_pasta_dados()
         gerar_secret()
         senha = obter_senha(args)
-        definir_senha(senha)
+        definir_senha(PASSWORD_FILE, senha, "Senha do instrutor")
+        senha_sec = obter_senha_secretario(args)
+        definir_senha(SECRETARIO_FILE, senha_sec, "Senha da secretaria")
         if not args.nao_iniciar_banco:
             inicializar_banco()
     except KeyboardInterrupt:

@@ -49,6 +49,8 @@ curso-hardware/
 ├── login-aluno.html      # Login do aluno (digita o nome → index.html?aluno=Nome)
 ├── alunos.html           # Registro do instrutor (painel protegido por senha)
 ├── login-alunos.html     # Login do instrutor (senha)
+├── secretaria.html       # Painel da Secretaria Pedagógica (monitoramento + atendimento aos pais)
+├── login-secretaria.html # Login da secretaria (senha própria)
 ├── servidor.py           # Servidor HTTP + API JSON + banco SQLite (sem dependências)
 ├── curso.js              # Estrutura do curso (8 módulos, 43 aulas) — compartilhado
 ├── exercicios.js         # Banco de questões do caderno (43 aulas)
@@ -89,6 +91,14 @@ Os dados do aluno (progresso, respostas, provas) são guardados no navegador e s
 3. Avalia as dissertativas do caderno (nota 0–10).
 4. Define a **semana atual do curso** (usada na frequência automática dos alunos).
 5. Consulta o **painel da turma** (ranking de progresso e módulos com dificuldade) e emite **boletins** imprimíveis.
+
+### Secretaria Pedagógica
+
+1. Abre `secretaria.html` e faz login com a senha própria (`login-secretaria.html`).
+2. **Monitora o curso** pelo painel da turma (situação, frequência, ranking e módulos com dificuldade).
+3. Consulta por aluno: resumo, presenças, notas, atividades, exercícios (com dissertativas) e provas.
+4. Pode registrar presenças, atividades e notas — útil no **atendimento aos pais** sobre o desempenho dos filhos.
+5. Acessa o **Plano de Aulas** (restrito a login) pelo botão 📋 no topo.
 
 ## Funcionalidades
 
@@ -148,9 +158,18 @@ Extras:
 - **Módulos com mais dificuldade**: aproveitamento médio por aula entre toda a turma.
 - Funciona mesmo sem um aluno selecionado.
 
+### Secretaria Pedagógica
+
+Página `secretaria.html` (link "🗂️ Secretaria" no topo do curso, login em `login-secretaria.html`) — painel da secretaria para acompanhar o curso e atender os pais:
+
+- **Painel da turma**: cards de resumo (total, aprovados, cursando, reprovados, média), ranking de progresso e módulos com mais dificuldade.
+- **Aba por aluno**: Resumo (situação, nota final, frequência), Presença (43 semanas, editável), Avaliação (notas com pesos), Atividades (registrar/listar), Exercícios (aproveitamento + avaliação de dissertativas), Provas por módulo e Histórico.
+- **Semana atual do curso** (frequência automática) também disponível na secretaria.
+- Senha própria em `dados/secretario.txt` (ou env `SECRETARIO_SENHA`), separada da do instrutor.
+
 ### Plano de Aulas
 
-Página `plano-de-aulas.html` (link "📋 Plano de Aulas" no topo do curso) que gera **um plano A4 por aula**, pronto para imprimir ou salvar em PDF (Ctrl+P):
+Página `plano-de-aulas.html` (link "📋 Plano de Aulas" no topo dos painéis do instrutor e da secretaria) que gera **um plano A4 por aula**, pronto para imprimir ou salvar em PDF (Ctrl+P):
 
 - Cabeçalho com módulo, semana, tipo (teoria/mista/prática), carga horária e referência ao volume do livro.
 - Objetivo, conteúdo, atividade prática e exercícios/avaliação da aula (vinculados ao caderno e à prova do módulo).
@@ -239,6 +258,7 @@ python3 servidor.py 8000 --publico  # aceita acesso externo (sem o flag, apenas 
 | GET | `/api/certificado?aluno=Nome` | — | Dados do certificado de um aluno |
 | GET | `/api/verificar-certificado?codigo=X` | — | Verificação pública de autenticidade |
 | POST | `/api/login` | — | Login do instrutor (senha) |
+| POST | `/api/login-secretario` | — | Login da secretaria pedagógica (senha própria) |
 | POST | `/api/logout` | — | Encerra a sessão |
 | POST | `/api/alunos` | sim | Salva o banco completo (usado pelo Registro) |
 | POST | `/api/exercicios` | — | Salva respostas de exercícios de um aluno |
@@ -277,14 +297,13 @@ Na primeira execução, o antigo `alunos.json` é migrado automaticamente (renom
 O script `setup.py` prepara o ambiente: cria a pasta `dados/`, gera o segredo de sessão, define a senha do instrutor e inicializa o banco SQLite (sem apagar dados existentes):
 
 ```bash
-python3 setup.py                        # pergunta a nova senha (recomendado)
-INSTRUTOR_SENHA=MinhaSenha python3 setup.py  # senha via variável de ambiente
-python3 setup.py --gerar                # gera uma senha aleatória segura
+python3 setup.py                        # pergunta as senhas (recomendado)
+INSTRUTOR_SENHA=x SECRETARIO_SENHA=y python3 setup.py  # via variáveis de ambiente
+python3 setup.py --gerar                # gera senhas aleatórias seguras
+python3 setup.py --senha X --senha-secretario Y
 ```
 
-Evite `--senha` se possível: a senha fica visível no histórico do shell e na lista de processos.
-
-A senha fica em `dados/instrutor.txt` (fora do versionamento). **Reinicie o servidor** após o setup para que a nova senha valha.
+O setup define a **senha do instrutor** (`dados/instrutor.txt`) e a **senha da secretaria** (`dados/secretario.txt`), ambas fora do versionamento. Evite `--senha`/`--senha-secretario` se possível: as senhas ficam visíveis no histórico do shell e na lista de processos. **Reinicie o servidor** após o setup para que as novas senhas valham.
 
 ## Como executar
 
@@ -318,6 +337,7 @@ Guia completo em [`INSTRUCOES-SERVIDOR.txt`](INSTRUCOES-SERVIDOR.txt). Resumo:
 ## Personalização
 
 - **Senha do instrutor**: padrão `instrutor123`. Troque rodando `python3 setup.py` (recomendado), criando `dados/instrutor.txt` com a nova senha, ou via variável de ambiente `INSTRUTOR_SENHA`.
+- **Senha da secretaria pedagógica**: padrão `secretario123`. Troque com `python3 setup.py --senha-secretario NovaSenha` (ou env `SECRETARIO_SENHA`), ou criando `dados/secretario.txt`.
 - **Questões do caderno**: edite `exercicios.js` (chave `"módulo|título da aula"`, 3 objetivas + 1 dissertativa).
 - **Questões das provas**: edite `provas.js` (módulos `"01"` a `"08"`).
 - **Conteúdo das aulas e estrutura**: edite o array `CURSO` no `curso.js` (usado pelo site do curso e pelo Plano de Aulas).

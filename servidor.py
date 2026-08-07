@@ -34,6 +34,7 @@ DATA_FILE = os.path.join(DATA_DIR, "alunos.json")
 DB_FILE = os.path.join(DATA_DIR, "curso.db")
 SECRET_FILE = os.path.join(DATA_DIR, "secret.txt")
 PASSWORD_FILE = os.path.join(DATA_DIR, "instrutor.txt")
+SECRETARIO_FILE = os.path.join(DATA_DIR, "secretario.txt")
 
 # ---- esquema do banco SQLite ----
 SCHEMA = """
@@ -174,6 +175,21 @@ def _carregar_senha():
 
 INSTRUTOR_SENHA = _carregar_senha()
 
+# senha da secretaria pedagógica
+#  - igual ao instrutor: arquivo dados/secretario.txt ou env SECRETARIO_SENHA.
+def _carregar_secretario():
+    if os.path.exists(SECRETARIO_FILE):
+        with open(SECRETARIO_FILE, "r", encoding="utf-8") as f:
+            s = f.read().strip()
+            if s:
+                return s
+    env = os.environ.get("SECRETARIO_SENHA", "").strip()
+    if env:
+        return env
+    return "secretario123"  # padrão — troque em produção!
+
+SECRETARIO_SENHA = _carregar_secretario()
+
 # segredo para assinar o token (persistente entre reinícios)
 def _carregar_secret():
     if os.path.exists(SECRET_FILE):
@@ -188,29 +204,35 @@ SECRET = _carregar_secret()
 SESS_DURACAO = 8 * 3600  # 8 horas
 
 
-def _sess_token():
+def _sess_token(papel="instrutor"):
+    """Gera o token assinado da sessão com o papel (instrutor/secretario)."""
     exp = int(time.time()) + SESS_DURACAO
-    msg = "instrutor|%d" % exp
+    msg = "%s|%d" % (papel, exp)
     sig = hmac.new(SECRET.encode(), msg.encode(), hashlib.sha256).hexdigest()
     return "%s.%s" % (msg, sig)
 
 
-def _sess_valida(token):
+def _sess_papel(token):
+    """Valida o token e retorna o papel ('instrutor'/'secretario') ou None.
+    Tokens antigos ("instrutor|exp") continuam válidos."""
     if not token:
-        return False
+        return None
     try:
         msg, sig = token.rsplit(".", 1)
         calc = hmac.new(SECRET.encode(), msg.encode(), hashlib.sha256).hexdigest()
         if not hmac.compare_digest(calc, sig):
-            return False
-        _, exp = msg.rsplit("|", 1)
-        return int(exp) > int(time.time())
+            return None
+        papel, exp = msg.rsplit("|", 1)
+        if int(exp) <= int(time.time()):
+            return None
+        return papel
     except Exception:
-        return False
+        return None
 
 
-# rotas que exigem autenticação do instrutor
-ROTAS_PROTEGIDAS = ("/alunos.html", "/api/alunos", "/api/alunos.json")
+# rotas que exigem autenticação (instrutor ou secretaria)
+ROTAS_PROTEGIDAS = ("/alunos.html", "/api/alunos", "/api/alunos.json",
+                    "/secretaria.html", "/plano-de-aulas.html")
 
 
 
@@ -803,7 +825,7 @@ class Handler(BaseHTTPRequestHandler):
         return None
 
     def _autenticado(self):
-        return _sess_valida(self._sess_cookie())
+        return _sess_papel(self._sess_cookie()) is not None
 
     def _set_cookie(self, value):
         self.send_header("Set-Cookie",
@@ -814,13 +836,13 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Set-Cookie",
                          "curso_sessao=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0")
 
-    def _negar_acesso(self, json_):
+    def _negar_acesso(self, json_, destino="/login-alunos.html"):
         if json_:
             self._json(401, {"erro": "Acesso negado", "login": True})
         else:
-            # página html: redireciona para o login
+            # página html: redireciona para o login adequado
             self.send_response(302)
-            self.send_header("Location", "/login-alunos.html")
+            self.send_header("Location", destino)
             self.end_headers()
 
     # ------------------------------------------------------
@@ -835,9 +857,10 @@ class Handler(BaseHTTPRequestHandler):
             self._servir_estatico(path)
             return
 
-        # --- rotas do instrutor exigem autenticação ---
+        # --- rotas do instrutor/secretaria exigem autenticação ---
         if path in ROTAS_PROTEGIDAS and not self._autenticado():
-            self._negar_acesso(json_=(path != "/alunos.html"))
+            destino = "/login-secretaria.html" if path == "/secretaria.html" else "/login-alunos.html"
+            self._negar_acesso(json_=path.startswith("/api/"), destino=destino)
             return
 
         # --- API: lista de alunos ---
@@ -947,6 +970,24 @@ class Handler(BaseHTTPRequestHandler):
                 if hmac.compare_digest(senha, INSTRUTOR_SENHA):
                     self.send_response(200)
                     self._set_cookie(_sess_token())
+                    self.send_header("Content-Type", "application/json; charset=utf-8")
+                    self.send_header("Content-Length", str(len('{"status":"ok"}')))
+                    self.end_headers()
+                    self.wfile.write('{"status":"ok"}'.encode())
+                else:
+                    self._json(401, {"erro": "Senha incorreta"})
+            except Exception as e:
+                self._json(500, {"erro": str(e)})
+            return
+
+        # --- API: login da secretaria pedagógica ---
+        if path == "/api/login-secretario":
+            try:
+                body = json.loads(self._read_body().decode("utf-8") or "{}")
+                senha = body.get("senha", "")
+                if hmac.compare_digest(senha, SECRETARIO_SENHA):
+                    self.send_response(200)
+                    self._set_cookie(_sess_token("secretario"))
                     self.send_header("Content-Type", "application/json; charset=utf-8")
                     self.send_header("Content-Length", str(len('{"status":"ok"}')))
                     self.end_headers()
@@ -1209,6 +1250,7 @@ def main():
     print("  Dados: %s" % DB_FILE)
     print("  Registro de alunos protegido por senha.")
     print("  Senha do instrutor: %s (defina em dados/instrutor.txt ou env INSTRUTOR_SENHA)" % INSTRUTOR_SENHA)
+    print("  Senha da secretaria: %s (defina em dados/secretario.txt ou env SECRETARIO_SENHA)" % SECRETARIO_SENHA)
     print("  Para parar: Ctrl+C")
     print("=" * 55)
     try:

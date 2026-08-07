@@ -144,17 +144,22 @@ certificado sozinho. Para conferir a renovação:
     sudo certbot renew --dry-run
 
 ------------------------------------------------------------
- SENHA DO INSTRUTOR
+ SENHA DO INSTRUTOR E DA SECRETARIA
 ------------------------------------------------------------
-Senha padrão: instrutor123
+Senha padrão do instrutor:  instrutor123
+Senha padrão da secretaria: secretario123
 
-Para trocar, crie o arquivo dados/instrutor.txt com a nova senha
-na 1ª linha e reinicie o serviço:
+Para trocar, crie os arquivos dados/instrutor.txt e dados/secretario.txt
+com as novas senhas na 1ª linha e reinicie o serviço:
 
     sudo nano /var/www/curso-hardware/dados/instrutor.txt
+    sudo nano /var/www/curso-hardware/dados/secretario.txt
     sudo systemctl restart curso-hardware
 
-(Ou use: INSTRUTOR_SENHA=minhasenha antes de iniciar o serviço.)
+(Ou use: INSTRUTOR_SENHA=x SECRETARIO_SENHA=y antes de iniciar o serviço.)
+
+A Secretaria Pedagógica acessa em: http://palmarante.com.br/secretaria.html
+O Plano de Aulas agora exige login (instrutor ou secretaria).
 
 ------------------------------------------------------------
  CAMINHO MAIS SIMPLES (sem nginx, caso um dia queira)

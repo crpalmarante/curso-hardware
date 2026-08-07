@@ -231,5 +231,17 @@ preencherModulos();
 document.getElementById("filtro-mod").addEventListener("change", render);
 render();
 </script>
+<script>
+/* Proteção suave: se houver servidor e ele exigir login, redireciona.
+   (Sem servidor — modo local / GitHub Pages — a página segue liberada.) */
+(async function(){
+  try {
+    const ctl = new AbortController();
+    setTimeout(()=>ctl.abort(), 2500);
+    const r = await fetch("api/alunos", { signal: ctl.signal });
+    if (r.status === 401) window.location.href = "login-alunos.html";
+  } catch(e) { /* sem servidor: liberado */ }
+})();
+</script>
 </body>
 </html>
