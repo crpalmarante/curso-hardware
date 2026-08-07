@@ -1,6 +1,6 @@
 // Harness: executa o JS real de alunos.html e verifica que a nota sugerida
-// de Exercícios (notaExerciciosSugerida) inclui a média das dissertativas
-// dos apêndices como componente próprio.
+// de Exercícios (notaExerciciosSugerida) inclui a média das dissertativas e
+// das objetivas dos apêndices como componentes próprios.
 const fs = require('fs');
 const html = fs.readFileSync('alunos.html', 'utf-8');
 const scripts = [...html.matchAll(/<script(?:[^>]*)>([\s\S]*?)<\/script>/g)]
@@ -30,13 +30,20 @@ const testCode = `
 
   ok('exApDiscMedia lê o campo do resumo', exApDiscMedia(a) === 10.0);
   ok('exDiscMedia continua lendo o caderno', exDiscMedia(a) === 8.0);
+  ok('sem ap_nota_sugerida no resumo → undefined (filtrado)', exApNotaSugerida(a) === undefined);
 
   // média de [caderno 6, dissertativas 8, apêndices 10] = 8.0
   const comAp = notaExerciciosSugerida(a);
   ok('nota sugerida inclui os apêndices (6+8+10)/3 = 8.0', comAp === 8.0);
 
+  // com as objetivas dos apêndices: (6+8+10+10)/4 = 8.5
+  exerciciosCache['aluno nota teste'].resumo.ap_nota_sugerida = 10.0;
+  ok('exApNotaSugerida lê o campo do resumo', exApNotaSugerida(a) === 10.0);
+  ok('nota inclui as objetivas dos apêndices (6+8+10+10)/4 = 8.5', notaExerciciosSugerida(a) === 8.5);
+
   // sem apêndices: média de [6, 8] = 7.0
   exerciciosCache['aluno nota teste'].resumo.ap_disc_media = null;
+  exerciciosCache['aluno nota teste'].resumo.ap_nota_sugerida = null;
   const semAp = notaExerciciosSugerida(a);
   ok('sem apêndices a nota é (6+8)/2 = 7.0', semAp === 7.0);
 
@@ -44,8 +51,12 @@ const testCode = `
   exerciciosCache['aluno nota teste'].resumo = { nota_sugerida: null, disc_media: null, ap_disc_media: 9.5 };
   ok('só apêndices → nota = 9.5', notaExerciciosSugerida(a) === 9.5);
 
+  // só objetivas dos apêndices
+  exerciciosCache['aluno nota teste'].resumo = { nota_sugerida: null, disc_media: null, ap_disc_media: null, ap_nota_sugerida: 7.5 };
+  ok('só objetivas dos apêndices → nota = 7.5', notaExerciciosSugerida(a) === 7.5);
+
   // nada → null
-  exerciciosCache['aluno nota teste'].resumo = { nota_sugerida: null, disc_media: null, ap_disc_media: null };
+  exerciciosCache['aluno nota teste'].resumo = { nota_sugerida: null, disc_media: null, ap_disc_media: null, ap_nota_sugerida: null };
   ok('sem nenhum componente → null', notaExerciciosSugerida(a) === null);
 
   console.log(falhas === 0 ? 'RESULTADO: TODOS OS CHECKS OK' : 'RESULTADO: ' + falhas + ' FALHA(S)');

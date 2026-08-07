@@ -42,6 +42,7 @@ try:
         "SELECT id FROM alunos WHERE nome=?", ("Aluno Resumo Teste",)
     ).fetchone()[0]
     # 2 objetivas do caderno (1 certa) + 1 dissertativa do caderno (nota 8)
+    # + 2 objetivas do apêndice A (1 certa)
     # + 1 dissertativa do apêndice A (nota 10) + 1 dissertativa do apêndice B (nota 6)
     conn.executemany(
         "INSERT INTO exercicios(aluno_id, aula_id, qindice, tipo, resposta, correta, nota) "
@@ -50,6 +51,8 @@ try:
             (aid, "01|Aula 1", 0, "obj", "1", 1, None),
             (aid, "01|Aula 1", 1, "obj", "0", 0, None),
             (aid, "01|Aula 1", 2, "disc", "resposta caderno", 0, 8.0),
+            (aid, "AP|Apêndice A — Diskpart (Windows)", 0, "obj", "1", 1, None),
+            (aid, "AP|Apêndice A — Diskpart (Windows)", 1, "obj", "0", 0, None),
             (aid, "AP|Apêndice A — Diskpart (Windows)", 9, "disc", "resposta A", 0, 10.0),
             (aid, "AP|Apêndice B — GParted/Fdisk (Linux)", 11, "disc", "resposta B", 0, 6.0),
         ],
@@ -60,7 +63,10 @@ try:
     r = servidor.get_exercicios("Aluno Resumo Teste")["resumo"]
 
     ok("objetivas do caderno (2, 1 certa)", r["objetivas"] == 2 and r["certas"] == 1)
-    ok("nota_sugerida das objetivas (5.0)", r["nota_sugerida"] == 5.0)
+    ok("nota_sugerida só do caderno (5.0, sem os apêndices)", r["nota_sugerida"] == 5.0)
+    ok("objetivas dos apêndices (2, 1 certa)", r["ap_objetivas"] == 2 and r["ap_certas"] == 1)
+    ok("ap_nota_sugerida das objetivas dos apêndices (5.0)", r["ap_nota_sugerida"] == 5.0)
+    ok("aproveitamento global (caderno+apêndices) = 50%", r["aproveitamento"] == 50)
     ok("dissertativas entregues total (3)", r["dissertativas"] == 3)
     ok("média do caderno: só a nota 8 (disc_media=8.0)",
        r["disc_avaliadas"] == 1 and r["disc_media"] == 8.0)
@@ -84,12 +90,15 @@ try:
     conn.close()
     r2 = servidor.get_exercicios("Aluno So Caderno")["resumo"]
     ok("sem apêndices: ap_disc_media é None", r2["ap_disc_media"] is None)
+    ok("sem apêndices: ap_nota_sugerida é None", r2["ap_nota_sugerida"] is None)
     ok("sem apêndices: disc_media do caderno (9.0)", r2["disc_media"] == 9.0)
 
     # aluno inexistente → resumo com os campos novos
     r3 = servidor.get_exercicios("Ninguém Aqui")["resumo"]
     ok("aluno inexistente tem ap_disc_media no resumo",
        "ap_disc_media" in r3 and r3["ap_disc_media"] is None)
+    ok("aluno inexistente tem ap_nota_sugerida no resumo",
+       "ap_nota_sugerida" in r3 and r3["ap_nota_sugerida"] is None)
 
 finally:
     shutil.rmtree(tmp, ignore_errors=True)

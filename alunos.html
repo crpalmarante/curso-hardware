@@ -852,13 +852,14 @@ function checkoutsMediaDoAluno(a){
 }
 function notaExerciciosSugerida(a){
   // média simples de: caderno (objetivas), dissertativas avaliadas,
-  // dissertativas dos apêndices, checkouts e provas
+  // dissertativas e objetivas dos apêndices, checkouts e provas
   const caderno = exNotaSugerida(a);
   const disc = exDiscMedia(a);
   const apDisc = exApDiscMedia(a);
+  const apObj = exApNotaSugerida(a);
   const checkouts = checkoutsMediaDoAluno(a);
   const provas = provasMediaDoAluno(a);
-  const componentes = [caderno, disc, apDisc, checkouts, provas].filter(v => v != null);
+  const componentes = [caderno, disc, apDisc, apObj, checkouts, provas].filter(v => v != null);
   if (!componentes.length) return null;
   return Math.round(componentes.reduce((s,v)=>s+v,0) / componentes.length * 10) / 10;
 }
@@ -870,15 +871,19 @@ function exApDiscMedia(a){
   const rs = exerciciosCache[(a.nome||"").toLowerCase()] && exerciciosCache[(a.nome||"").toLowerCase()].resumo;
   return rs ? rs.ap_disc_media : null;
 }
+function exApNotaSugerida(a){
+  const rs = exerciciosCache[(a.nome||"").toLowerCase()] && exerciciosCache[(a.nome||"").toLowerCase()].resumo;
+  return rs ? rs.ap_nota_sugerida : null;
+}
 function aplicarNotaExercicios(){
   const a = alunoAtual();
   if (!a) return;
   const nota = notaExerciciosSugerida(a);
-  if (nota == null){ alert("O aluno ainda não tem aproveitamento de exercícios (caderno e/ou provas) suficiente para gerar nota."); return; }
+  if (nota == null){ alert("O aluno ainda não tem aproveitamento de exercícios (caderno, apêndices e/ou provas) suficiente para gerar nota."); return; }
   if (!confirm(`Aplicar a nota sugerida de Exercícios (${nota}/10) para ${a.nome}?`)) return;
   const mudou = a.notas.exercicios !== nota;
   a.notas.exercicios = nota;
-  if (mudou) logEvento(a, "nota", `Nota de Exercícios aplicada automaticamente (média caderno + dissertativas + checkouts + provas): ${nota}.`);
+  if (mudou) logEvento(a, "nota", `Nota de Exercícios aplicada automaticamente (média caderno + dissertativas + apêndices + checkouts + provas): ${nota}.`);
   salvar(); renderTudo();
   alert(`Nota de Exercícios definida para ${nota}/10.`);
 }
@@ -941,10 +946,15 @@ async function renderExercicios(a){
   const mediaProvas = provasMediaDoAluno(a);
   const mediaDisc = resumo ? resumo.disc_media : null;
   const mediaApDisc = resumo ? resumo.ap_disc_media : null;
+  const mediaApObj = resumo ? resumo.ap_nota_sugerida : null;
   const mediaCheckouts = checkoutsMediaDoAluno(a);
+  const apBits = [];
+  if (mediaApDisc != null) apBits.push("disc " + mediaApDisc);
+  if (mediaApObj != null) apBits.push("obj " + mediaApObj);
+  const apPart = apBits.length ? " + apêndices " + apBits.join(" · ") : "";
   const detNota = "caderno " + (resumo && resumo.nota_sugerida != null ? resumo.nota_sugerida : "—") +
                   " + dissertativas " + (mediaDisc != null ? mediaDisc : "—") +
-                  " + apêndices " + (mediaApDisc != null ? mediaApDisc : "—") +
+                  apPart +
                   " + checkouts " + (mediaCheckouts != null ? mediaCheckouts : "—") +
                   " + provas " + (mediaProvas != null ? mediaProvas : "—");
   if (aulas.length === 0){
