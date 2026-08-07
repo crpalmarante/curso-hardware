@@ -22,6 +22,7 @@ Acesso online: **http://palmarante.com.br**
 - [Avaliação e situação do aluno](#avaliação-e-situação-do-aluno)
 - [Servidor e API](#servidor-e-api)
 - [Banco de dados](#banco-de-dados)
+- [Setup inicial (primeira execução)](#setup-inicial-primeira-execução)
 - [Como executar](#como-executar)
 - [Publicação no servidor (nginx)](#publicação-no-servidor-nginx)
 - [Personalização](#personalização)
@@ -271,6 +272,20 @@ SQLite em `dados/curso.db` (criado automaticamente na primeira execução). Tabe
 
 Na primeira execução, o antigo `alunos.json` é migrado automaticamente (renomeado para `alunos.json.migrado`).
 
+## Setup inicial (primeira execução)
+
+O script `setup.py` prepara o ambiente: cria a pasta `dados/`, gera o segredo de sessão, define a senha do instrutor e inicializa o banco SQLite (sem apagar dados existentes):
+
+```bash
+python3 setup.py                        # pergunta a nova senha (recomendado)
+INSTRUTOR_SENHA=MinhaSenha python3 setup.py  # senha via variável de ambiente
+python3 setup.py --gerar                # gera uma senha aleatória segura
+```
+
+Evite `--senha` se possível: a senha fica visível no histórico do shell e na lista de processos.
+
+A senha fica em `dados/instrutor.txt` (fora do versionamento). **Reinicie o servidor** após o setup para que a nova senha valha.
+
 ## Como executar
 
 **Modo local (sem servidor):** basta abrir `index.html` no navegador. Funciona, mas os dados ficam só naquele navegador (localStorage) e o Registro de Alunos usa somente os dados locais.
@@ -302,7 +317,7 @@ Guia completo em [`INSTRUCOES-SERVIDOR.txt`](INSTRUCOES-SERVIDOR.txt). Resumo:
 
 ## Personalização
 
-- **Senha do instrutor**: padrão `instrutor123`. Troque criando `dados/instrutor.txt` com a nova senha (ou variável de ambiente `INSTRUTOR_SENHA`).
+- **Senha do instrutor**: padrão `instrutor123`. Troque rodando `python3 setup.py` (recomendado), criando `dados/instrutor.txt` com a nova senha, ou via variável de ambiente `INSTRUTOR_SENHA`.
 - **Questões do caderno**: edite `exercicios.js` (chave `"módulo|título da aula"`, 3 objetivas + 1 dissertativa).
 - **Questões das provas**: edite `provas.js` (módulos `"01"` a `"08"`).
 - **Conteúdo das aulas e estrutura**: edite o array `CURSO` no `curso.js` (usado pelo site do curso e pelo Plano de Aulas).
