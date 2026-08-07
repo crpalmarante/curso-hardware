@@ -303,7 +303,7 @@ python3 setup.py --gerar                # gera senhas aleatórias seguras
 python3 setup.py --senha X --senha-secretario Y
 ```
 
-O setup define a **senha do instrutor** (`dados/instrutor.txt`) e a **senha da secretaria** (`dados/secretario.txt`), ambas fora do versionamento. Evite `--senha`/`--senha-secretario` se possível: as senhas ficam visíveis no histórico do shell e na lista de processos. **Reinicie o servidor** após o setup para que as novas senhas valham.
+O setup define a **senha do instrutor** (`dados/instrutor.txt`) e a **senha da secretaria** (`dados/secretario.txt`), ambas fora do versionamento. Quando uma senha não é fornecida, a existente é **mantida** (ex.: `python3 setup.py --senha-secretario MinhaSenha` troca só a da secretaria). Evite `--senha`/`--senha-secretario` se possível: as senhas ficam visíveis no histórico do shell e na lista de processos. **Reinicie o servidor** após o setup para que as novas senhas valham.
 
 ## Como executar
 

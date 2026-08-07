@@ -7,11 +7,13 @@
 #  - Inicializa o banco (tabelas) sem apagar dados existentes.
 #
 #  Uso (prefira o modo interativo ou a variável de ambiente —
-#  evite --senha, que deixa a senha visível no histórico do shell):
+#  evite --senha/--senha-secretario, que deixam a senha visível no
+#  histórico do shell):
 #    python3 setup.py                    # pergunta as senhas
 #    INSTRUTOR_SENHA=x SECRETARIO_SENHA=y python3 setup.py
 #    python3 setup.py --gerar            # gera senhas aleatórias
-#    python3 setup.py --senha X --senha-secretario Y
+#    python3 setup.py --senha-secretario MinhaSenha  # troca só a da secretaria
+#  Quando uma senha não é fornecida, a existente é mantida.
 # ============================================================
 
 import argparse
@@ -83,10 +85,11 @@ def perguntar_senha(rotulo="Nova senha do instrutor: "):
 
 
 def obter_senha(args):
-    """Prioridade: --gerar > INSTRUTOR_SENHA > --senha > prompt interativo."""
+    """Senha do instrutor: --gerar > INSTRUTOR_SENHA > --senha > prompt
+    > gerada (somente em instalação nova). Retorna None para manter a atual."""
     if args.gerar:
         s = secrets.token_urlsafe(12)
-        print("Senha gerada: %s" % cor(s, "1;33"))
+        print("Senha do instrutor gerada: %s" % cor(s, "1;33"))
         return s
     env = os.environ.get("INSTRUTOR_SENHA", "").strip()
     if env:
@@ -94,10 +97,12 @@ def obter_senha(args):
     if args.senha:
         return args.senha
     if sys.stdin.isatty():
-        return perguntar_senha()
-    raise SystemExit(
-        "Nenhuma senha fornecida. Use --senha, --gerar, a variável "
-        "INSTRUTOR_SENHA ou rode interativamente.")
+        return perguntar_senha("Nova senha do instrutor: ")
+    if not os.path.exists(PASSWORD_FILE):
+        s = secrets.token_urlsafe(12)
+        print("Senha do instrutor gerada: %s" % cor(s, "1;33"))
+        return s
+    return None
 
 
 def definir_senha(arquivo, senha, rotulo):
@@ -112,7 +117,8 @@ def definir_senha(arquivo, senha, rotulo):
 
 
 def obter_senha_secretario(args):
-    """Senha da secretaria: --gerar > --senha-secretario > SECRETARIO_SENHA > prompt > gerada."""
+    """Senha da secretaria: --gerar > SECRETARIO_SENHA > --senha-secretario
+    > prompt > gerada (somente em instalação nova). Retorna None para manter."""
     if args.gerar:
         s = secrets.token_urlsafe(12)
         print("Senha da secretaria gerada: %s" % cor(s, "1;33"))
@@ -126,9 +132,11 @@ def obter_senha_secretario(args):
         print()
         print("Secretaria Pedagógica")
         return perguntar_senha("Nova senha da secretaria: ")
-    s = secrets.token_urlsafe(12)
-    print("Senha da secretaria gerada: %s" % cor(s, "1;33"))
-    return s
+    if not os.path.exists(SECRETARIO_FILE):
+        s = secrets.token_urlsafe(12)
+        print("Senha da secretaria gerada: %s" % cor(s, "1;33"))
+        return s
+    return None
 
 
 def inicializar_banco():
@@ -141,7 +149,7 @@ def inicializar_banco():
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Setup do curso: pasta dados/, segredo de sessão e senha do instrutor.")
+        description="Setup do curso: pasta dados/, segredo de sessão e senhas do instrutor e da secretaria.")
     parser.add_argument("--senha", help=("Define a senha do instrutor (substitui a padrão). "
                                            "Atenção: fica visível no histórico do shell e em 'ps' — "
                                            "prefira o modo interativo ou INSTRUTOR_SENHA."))
@@ -160,16 +168,22 @@ def main():
         criar_pasta_dados()
         gerar_secret()
         senha = obter_senha(args)
-        definir_senha(PASSWORD_FILE, senha, "Senha do instrutor")
+        if senha is not None:
+            definir_senha(PASSWORD_FILE, senha, "Senha do instrutor")
+        else:
+            info("Senha do instrutor mantida (nenhuma nova fornecida).")
         senha_sec = obter_senha_secretario(args)
-        definir_senha(SECRETARIO_FILE, senha_sec, "Senha da secretaria")
+        if senha_sec is not None:
+            definir_senha(SECRETARIO_FILE, senha_sec, "Senha da secretaria")
+        else:
+            info("Senha da secretaria mantida (nenhuma nova fornecida).")
         if not args.nao_iniciar_banco:
             inicializar_banco()
     except KeyboardInterrupt:
         print("\nCancelado. Nenhuma alteração foi concluída.")
         sys.exit(130)
     print()
-    info("Pronto! Reinicie o servidor para que a nova senha valha:")
+    info("Pronto! Reinicie o servidor para que as novas senhas valham:")
     print("  python3 servidor.py")
 
 
