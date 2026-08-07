@@ -5,28 +5,34 @@
 Dados do servidor:
   IP público fixo: 177.190.69.20
   Domínio próprio: palmarante.com.br
-  Acesso final:    http://palmarante.com.br
+  Subdomínio do curso: curso.palmarante.com.br  (DNS pendente de criação)
+  Acesso final:    http://curso.palmarante.com.br
+  Acesso temporário (sem DNS): http://177.190.69.20/  (já funciona hoje)
 
 Resumo do que vamos fazer:
-  1) Apontar o domínio para o IP do servidor (DNS).
+  1) Apontar o subdomínio curso.palmarante.com.br para o IP do servidor (DNS).
   2) Enviar os arquivos do curso para o servidor.
   3) Instalar o servidor Python como serviço (roda sozinho, mesmo
-     depois de fechar o terminal).
+     depois de fechar o terminal) na porta 8081 (interna).
   4) Configurar o nginx para publicar o curso na porta 80.
   5) (Opcional) Colocar HTTPS com certificado gratuito.
 
 ------------------------------------------------------------
- 1) APONTAR O DOMÍNIO PARA O SEU SERVIDOR (DNS)
+ 1) APONTAR O SUBDOMÍNIO PARA O SEU SERVIDOR (DNS)
 ------------------------------------------------------------
-No painel de DNS do seu provedor de domínio, crie estes registros:
+O domínio principal (palmarante.com.br) já é usado pelo Odoo e pela
+loja — o curso fica no SUBDOMÍNIO curso.palmarante.com.br.
+No painel de DNS do seu provedor de domínio, crie o registro:
 
-  Tipo  Nome           Valor          TTL
-  A     @              177.190.69.20  300
-  A     www            177.190.69.20  300
+  Tipo  Nome    Valor          TTL
+  A     curso   177.190.69.20  300
 
 Confira depois de alguns minutos (pode demorar até 24h):
-  (no seu computador)  nslookup palmarante.com.br
+  (no seu computador)  nslookup curso.palmarante.com.br
   (deve mostrar o IP 177.190.69.20)
+
+Enquanto o DNS não propaga, o curso JÁ fica acessível pelo IP direto
+(sem porta):  http://177.190.69.20/
 
 ------------------------------------------------------------
  2) ENVIAR OS ARQUIVOS PARA O SERVIDOR
@@ -55,7 +61,7 @@ Cole este conteúdo (ajuste o caminho se precisar):
 
     [Service]
     WorkingDirectory=/var/www/curso-hardware
-    ExecStart=/usr/bin/python3 /var/www/curso-hardware/servidor.py 8080
+    ExecStart=/usr/bin/python3 /var/www/curso-hardware/servidor.py 8081
     Restart=always
     User=www-data
 
@@ -71,27 +77,32 @@ Salve (Ctrl+O, Enter, Ctrl+X) e ative:
 Confira se está no ar:
 
     sudo systemctl status curso-hardware
-    curl http://localhost:8080/
+    curl http://localhost:8081/
 
 Dica: para ver os erros, use:  journalctl -u curso-hardware -f
+
+IMPORTANTE: o serviço roda SEM a flag --publico (escuta só em
+127.0.0.1:8081) — quem expõe na porta 80 é o nginx (passo 4).
+A porta 8081 NÃO precisa estar aberta no firewall externo.
 
 ------------------------------------------------------------
  4) CONFIGURAR O NGINX (publica na porta 80)
 ------------------------------------------------------------
 Crie a configuração:
 
-    sudo nano /etc/nginx/sites-available/curso-hardware
+    sudo nano /etc/nginx/sites-available/curso
 
 Cole:
 
     server {
         listen 80;
-        server_name palmarante.com.br www.palmarante.com.br;
+        listen [::]:80;
+        server_name curso.palmarante.com.br;
 
         client_max_body_size 20M;
 
         location / {
-            proxy_pass http://127.0.0.1:8080;
+            proxy_pass http://127.0.0.1:8081;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -100,16 +111,21 @@ Cole:
 
 Ative e recarregue:
 
-    sudo ln -s /etc/nginx/sites-available/curso-hardware /etc/nginx/sites-enabled/
+    sudo ln -s /etc/nginx/sites-available/curso /etc/nginx/sites-enabled/curso
     sudo nginx -t          # tem que dizer "syntax is ok"
     sudo systemctl reload nginx
 
+Esse bloco também atende o acesso direto pelo IP (http://177.190.69.20/),
+pois é o primeiro server block de listen 80 do nginx (server padrão) —
+útil enquanto o DNS do subdomínio não existe.
+
 Pronto! Acesse no navegador:
 
-    http://palmarante.com.br
+    http://curso.palmarante.com.br   (após o DNS)
+    http://177.190.69.20/            (temporário, sem DNS — funciona hoje)
 
 Para o registro de alunos (com senha):
-    http://palmarante.com.br/alunos.html
+    http://curso.palmarante.com.br/alunos.html
 
 ------------------------------------------------------------
   BANCO DE DADOS (SQLite)
@@ -175,20 +191,53 @@ criada no servidor e não deve ser sobrescrita pelo seu computador.
 ------------------------------------------------------------
 Senha padrão do instrutor:  instrutor123
 Senha padrão da secretaria: secretario123
+(NUNCA deixe as padrão em produção!)
 
-Para trocar, crie os arquivos dados/instrutor.txt e dados/secretario.txt
-com as novas senhas na 1ª linha e reinicie o serviço:
+As senhas ficam em dados/instrutor.txt e dados/secretario.txt (1ª linha),
+com permissão 600 e DONO www-data (o serviço roda como www-data).
 
-    sudo nano /var/www/curso-hardware/dados/instrutor.txt
-    sudo nano /var/www/curso-hardware/dados/secretario.txt
+>>> TROCAR AS SENHAS EM PRODUÇÃO (forma correta) <<<
+
+O serviço lê as senhas uma única vez, na inicialização, e o setup cria
+os arquivos com dono = usuário que o executa. Por isso, em produção,
+rode o setup COMO www-data e REINICIE o serviço em seguida:
+
+    cd /var/www/curso-hardware
+
+    # 1) Gera senhas fortes e grava os arquivos como www-data:
+    sudo -u www-data python3 setup.py --gerar
+
+    # 2) O setup mostra as senhas geradas na tela — ANOTE-AS.
+    #    (Para senhas escolhidas por você: sudo -u www-data python3 setup.py
+    #    responde interativamente, ou use --senha/--senha-secretario.)
+
+    # 3) Reinicia para as novas senhas valerem (lidas só no start):
     sudo systemctl restart curso-hardware
 
-(Ou use: INSTRUTOR_SENHA=x SECRETARIO_SENHA=y antes de iniciar o serviço.)
+    # 4) Confere (opcional):
+    curl -s -X POST http://localhost:8081/api/login \
+      -H 'Content-Type: application/json' -d '{"senha":"SUA_SENHA"}'
+    # -> {"status":"ok"} ; com senha errada -> {"erro": "Senha incorreta"}
 
-A Secretaria Pedagógica acessa em: http://palmarante.com.br/secretaria.html
+Se o setup rodar como outro usuário (ex.: seu usuário SSH), os arquivos
+ficam 600 com dono errado e o serviço (www-data) não consegue ler —
+corrija com:  sudo chown www-data:www-data /var/www/curso-hardware/dados/*.txt
+
+A Secretaria Pedagógica acessa em: http://curso.palmarante.com.br/secretaria.html
 O Plano de Aulas agora exige login (instrutor ou secretaria).
 Restrição por papel: só o INSTRUTOR emite certificados (a secretaria recebe 403
 na API e é redirecionada ao tentar abrir alunos.html).
+
+------------------------------------------------------------
+ ACESSO TEMPORÁRIO / SOLUÇÃO DE PROBLEMAS DE REDE
+------------------------------------------------------------
+- Enquanto o DNS do subdomínio não existe, o curso abre por:
+    http://177.190.69.20/            (porta 80 via nginx — sem porta no navegador)
+  NÃO tente http://177.190.69.20:8081: o FIREWALL DO PROVEDOR de
+  hospedagem bloqueia portas altas (8081 e até a 8080 da loja) de fora —
+  só 80/443/8443 passam. A 8081 é interna (127.0.0.1), usada só pelo nginx.
+- Para liberar portas altas é preciso abrir no painel do provedor
+  (firewall em nuvem), não no servidor (ufw/iptables estão sem regras).
 
 ------------------------------------------------------------
  CAMINHO MAIS SIMPLES (sem nginx, caso um dia queira)
@@ -196,9 +245,10 @@ na API e é redirecionada ao tentar abrir alunos.html).
 Se não quiser usar o nginx, basta expor o servidor Python direto:
 
     cd /var/www/curso-hardware
-    python3 servidor.py 8080 --publico
+    python3 servidor.py 8081 --publico
 
-Aí o acesso fica: http://palmarante.com.br:8080
+Aí o acesso fica: http://curso.palmarante.com.br:8081 (ou IP:8081, se o
+provedor liberar a porta).
 
 ------------------------------------------------------------
  SOLUÇÃO DE PROBLEMAS
@@ -206,6 +256,8 @@ Aí o acesso fica: http://palmarante.com.br:8080
 - "Erro de permissão": ajuste o dono da pasta:
     sudo chown -R www-data:www-data /var/www/curso-hardware
 - A página abriu mas o registro de alunos não conecta:
-    confira o passo 3 (nginx -t) e o serviço (curl http://localhost:8080/).
+    confira o passo 3 (nginx -t) e o serviço (curl http://localhost:8081/).
+- Senha não funciona após o setup: lembre de reiniciar o serviço e de
+  conferir o dono dos arquivos (www-data) — veja a seção de senhas acima.
 - Para testar tudo sem mexer no servidor real:
     python3 servidor.py 8124   (abre em http://localhost:8124)

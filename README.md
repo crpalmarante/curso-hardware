@@ -2,7 +2,7 @@
 
 Sistema completo de curso técnico com **8 módulos, 43 aulas semanais (2h cada)**, página interativa para o aluno, caderno de exercícios, avaliações por módulo e registro do instrutor com notas, presenças, comprometimento e painel da turma — tudo sincronizado com um servidor central (SQLite).
 
-Acesso online: **http://palmarante.com.br**
+Acesso online: **http://curso.palmarante.com.br** (subdomínio; enquanto o DNS não propaga, o curso abre por **http://177.190.69.20/**)
 
 ## Índice
 
@@ -340,6 +340,16 @@ python3 setup.py --senha X --senha-secretario Y
 
 O setup define a **senha do instrutor** (`dados/instrutor.txt`) e a **senha da secretaria** (`dados/secretario.txt`), ambas fora do versionamento. Quando uma senha não é fornecida, a existente é **mantida** (ex.: `python3 setup.py --senha-secretario MinhaSenha` troca só a da secretaria). Evite `--senha`/`--senha-secretario` se possível: as senhas ficam visíveis no histórico do shell e na lista de processos. **Reinicie o servidor** após o setup para que as novas senhas valham.
 
+**Trocando as senhas em produção (servidor com systemd):** o serviço lê as senhas uma única vez na inicialização e o `setup.py` cria os arquivos com dono = quem o executa (o serviço roda como `www-data`). Portanto, em produção rode como `www-data` e reinicie:
+
+```bash
+cd /var/www/curso-hardware
+sudo -u www-data python3 setup.py --gerar   # mostra as senhas geradas na tela
+sudo systemctl restart curso-hardware        # sem isso as senhas não valem
+```
+
+Se o setup rodar com outro usuário, os arquivos ficam `600` com dono errado e o serviço não consegue ler (corrija com `sudo chown www-data:www-data dados/*.txt`). Detalhes completos em [`INSTRUCOES-SERVIDOR.txt`](INSTRUCOES-SERVIDOR.txt).
+
 ## Como executar
 
 **Modo local (sem servidor):** basta abrir `index.html` no navegador. Funciona, mas os dados ficam só naquele navegador (localStorage) e o Registro de Alunos usa somente os dados locais.
@@ -361,26 +371,28 @@ python3 servidor.py 8080
 
 ## Publicação no servidor (nginx)
 
-Guia completo em [`INSTRUCOES-SERVIDOR.txt`](INSTRUCOES-SERVIDOR.txt). Resumo:
+Guia completo em [`INSTRUCOES-SERVIDOR.txt`](INSTRUCOES-SERVIDOR.txt). Resumo da produção real (`177.190.69.20`, o domínio principal é do Odoo):
 
-1. **DNS**: apontar `palmarante.com.br` e `www` para o IP fixo `177.190.69.20`.
-2. **Enviar arquivos**: `scp -r curso-hardware usuario@177.190.69.20:/var/www/`.
-3. **Serviço systemd** (`curso-hardware.service`): roda `servidor.py 8080` para sempre.
-4. **nginx**: proxy na porta 80 para `127.0.0.1:8080`.
-5. **HTTPS (opcional)**: `certbot --nginx -d palmarante.com.br -d www.palmarante.com.br`.
+1. **DNS**: criar o registro `A` de **`curso.palmarante.com.br`** → `177.190.69.20` (pendente de criação). Enquanto isso, o curso já abre em `http://177.190.69.20/` (porta 80 via nginx, sem DNS).
+2. **Enviar arquivos**: `scp -r curso-hardware palmarante@177.190.69.20:/var/www/` (pasta real de produção).
+3. **Serviço systemd** (`curso-hardware.service`): roda `servidor.py 8081` (interna, sem `--publico` — só o nginx acessa).
+4. **nginx**: site `curso` faz proxy da porta 80 para `127.0.0.1:8081` e é o primeiro bloco de `listen 80` (server padrão, por isso atende o IP direto).
+5. **HTTPS (após DNS)**: `sudo certbot --nginx -d curso.palmarante.com.br`.
+
+> ⚠️ **Firewall do provedor**: portas altas (8081, 8080) são bloqueadas de fora pelo provedor de hospedagem — não tente acessar `IP:8081`. A 8081 é interna; quem expõe é o nginx na porta 80.
 
 **Atualizar o curso sem mexer no banco** (recomendado a cada mudança):
 
 ```bash
-./deploy-producao.sh usuario@177.190.69.20
+./deploy-producao.sh palmarante@177.190.69.20
 ```
 
 O script roda o teste de permissões, gera o pacote `deploy-curso.tar.gz` (sem a pasta `dados/`), faz backup do banco no servidor, envia e reinicia o serviço. A pasta `dados/` (banco, senhas, segredo) **nunca** é enviada — ela pertence ao servidor.
 
 ## Personalização
 
-- **Senha do instrutor**: padrão `instrutor123`. Troque rodando `python3 setup.py` (recomendado), criando `dados/instrutor.txt` com a nova senha, ou via variável de ambiente `INSTRUTOR_SENHA`.
-- **Senha da secretaria pedagógica**: padrão `secretario123`. Troque com `python3 setup.py --senha-secretario NovaSenha` (ou env `SECRETARIO_SENHA`), ou criando `dados/secretario.txt`.
+- **Senha do instrutor**: padrão `instrutor123`. Troque rodando `python3 setup.py` (recomendado) — em produção, como `sudo -u www-data` + restart (veja [Setup inicial](#setup-inicial-primeira-execução)).
+- **Senha da secretaria pedagógica**: padrão `secretario123`. Troque com `python3 setup.py --senha-secretario NovaSenha` (ou env `SECRETARIO_SENHA`), ou criando `dados/secretario.txt` — em produção, idem `sudo -u www-data` + restart.
 - **Questões do caderno**: edite `exercicios.js` (chave `"módulo|título da aula"`, 3 objetivas + 1 dissertativa).
 - **Questões das provas**: edite `provas.js` (módulos `"01"` a `"08"`).
 - **Conteúdo das aulas e estrutura**: edite o array `CURSO` no `curso.js` (usado pelo site do curso e pelo Plano de Aulas).
