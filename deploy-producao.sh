@@ -4,7 +4,7 @@
 #
 #  Uso:
 #    ./deploy-producao.sh                    # pergunta usuário e IP
-#    ./deploy-producao.sh usuario@177.190.69.20
+#    ./deploy-producao.sh palmarante@177.190.69.20
 #
 #  O que faz:
 #    1. Gera o pacote deploy-curso.tar.gz (arquivos versionados,
@@ -72,11 +72,12 @@ echo "==> [4/5] Enviando e extraindo..."
 scp "$PACOTE" "$ALVO:/tmp/"
 ssh "$ALVO" "cd $DESTINO_REMOTO && sudo tar -xzf /tmp/$PACOTE && sudo chown -R www-data:www-data $DESTINO_REMOTO && rm /tmp/$PACOTE"
 
-echo "==> [5/5] Reiniciando o serviço..."
-ssh "$ALVO" "sudo systemctl restart $NOME_SERVICO && sleep 2 && curl -fsS http://localhost:8080/api/config && echo && echo 'Deploy concluído!'"
+echo "==> [5/5] Reiniciando o serviço (porta 8081)..."
+ssh "$ALVO" "(sudo systemctl restart $NOME_SERVICO 2>/dev/null || sudo systemctl enable --now $NOME_SERVICO) && sleep 2 && curl -fsS http://localhost:8081/api/config && echo && echo 'Deploy concluído!'"
 
 echo
-echo "Pronto! Acesse: http://palmarante.com.br"
-echo "Secretaria: http://palmarante.com.br/secretaria.html"
+echo "Pronto! Acesse: http://curso.palmarante.com.br"
+echo "Secretaria: http://curso.palmarante.com.br/secretaria.html"
+echo "(após adicionar o registro DNS: curso -> 177.190.69.20)"
 echo "Se as senhas ainda não foram definidas no servidor, rode lá:"
 echo "  cd $DESTINO_REMOTO && python3 setup.py"
