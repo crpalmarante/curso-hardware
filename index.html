@@ -661,6 +661,9 @@ let alunoNome = null;
         e.preventDefault();
         return false;
       }
+      // Ao trocar de aluno com o modo blindado ativo, desativa-o antes de
+      // navegar para não registrar falsa violação (visibilitychange no unload).
+      try { if (typeof guardDesativar === "function" && guard) guardDesativar(); } catch(err) {}
       window.location.href = "login-aluno.html";
     };
     try { done = JSON.parse(localStorage.getItem(storageKey()) || "{}"); } catch(e) {}
@@ -1355,30 +1358,36 @@ function guardExit(){
   else if (document.webkitFullscreenElement) document.webkitExitFullscreen();
 }
 
-function guardToggle(){
-  guard = !guard;
+function guardAtivar(silencioso){
+  guard = true;
+  guardStart = Date.now();
+  guardSave();
   const btn = document.getElementById("btn-guard");
-  if (guard) {
-    guardStart = Date.now();
-    guardSave();
-    btn.innerHTML = "🔓 Desativar modo";
-    btn.style.borderColor = "var(--danger)";
-    btn.style.color = "var(--danger)";
-    document.body.style.pointerEvents = "auto";
-    guardEnter();
-    attachGuardListeners(true);
+  btn.innerHTML = "🔓 " + (alunoNome || "Desativar modo");
+  btn.style.borderColor = "var(--danger)";
+  btn.style.color = "var(--danger)";
+  document.body.style.pointerEvents = "auto";
+  guardEnter();
+  attachGuardListeners(true);
+  if (!silencioso){
     alert("Modo blindado ATIVADO.\n\n- Tela cheia ativada.\n- Se você trocar de aba ou minimizar, o curso será bloqueado e a ocorrência registrada.\n- Use ESC somente com autorização do instrutor.");
-  } else {
-    guardLocked = false;
-    hideGuardOverlay();
-    attachGuardListeners(false);
-    guardExit();
-    guardStart = null;
-    guardSave();
-    btn.innerHTML = "🔒 Modo blindado";
-    btn.style.borderColor = "var(--primary)";
-    btn.style.color = "var(--primary)";
   }
+}
+function guardDesativar(){
+  guardLocked = false;
+  hideGuardOverlay();
+  attachGuardListeners(false);
+  guardExit();
+  guardStart = null;
+  guardSave();
+  const btn = document.getElementById("btn-guard");
+  btn.innerHTML = "🔒 " + (alunoNome || "Modo blindado");
+  btn.style.borderColor = "var(--primary)";
+  btn.style.color = "var(--primary)";
+}
+function guardToggle(){
+  if (guard) guardDesativar();
+  else guardAtivar(false);
 }
 
 function attachGuardListeners(on){
@@ -1453,6 +1462,17 @@ function guardResume(){
 }
 
 guardLoad();
+
+// Após o login do aluno (?aluno=Nome), o modo quiosque (blindado)
+// é ativado automaticamente como padrão de uso do aluno.
+if (alunoNome) {
+  guardAtivar(true);
+  // Fullscreen exige gesto do usuário: re-tenta no primeiro clique.
+  document.addEventListener("click", function guardPrimeiroClique(){
+    if (guard) guardEnter();
+    document.removeEventListener("click", guardPrimeiroClique);
+  });
+}
 
 render();
 renderProvas();
