@@ -873,6 +873,7 @@ function renderExercicios(m, a){
 
 function cssId(id){ return id.replace(/[^a-zA-Z0-9_-]/g, "_"); }
 function escAttr(s){ return String(s).replace(/["']/g, c=>({"'":"&#39;",'"':"&quot;"}[c])); }
+function esc(s){ return String(s||"").replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
 function fmt(d){
   return d.toLocaleDateString("pt-BR") + " " + d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
 }
