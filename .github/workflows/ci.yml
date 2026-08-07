@@ -55,5 +55,8 @@ jobs:
       - name: Quiz dos apêndices A e B (render real do apendice-exercicios.html)
         run: node teste-apendice-exercicios.js
 
+      - name: Selo de pendências dos apêndices (render real de alunos.html e secretaria.html)
+        run: node teste-selo-apendices.js
+
       - name: Aulas extras dos apêndices no plano de aulas (render real do plano-de-aulas.html)
         run: node teste-plano-apendices.js

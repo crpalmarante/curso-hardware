@@ -436,8 +436,16 @@ def carregar_db():
     """Carrega todos os alunos do SQLite no formato do Registro."""
     conn = _conn()
     try:
-        alunos = [_aluno_dict(conn, r["id"])
-                  for r in conn.execute("SELECT id FROM alunos ORDER BY nome COLLATE NOCASE")]
+        # Dissertativas do quiz dos apêndices (aulas AP|) ainda sem nota do instrutor
+        pendentes = {r["aluno_id"]: r["n"] for r in conn.execute(
+            "SELECT aluno_id, COUNT(*) AS n FROM exercicios "
+            "WHERE aula_id LIKE 'AP|%' AND tipo='disc' AND nota IS NULL "
+            "GROUP BY aluno_id")}
+        alunos = []
+        for r in conn.execute("SELECT id FROM alunos ORDER BY nome COLLATE NOCASE"):
+            a = _aluno_dict(conn, r["id"])
+            a["apendices_pendentes"] = pendentes.get(r["id"], 0)
+            alunos.append(a)
     finally:
         conn.close()
     return {"alunos": alunos}
