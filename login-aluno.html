@@ -41,6 +41,7 @@ body{
 }
 h1{text-align:center;font-size:19px;margin-bottom:6px}
 p.sub{text-align:center;color:var(--text-secondary);font-size:13px;margin-bottom:26px}
+.field{margin-bottom:12px}
 .field label{display:block;font-size:12px;color:var(--text-muted);margin-bottom:6px;font-weight:600}
 .field input{
   width:100%;padding:12px 14px;border-radius:var(--radius-md);font-size:14px;
@@ -60,25 +61,65 @@ p.sub{text-align:center;color:var(--text-secondary);font-size:13px;margin-bottom
   font-size:13px;text-align:center;
 }
 .erro.visible{display:block}
+.aviso{
+  display:none;margin-bottom:18px;padding:11px 14px;border-radius:var(--radius-md);
+  background:rgba(245,158,11,.12);border:1px solid #f59e0b;color:#fbbf24;
+  font-size:13px;text-align:center;line-height:1.45;
+}
+.aviso.visible{display:block}
 .link-voltar{display:block;text-align:center;margin-top:18px;font-size:12.5px;color:var(--text-muted);text-decoration:none}
 .link-voltar:hover{color:var(--text)}
+.link-alt{display:block;text-align:center;margin-top:10px;font-size:12.5px;color:var(--text-muted);background:none;border:0;cursor:pointer;font-family:inherit}
+.link-alt:hover{color:var(--text)}
 .footer{text-align:center;margin-top:22px;font-size:11.5px;color:var(--text-muted)}
+.hidden{display:none}
 </style>
 </head>
 <body>
 
 <div class="login-card">
   <div class="login-icon">👨‍🎓</div>
-  <h1>Bem-vindo ao curso</h1>
-  <p class="sub">Digite seu nome para entrar e acompanhar seu progresso.</p>
+  <h1 id="titulo">Bem-vindo ao curso</h1>
+  <p class="sub" id="subtitulo">Entre com o login e a senha que o instrutor passou.</p>
+
+  <div class="aviso" id="aviso-troca">Este é o seu primeiro acesso. Escolha uma senha nova para continuar.</div>
+
   <form id="login-form" autocomplete="off">
     <div class="field">
-      <label>Seu nome completo</label>
-      <input type="text" id="nome" placeholder="Ex.: Maria da Silva" autocomplete="name" autofocus>
+      <label>Nome de login</label>
+      <input type="text" id="login" placeholder="Ex.: maria.silva" autocomplete="username" spellcheck="false" autofocus>
     </div>
-    <button class="btn" type="submit">Entrar no curso</button>
-    <div class="erro" id="erro">Digite seu nome para continuar.</div>
+    <div class="field">
+      <label>Senha</label>
+      <input type="password" id="senha" placeholder="Senha padrão no primeiro acesso" autocomplete="current-password">
+    </div>
+    <button class="btn" type="submit" id="btn-entrar">Entrar no curso</button>
+    <div class="erro" id="erro"></div>
   </form>
+
+  <form id="troca-form" class="hidden" autocomplete="off">
+    <div class="field">
+      <label>Nova senha</label>
+      <input type="password" id="senha-nova" placeholder="Mínimo 6 caracteres" autocomplete="new-password">
+    </div>
+    <div class="field">
+      <label>Confirme a nova senha</label>
+      <input type="password" id="senha-confirma" placeholder="Repita a nova senha" autocomplete="new-password">
+    </div>
+    <button class="btn" type="submit" id="btn-trocar">Salvar senha e entrar</button>
+    <div class="erro" id="erro-troca"></div>
+  </form>
+
+  <form id="nome-form" class="hidden" autocomplete="off">
+    <div class="field">
+      <label>Seu nome completo</label>
+      <input type="text" id="nome" placeholder="Ex.: Maria da Silva" autocomplete="name">
+    </div>
+    <button class="btn" type="submit">Entrar só com o nome</button>
+    <div class="erro" id="erro-nome">Digite seu nome para continuar.</div>
+  </form>
+
+  <button type="button" class="link-alt" id="btn-alt">Ainda não tenho login? Entrar com o nome</button>
   <a class="link-voltar" href="index.html">◀ Voltar ao curso</a>
 </div>
 
@@ -87,10 +128,120 @@ p.sub{text-align:center;color:var(--text-secondary);font-size:13px;margin-bottom
 </div>
 
 <script>
-document.getElementById("login-form").addEventListener("submit", function(e){
+const SENHA_ALUNO_MIN = 6;
+let pendente = null; // { login, senha, nome }
+
+function mostrarErro(id, msg){
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.classList.toggle("visible", !!msg);
+}
+
+function entrarNoCurso(nome){
+  window.location.href = "index.html?aluno=" + encodeURIComponent(nome);
+}
+
+function mostrarTroca(dados, senhaAtual){
+  pendente = { login: dados.login, senha: senhaAtual, nome: dados.nome };
+  document.getElementById("login-form").classList.add("hidden");
+  document.getElementById("nome-form").classList.add("hidden");
+  document.getElementById("btn-alt").classList.add("hidden");
+  document.getElementById("troca-form").classList.remove("hidden");
+  document.getElementById("titulo").textContent = "Troque sua senha";
+  document.getElementById("subtitulo").textContent = "Olá, " + dados.nome + ". Defina uma senha pessoal.";
+  document.getElementById("aviso-troca").classList.add("visible");
+  document.getElementById("senha-nova").focus();
+}
+
+document.getElementById("login-form").addEventListener("submit", async function(e){
+  e.preventDefault();
+  const login = document.getElementById("login").value.trim();
+  const senha = document.getElementById("senha").value;
+  mostrarErro("erro", "");
+  if (!login || !senha) {
+    mostrarErro("erro", "Informe o login e a senha.");
+    return;
+  }
+  const btn = document.getElementById("btn-entrar");
+  btn.disabled = true;
+  btn.textContent = "Entrando...";
+  try {
+    const r = await fetch("api/login-aluno", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ login, senha })
+    });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) {
+      mostrarErro("erro", j.erro || "Login ou senha incorretos.");
+      btn.disabled = false;
+      btn.textContent = "Entrar no curso";
+      document.getElementById("senha").value = "";
+      document.getElementById("senha").focus();
+      return;
+    }
+    if (j.deve_trocar_senha) {
+      mostrarTroca(j, senha);
+      return;
+    }
+    entrarNoCurso(j.nome);
+  } catch (err) {
+    mostrarErro("erro", "Não foi possível conectar ao servidor.");
+    btn.disabled = false;
+    btn.textContent = "Entrar no curso";
+  }
+});
+
+document.getElementById("troca-form").addEventListener("submit", async function(e){
+  e.preventDefault();
+  if (!pendente) return;
+  const nova = document.getElementById("senha-nova").value;
+  const conf = document.getElementById("senha-confirma").value;
+  mostrarErro("erro-troca", "");
+  if (!nova || nova.length < SENHA_ALUNO_MIN) {
+    mostrarErro("erro-troca", "A nova senha deve ter ao menos " + SENHA_ALUNO_MIN + " caracteres.");
+    return;
+  }
+  if (nova !== conf) {
+    mostrarErro("erro-troca", "As senhas não conferem.");
+    return;
+  }
+  if (nova === pendente.senha) {
+    mostrarErro("erro-troca", "Escolha uma senha diferente da senha padrão.");
+    return;
+  }
+  const btn = document.getElementById("btn-trocar");
+  btn.disabled = true;
+  btn.textContent = "Salvando...";
+  try {
+    const r = await fetch("api/aluno-trocar-senha", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        login: pendente.login,
+        senha_atual: pendente.senha,
+        senha_nova: nova
+      })
+    });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) {
+      mostrarErro("erro-troca", j.erro || "Não foi possível trocar a senha.");
+      btn.disabled = false;
+      btn.textContent = "Salvar senha e entrar";
+      return;
+    }
+    entrarNoCurso(pendente.nome);
+  } catch (err) {
+    mostrarErro("erro-troca", "Não foi possível conectar ao servidor.");
+    btn.disabled = false;
+    btn.textContent = "Salvar senha e entrar";
+  }
+});
+
+document.getElementById("nome-form").addEventListener("submit", function(e){
   e.preventDefault();
   const nome = document.getElementById("nome").value.trim();
-  const erro = document.getElementById("erro");
+  const erro = document.getElementById("erro-nome");
   erro.classList.remove("visible");
   if (!nome) {
     erro.textContent = "Digite seu nome para continuar.";
@@ -98,10 +249,28 @@ document.getElementById("login-form").addEventListener("submit", function(e){
     document.getElementById("nome").focus();
     return;
   }
-  const btn = document.querySelector(".btn");
-  btn.disabled = true;
-  btn.textContent = "Entrando...";
-  window.location.href = "index.html?aluno=" + encodeURIComponent(nome);
+  entrarNoCurso(nome);
+});
+
+document.getElementById("btn-alt").addEventListener("click", function(){
+  const nomeForm = document.getElementById("nome-form");
+  const loginForm = document.getElementById("login-form");
+  const mostrandoNome = !nomeForm.classList.contains("hidden");
+  if (mostrandoNome) {
+    nomeForm.classList.add("hidden");
+    loginForm.classList.remove("hidden");
+    document.getElementById("titulo").textContent = "Bem-vindo ao curso";
+    document.getElementById("subtitulo").textContent = "Entre com o login e a senha que o instrutor passou.";
+    this.textContent = "Ainda não tenho login? Entrar com o nome";
+    document.getElementById("login").focus();
+  } else {
+    loginForm.classList.add("hidden");
+    nomeForm.classList.remove("hidden");
+    document.getElementById("titulo").textContent = "Entrar com o nome";
+    document.getElementById("subtitulo").textContent = "Para alunos ainda sem login e senha.";
+    this.textContent = "◀ Voltar ao login com senha";
+    document.getElementById("nome").focus();
+  }
 });
 </script>
 </body>

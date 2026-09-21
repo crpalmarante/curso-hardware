@@ -355,6 +355,59 @@ def main():
         checar("Troca de turma regenera matrícula (SEMTURMA → turma)",
                mats.get("Aluno Mat A", "").startswith("5502-HWD10-"), "matrículas: %s" % mats)
 
+        # ---- 10. Login e senha padrão do aluno (troca no 1º acesso) ----
+        st, j = inst.post("/api/alunos", {"alunos": [{
+            "id": "a10", "nome": "Maria da Silva", "turma": "5502+HWD10",
+            "login": "maria.silva", "senha": "aluno123"}]})
+        checar("Instrutor cadastra aluno com login e senha padrão = 200",
+               st == 200 and j.get("status") == "ok", "HTTP %d %s" % (st, j))
+        st, _, db = inst.get("/api/alunos")
+        maria = next((a for a in db.get("alunos", []) if a.get("nome") == "Maria da Silva"), {})
+        checar("GET /api/alunos devolve login e pede troca, sem senha/hash",
+               maria.get("login") == "maria.silva" and maria.get("deve_trocar_senha") is True
+               and maria.get("tem_senha") is True
+               and "senha" not in maria and "senha_hash" not in maria,
+               "%s" % {k: maria.get(k) for k in ("login", "deve_trocar_senha", "tem_senha", "senha", "senha_hash")})
+        st, j = anon.post("/api/login-aluno", {"login": "maria.silva", "senha": "errada"})
+        checar("Login do aluno com senha errada = 401", st == 401, "HTTP %d" % st)
+        st, j = anon.post("/api/login-aluno", {"login": "MARIA.SILVA", "senha": "aluno123"})
+        checar("Login do aluno com senha padrão pede troca = 200",
+               st == 200 and j.get("deve_trocar_senha") is True and j.get("nome") == "Maria da Silva",
+               "HTTP %d %s" % (st, j))
+        st, j = anon.post("/api/aluno-trocar-senha", {
+            "login": "maria.silva", "senha_atual": "aluno123", "senha_nova": "aluno123"})
+        checar("Troca para a mesma senha padrão = 400", st == 400, "HTTP %d %s" % (st, j))
+        st, j = anon.post("/api/aluno-trocar-senha", {
+            "login": "maria.silva", "senha_atual": "aluno123", "senha_nova": "secreta1"})
+        checar("Aluno troca a senha no primeiro acesso = 200",
+               st == 200 and j.get("status") == "ok", "HTTP %d %s" % (st, j))
+        st, j = anon.post("/api/login-aluno", {"login": "maria.silva", "senha": "aluno123"})
+        checar("Senha padrão antiga deixa de funcionar = 401", st == 401, "HTTP %d" % st)
+        st, j = anon.post("/api/login-aluno", {"login": "maria.silva", "senha": "secreta1"})
+        checar("Login com a senha nova não pede troca = 200",
+               st == 200 and j.get("status") == "ok" and j.get("deve_trocar_senha") is False,
+               "HTTP %d %s" % (st, j))
+        st, j = inst.post("/api/alunos", {"alunos": [{
+            "id": "a10", "nome": "Maria da Silva", "turma": "5502+HWD10",
+            "login": "maria.silva"}]})
+        st, j = anon.post("/api/login-aluno", {"login": "maria.silva", "senha": "secreta1"})
+        checar("Reenvio do banco sem senha mantém a senha do aluno",
+               st == 200 and j.get("status") == "ok", "HTTP %d %s" % (st, j))
+        st, j = inst.post("/api/alunos", {"alunos": [{
+            "id": "a11", "nome": "Maria Clone", "turma": "5502+HWD10",
+            "login": "maria.silva", "senha": "aluno123"}]})
+        checar("Login duplicado = 400", st == 400, "HTTP %d %s" % (st, j))
+        st, _, j = anon.get("/api/progresso?aluno=" + urllib.parse.quote("Maria da Silva"))
+        checar("senha_hash NÃO vaza em /api/progresso",
+               st == 200 and not j.get("senha_hash") and not j.get("senha"),
+               "HTTP %d %s" % (st, j))
+        st, j = inst.post("/api/alunos", {"alunos": [{
+            "id": "a10", "nome": "Maria da Silva", "turma": "5502+HWD10",
+            "login": "maria.silva", "senha": "aluno123"}]})
+        st, j = anon.post("/api/login-aluno", {"login": "maria.silva", "senha": "aluno123"})
+        checar("Instrutor redefine senha padrão e pede troca de novo",
+               st == 200 and j.get("deve_trocar_senha") is True, "HTTP %d %s" % (st, j))
+
         print()
         if falhas:
             print("RESULTADO: %d FALHA(S)" % len(falhas))

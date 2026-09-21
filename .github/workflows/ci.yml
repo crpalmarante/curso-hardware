@@ -73,3 +73,6 @@ jobs:
 
       - name: Aulas extras dos apêndices no plano de aulas (render real do plano-de-aulas.html)
         run: node teste-plano-apendices.js
+
+      - name: Login e senha padrão do aluno (cadastro do instrutor + 1º acesso)
+        run: node teste-login-aluno.js

@@ -48,7 +48,7 @@ curso-hardware/
 ├── index.html            # Site do curso (aluno): aulas, progresso, exercícios, provas
 ├── gerar-slides.py       # Gera APRESENTACAO-CURSO.pdf (requer reportlab)
 ├── apresentacao.html     # Página de divulgação/apresentação do curso (landing page)
-├── login-aluno.html      # Login do aluno (digita o nome → index.html?aluno=Nome)
+├── login-aluno.html      # Login do aluno (login + senha; troca obrigatória no 1º acesso)
 ├── alunos.html           # Registro do instrutor (painel protegido por senha)
 ├── login-alunos.html     # Login do instrutor (senha)
 ├── secretaria.html       # Painel da Secretaria Pedagógica (monitoramento + atendimento aos pais)
@@ -84,20 +84,22 @@ curso-hardware/
 ### Aluno
 
 1. Abre o curso e clica em **👤 Aluno** (ou entra em `login-aluno.html`).
-2. Digita o nome completo → é direcionado para `index.html?aluno=Nome` (a matrícula do aluno aparece em um chip "🎫 Matrícula: …" no topo — veja [Matrícula automática](#matrícula-automática)).
-3. Acessa as aulas: cada aula marcada como concluída libera os **exercícios** da aula e a **próxima aula** (progressão por ordem global de 43 aulas).
-4. Ao concluir todas as aulas de um módulo, a **prova do módulo** é liberada.
-5. Ao entrar, a **presença é registrada automaticamente** na semana atual do curso (definida pelo instrutor).
+2. Digita o **nome de login** e a **senha padrão** que o instrutor cadastrou. No **primeiro acesso** o sistema pede para trocar a senha.
+3. Depois do login, vai para `index.html?aluno=Nome` (a matrícula do aluno aparece em um chip "🎫 Matrícula: …" no topo — veja [Matrícula automática](#matrícula-automática)).
+4. Acessa as aulas: cada aula marcada como concluída libera os **exercícios** da aula e a **próxima aula** (progressão por ordem global de 43 aulas).
+5. Ao concluir todas as aulas de um módulo, a **prova do módulo** é liberada.
+6. Ao entrar, a **presença é registrada automaticamente** na semana atual do curso (definida pelo instrutor).
 
 Os dados do aluno (progresso, respostas, provas) são guardados no navegador e sincronizados com o servidor central.
 
 ### Instrutor
 
 1. Abre `alunos.html` e faz login com a senha (`login-alunos.html`).
-2. Gerencia turmas, presenças, notas, atividades, comprometimento e histórico.
-3. Avalia as dissertativas do caderno (nota 0–10).
-4. Define a **semana atual do curso** (usada na frequência automática dos alunos).
-5. Consulta o **painel da turma** (ranking de progresso e módulos com dificuldade) e emite **boletins** imprimíveis.### Secretaria Pedagógica
+2. Cadastra o aluno em **+ Novo aluno** com nome completo, turma, **nome de login** e **senha padrão** (o aluno troca essa senha no primeiro acesso).
+3. Gerencia turmas, presenças, notas, atividades, comprometimento e histórico.
+4. Avalia as dissertativas do caderno (nota 0–10).
+5. Define a **semana atual do curso** (usada na frequência automática dos alunos).
+6. Consulta o **painel da turma** (ranking de progresso e módulos com dificuldade) e emite **boletins** imprimíveis.### Secretaria Pedagógica
 1. Abre `secretaria.html` e faz login com a senha própria (`login-secretaria.html`).
 2. A secretaria **não emite certificados** (ação exclusiva do instrutor) e não acessa o painel do instrutor (`alunos.html` redireciona para a secretaria).
 3. **Avaliação é exclusiva do instrutor**: a secretaria apenas **consulta** dissertativas, provas e checkouts — as rotas de lançar nota (`POST /api/dissertativa`, `POST /api/checkout-avaliar`) retornam 403 para o papel secretaria. **Exceção**: `POST /api/provas` é aberto porque é o próprio **aluno** quem envia o resultado da avaliação no `index.html` (sem login) — por isso não pode ser restrito por papel; a secretaria não tem UI para lançar provas (só consulta).
@@ -289,6 +291,8 @@ python3 servidor.py 8000 --publico  # aceita acesso externo (sem o flag, apenas 
 | GET | `/api/verificar-certificado?codigo=X` | — | Verificação pública de autenticidade |
 | POST | `/api/login` | — | Login do instrutor (senha) |
 | POST | `/api/login-secretario` | — | Login da secretaria pedagógica (senha própria) |
+| POST | `/api/login-aluno` | — | Login do aluno (nome de login + senha); devolve `deve_trocar_senha` no 1º acesso |
+| POST | `/api/aluno-trocar-senha` | — | Aluno troca a senha padrão no primeiro acesso |
 | POST | `/api/logout` | — | Encerra a sessão |
 | POST | `/api/alunos` | sim | Salva o banco completo (usado pelo Registro) |
 | POST | `/api/exercicios` | — | Salva respostas de exercícios de um aluno |
@@ -312,6 +316,7 @@ O repositório tem um teste automatizado de **permissões por papel** (`teste-pe
 - A secretaria continua podendo editar dados (`POST /api/alunos`) e consultar provas (GET).
 - O envio de provas pelo aluno (`POST /api/provas`, sem login) segue aberto.
 - **Matrícula**: geração por turma (`5502-HWD10-001/002`), estabilidade no reenvio, troca de turma regenerando e consulta pelo aluno (`GET /api/progresso`).
+- **Login do aluno**: cadastro com nome de login e senha padrão, troca obrigatória no primeiro acesso, login duplicado rejeitado e hash que não vaza nas rotas públicas (`teste-permissoes.py` + `teste-login-aluno.js`).
 - **Apêndices**: resumo separado caderno × apêndices (`teste-resumo-apendices.py`), nota sugerida com os componentes dos apêndices (`teste-nota-apendices.js`), seção no boletim (`teste-boletim-apendices.js`), selo/filtro "📝 Com pendências" (`teste-selo-apendices.js`), quiz (`teste-apendice-exercicios.js`) e plano de aulas (`teste-plano-apendices.js`).
 
 Rodando localmente:
@@ -329,7 +334,7 @@ SQLite em `dados/curso.db` (criado automaticamente na primeira execução). Tabe
 
 | Tabela | Conteúdo |
 |---|---|
-| `alunos` | Nome, turma, matrícula, data de criação |
+| `alunos` | Nome, turma, matrícula, login, senha (hash), flag de troca no 1º acesso, data de criação |
 | `progresso` | Aulas concluídas por aluno |
 | `notas` | Notas por critério (participação, exercícios, montagem, diagnóstico) |
 | `presencas` | Status por semana (presente/falta/justificada) |

@@ -284,7 +284,7 @@ td b{color:var(--text)}
         <h3>Alunos (<span id="total-alunos">0</span>)</h3>
         <div class="side-search">
           <span>🔍</span>
-          <input type="text" id="search-aluno" placeholder="Buscar por nome, matrícula ou turma...">
+          <input type="text" id="search-aluno" placeholder="Buscar por nome, matrícula, login ou turma...">
         </div>
         <button class="filtro-qk" id="btn-filtro-qk" aria-pressed="false" onclick="toggleFiltroQk()">🔒 Só travados</button>
         <button class="filtro-ap" id="btn-filtro-ap" aria-pressed="false" onclick="toggleFiltroAp()">📝 Com pendências</button>
@@ -309,9 +309,11 @@ td b{color:var(--text)}
             <div style="flex:1;min-width:220px">
               <h2 id="p-nome">—</h2>
               <div class="sub" id="p-turma"></div>
+              <div class="sub" id="p-acesso" style="margin-top:4px"></div>
               <div class="foto-acoes" style="margin-top:10px">
                 <button class="btn ghost" style="padding:6px 12px;font-size:12px" onclick="abrirSeletorFoto()">📷 Adicionar foto</button>
                 <button class="btn ghost" id="btn-remover-foto" style="padding:6px 12px;font-size:12px;display:none" onclick="removerFoto()">🗑 Remover</button>
+                <button class="btn ghost" style="padding:6px 12px;font-size:12px" onclick="redefinirAcessoAluno()" title="Definir ou redefinir o login e a senha padrão">🔑 Acesso</button>
                 <span class="hint">Só visível ao instrutor e à secretaria</span>
               </div>
               <label class="toggle-quiosque" style="display:inline-flex;align-items:center;gap:8px;margin-top:8px;font-size:12.5px;cursor:pointer;color:var(--text-secondary)">
@@ -370,12 +372,21 @@ td b{color:var(--text)}
     <h3 style="margin-bottom:16px">Novo aluno</h3>
     <div class="field" style="margin-bottom:12px">
       <label>Nome completo</label>
-      <input type="text" id="nv-nome" placeholder="Nome do aluno">
+      <input type="text" id="nv-nome" placeholder="Nome do aluno" autocomplete="off">
     </div>
-    <div class="field" style="margin-bottom:18px">
+    <div class="field" style="margin-bottom:12px">
       <label>Turma / observação</label>
-      <input type="text" id="nv-turma" placeholder="Ex.: Turma A">
+      <input type="text" id="nv-turma" placeholder="Ex.: Turma A" autocomplete="off">
     </div>
+    <div class="field" style="margin-bottom:12px">
+      <label>Nome de login</label>
+      <input type="text" id="nv-login" placeholder="Ex.: maria.silva" autocomplete="off" spellcheck="false">
+    </div>
+    <div class="field" style="margin-bottom:10px">
+      <label>Senha padrão</label>
+      <input type="text" id="nv-senha" placeholder="Senha do primeiro acesso" autocomplete="off">
+    </div>
+    <p style="font-size:12px;color:var(--text-muted);margin:0 0 16px;line-height:1.45">O aluno entra com este login e a senha padrão. No <b>primeiro acesso</b> o sistema pede para trocar a senha.</p>
     <div style="display:flex;gap:10px;justify-content:flex-end">
       <button class="btn ghost" onclick="fecharModal()">Cancelar</button>
       <button class="btn" onclick="salvarNovoAluno()">Salvar</button>
@@ -419,7 +430,9 @@ function carregar(){
   if (!DB.alunos) DB.alunos = [];
 }
 function salvar(){
-  localStorage.setItem(DB_KEY, JSON.stringify(DB));
+  const copia = JSON.parse(JSON.stringify(DB));
+  (copia.alunos || []).forEach(a => { delete a.senha; });
+  localStorage.setItem(DB_KEY, JSON.stringify(copia));
   if (MODO_SERVIDOR) enfileirarSync();
 }
 function enfileirarSync(){
@@ -435,7 +448,12 @@ async function syncParaServidor(){
       body: JSON.stringify(DB)
     });
     const j = await r.json();
-    if (j.status !== "ok") throw new Error(j.erro || "erro");
+    if (!r.ok || j.status !== "ok") {
+      const msg = j.erro || "Não foi possível salvar o aluno.";
+      alert(msg);
+      throw new Error(msg);
+    }
+    (DB.alunos || []).forEach(a => { delete a.senha; });
   } catch(e) {
     console.warn("[SYNC] Falha ao sincronizar com o servidor:", e);
   }
@@ -466,9 +484,33 @@ async function detectarServidor(){
 
 function novoId(){ return "a" + Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
 
+const SENHA_PADRAO_ALUNO = "aluno123";
+const SENHA_ALUNO_MIN = 6;
+let nvLoginEditado = false;
+
+function sugerirLogin(nome){
+  const mapa = {á:'a',à:'a',ã:'a',â:'a',ä:'a',é:'e',è:'e',ê:'e',ë:'e',í:'i',ì:'i',î:'i',ï:'i',ó:'o',ò:'o',õ:'o',ô:'o',ö:'o',ú:'u',ù:'u',û:'u',ü:'u',ç:'c',ñ:'n'};
+  const n = String(nome||"").toLowerCase().split("").map(c => mapa[c] || c).join("");
+  const parts = n.replace(/[^a-z0-9\s._-]/g," ").split(/\s+/).filter(p => p && ["da","de","do","das","dos","e"].indexOf(p) < 0);
+  if (!parts.length) return "";
+  if (parts.length === 1) return parts[0].slice(0, 32);
+  return (parts[0] + "." + parts[parts.length - 1]).slice(0, 32);
+}
+function normalizarLogin(login){
+  const mapa = {á:'a',à:'a',ã:'a',â:'a',ä:'a',é:'e',è:'e',ê:'e',ë:'e',í:'i',ì:'i',î:'i',ï:'i',ó:'o',ò:'o',õ:'o',ô:'o',ö:'o',ú:'u',ù:'u',û:'u',ü:'u',ç:'c',ñ:'n'};
+  return String(login||"").toLowerCase().split("").map(c => mapa[c] || c).join("")
+    .replace(/[^a-z0-9._-]+/g,"").replace(/[._-]{2,}/g,".").replace(/^[._-]+|[._-]+$/g,"").slice(0,32);
+}
+function loginValido(login){
+  return !!login && login.length >= 3 && login.length <= 32 && /^[a-z0-9._-]+$/.test(login);
+}
+
 function novoAluno(){
+  nvLoginEditado = false;
   document.getElementById("nv-nome").value = "";
   document.getElementById("nv-turma").value = "";
+  document.getElementById("nv-login").value = "";
+  document.getElementById("nv-senha").value = SENHA_PADRAO_ALUNO;
   document.getElementById("modal-novo").style.display = "grid";
   setTimeout(()=>document.getElementById("nv-nome").focus(),50);
 }
@@ -476,22 +518,54 @@ function fecharModal(){ document.getElementById("modal-novo").style.display = "n
 function salvarNovoAluno(){
   const nome = document.getElementById("nv-nome").value.trim();
   if (!nome) { alert("Informe o nome do aluno."); return; }
+  const login = normalizarLogin(document.getElementById("nv-login").value || sugerirLogin(nome));
+  if (!loginValido(login)) { alert("Informe um nome de login válido (3 a 32 caracteres: letras, números, . _ -)."); document.getElementById("nv-login").focus(); return; }
+  const senha = document.getElementById("nv-senha").value;
+  if (!senha || senha.length < SENHA_ALUNO_MIN) { alert("A senha padrão deve ter ao menos " + SENHA_ALUNO_MIN + " caracteres."); document.getElementById("nv-senha").focus(); return; }
+  if (DB.alunos.some(x => normalizarLogin(x.login) === login)) {
+    alert("Este nome de login já está em uso."); document.getElementById("nv-login").focus(); return;
+  }
   const a = {
     id: novoId(),
     nome,
     turma: document.getElementById("nv-turma").value.trim(),
+    login,
+    senha,
+    deve_trocar_senha: true,
+    tem_senha: true,
     criadoEm: new Date().toISOString(),
     presencas: {},       // {semana: 'presente'|'falta'|'justificado'}
     notas: { participacao:null, exercicios:null, montagem:null, diagnostico:null },
     atividades: [],      // [{data,titulo,nota,obs}]
     comprometimento: { pontualidade:null, dedicacao:null, material:null, disciplina:null },
-    historico: [ { data: new Date().toISOString(), tipo:"sistema", texto:"Aluno cadastrado no curso." } ]
+    historico: [ { data: new Date().toISOString(), tipo:"sistema", texto:"Aluno cadastrado no curso. Login: "+login+" (trocar senha no primeiro acesso)." } ]
   };
   DB.alunos.push(a);
   salvar();
   fecharModal();
   atualId = a.id;
   renderTudo();
+}
+function redefinirAcessoAluno(){
+  const a = alunoAtual();
+  if (!a) return;
+  const sugerido = a.login || sugerirLogin(a.nome);
+  const loginInformado = prompt("Nome de login do aluno:", sugerido);
+  if (loginInformado == null) return;
+  const login = normalizarLogin(loginInformado);
+  if (!loginValido(login)) { alert("Informe um nome de login válido (3 a 32 caracteres: letras, números, . _ -)."); return; }
+  if (DB.alunos.some(x => x.id !== a.id && normalizarLogin(x.login) === login)) {
+    alert("Este nome de login já está em uso."); return;
+  }
+  const senha = prompt("Senha padrão (o aluno troca no primeiro acesso):", SENHA_PADRAO_ALUNO);
+  if (senha == null) return;
+  if (!senha || senha.length < SENHA_ALUNO_MIN) { alert("A senha padrão deve ter ao menos " + SENHA_ALUNO_MIN + " caracteres."); return; }
+  a.login = login;
+  a.senha = senha;
+  a.deve_trocar_senha = true;
+  a.tem_senha = true;
+  logEvento(a, "sistema", "Login/senha padrão definidos ("+login+"). O aluno deve trocar a senha no primeiro acesso.");
+  salvar(); renderTudo();
 }
 
 function alunoAtual(){ return DB.alunos.find(a=>a.id===atualId); }
@@ -502,7 +576,7 @@ function renderLista(){
   const list = DB.alunos.filter(a=>{
     if (filtroQk && !a.quiosque) return false;
     if (filtroAp && !((a.apendices_pendentes||0)>0)) return false;
-    return !q || a.nome.toLowerCase().includes(q) || (a.matricula||"").toLowerCase().includes(q) || (a.turma||"").toLowerCase().includes(q);
+    return !q || a.nome.toLowerCase().includes(q) || (a.matricula||"").toLowerCase().includes(q) || (a.login||"").toLowerCase().includes(q) || (a.turma||"").toLowerCase().includes(q);
   });
   document.getElementById("total-alunos").textContent = DB.alunos.length;
   const el = document.getElementById("aluno-list");
@@ -513,7 +587,7 @@ function renderLista(){
       <div class="aluno-avatar">${initiais(a.nome)}</div>
       <div class="aluno-info">
         <b>${esc(a.nome)}${a.quiosque?` <span class="aluno-qk" title="Modo quiosque obrigatório — aluno travado no modo monitorado">🔒 quiosque</span>`:""}${(a.apendices_pendentes||0)>0?` <span class="aluno-ap" title="${a.apendices_pendentes} dissertativa(s) do quiz dos apêndices aguardando avaliação">📝 ${a.apendices_pendentes} p/ avaliar</span>`:""}</b>
-        <small>${a.matricula?esc(a.matricula)+" · ":""}${esc(a.turma||"Sem turma")} · ${presencasCont(a)}/43</small>
+        <small>${a.matricula?esc(a.matricula)+" · ":""}${a.login?esc(a.login)+" · ":""}${esc(a.turma||"Sem turma")} · ${presencasCont(a)}/43</small>
       </div>
       <span class="aluno-situ situ-${sit.classe}">${sit.label}</span>
     </div>`;
@@ -554,6 +628,16 @@ function renderTudo(){
 
   document.getElementById("p-nome").textContent = a.nome;
   document.getElementById("p-turma").textContent = (a.matricula?esc(a.matricula)+" · ":"")+(a.turma?"Turma "+a.turma+" · ":"")+"Matriculado em "+fmt(new Date(a.criadoEm));
+  const acesso = document.getElementById("p-acesso");
+  if (acesso){
+    if (a.login){
+      acesso.textContent = a.deve_trocar_senha
+        ? "Login: " + a.login + " · senha padrão (trocar no 1º acesso)"
+        : "Login: " + a.login;
+    } else {
+      acesso.textContent = "Sem login — use 🔑 Acesso para o aluno entrar com senha";
+    }
+  }
   const qk = document.getElementById("quiosque-obrigatorio");
   if (qk) qk.checked = !!a.quiosque;
   renderFoto(a);
@@ -1543,7 +1627,9 @@ function toggleTheme(){
 
 /* ===== EXPORTAR / IMPORTAR ===== */
 function exportDados(){
-  const blob = new Blob([JSON.stringify(DB,null,2)],{type:"application/json"});
+  const copia = JSON.parse(JSON.stringify(DB));
+  (copia.alunos || []).forEach(a => { delete a.senha; });
+  const blob = new Blob([JSON.stringify(copia,null,2)],{type:"application/json"});
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
   a.download = "registro-alunos.json";
@@ -1576,6 +1662,13 @@ function importDados(){
 document.getElementById("search-aluno").addEventListener("input", e=>{
   busca = e.target.value.trim();
   renderLista();
+});
+document.getElementById("nv-nome").addEventListener("input", function(){
+  if (nvLoginEditado) return;
+  document.getElementById("nv-login").value = sugerirLogin(this.value);
+});
+document.getElementById("nv-login").addEventListener("input", function(){
+  nvLoginEditado = this.value.trim().length > 0;
 });
 
 carregar();

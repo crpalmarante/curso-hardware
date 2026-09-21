@@ -19,11 +19,13 @@ import hashlib
 import hmac
 import json
 import os
+import re
 import secrets
 import sqlite3
 import sys
 import threading
 import time
+import unicodedata
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from datetime import datetime
 from urllib.parse import parse_qs, urlparse
@@ -44,6 +46,9 @@ CREATE TABLE IF NOT EXISTS alunos(
     matricula TEXT,
     foto TEXT,
     quiosque INTEGER NOT NULL DEFAULT 0,
+    login TEXT COLLATE NOCASE,
+    senha_hash TEXT,
+    deve_trocar_senha INTEGER NOT NULL DEFAULT 0,
     criado_em TEXT
   );
 CREATE TABLE IF NOT EXISTS progresso(
@@ -267,6 +272,14 @@ def init_db():
         cols = [r["name"] for r in conn.execute("PRAGMA table_info(alunos)")]
         if "quiosque" not in cols:
             conn.execute("ALTER TABLE alunos ADD COLUMN quiosque INTEGER NOT NULL DEFAULT 0")
+        # migração: login e senha padrão do aluno (troca obrigatória no 1º acesso)
+        cols = [r["name"] for r in conn.execute("PRAGMA table_info(alunos)")]
+        if "login" not in cols:
+            conn.execute("ALTER TABLE alunos ADD COLUMN login TEXT COLLATE NOCASE")
+        if "senha_hash" not in cols:
+            conn.execute("ALTER TABLE alunos ADD COLUMN senha_hash TEXT")
+        if "deve_trocar_senha" not in cols:
+            conn.execute("ALTER TABLE alunos ADD COLUMN deve_trocar_senha INTEGER NOT NULL DEFAULT 0")
         for r in conn.execute("SELECT id, turma, matricula FROM alunos ORDER BY id"):
             if not (r["matricula"] or "").strip():
                 conn.execute("UPDATE alunos SET matricula=? WHERE id=?",
@@ -278,6 +291,13 @@ def init_db():
             conn.commit()
         except Exception as e:
             sys.stderr.write("[aviso] indice de matricula: %s\n" % e)
+        try:
+            conn.execute(
+                "CREATE UNIQUE INDEX IF NOT EXISTS idx_alunos_login "
+                "ON alunos(login) WHERE login IS NOT NULL AND login != ''")
+            conn.commit()
+        except Exception as e:
+            sys.stderr.write("[aviso] indice de login: %s\n" % e)
     except Exception as e:
         sys.stderr.write("[aviso] init_db: %s\n" % e)
     finally:
@@ -324,6 +344,120 @@ def _gerar_matricula(conn, turma):
         if suf.isdigit():
             maior = max(maior, int(suf))
     return "%s-%03d" % (base, maior + 1)
+
+
+SENHA_ALUNO_MIN = 6
+
+
+def _normalizar_login(login):
+    """Login do aluno: minúsculas, sem acento, só letras/números . _ - (3–32)."""
+    s = unicodedata.normalize("NFD", (login or "").strip().lower())
+    s = "".join(c for c in s if unicodedata.category(c) != "Mn")
+    s = re.sub(r"[^a-z0-9._-]+", "", s)
+    s = re.sub(r"[._-]{2,}", ".", s).strip("._-")
+    return s[:32]
+
+
+def _login_valido(login):
+    return bool(login) and 3 <= len(login) <= 32 and re.match(r"^[a-z0-9._-]+$", login)
+
+
+def _hash_senha(senha):
+    iters = 80000
+    salt = secrets.token_hex(16)
+    dk = hashlib.pbkdf2_hmac("sha256", senha.encode("utf-8"), bytes.fromhex(salt), iters)
+    return "pbkdf2$%d$%s$%s" % (iters, salt, dk.hex())
+
+
+def _verificar_senha(senha, stored):
+    if not senha or not stored:
+        return False
+    try:
+        kind, iters, salt, hx = stored.split("$", 3)
+        if kind != "pbkdf2":
+            return False
+        dk = hashlib.pbkdf2_hmac("sha256", senha.encode("utf-8"),
+                                 bytes.fromhex(salt), int(iters))
+        return hmac.compare_digest(dk.hex(), hx)
+    except Exception:
+        return False
+
+
+def _aplicar_credenciais(conn, aid, a):
+    """Grava login/senha enviados pelo Registro. Senha ausente = mantém a atual.
+    senha em texto só chega na inclusão ou na redefinição pelo instrutor."""
+    if "login" in a:
+        login = _normalizar_login(a.get("login"))
+        if login:
+            if not _login_valido(login):
+                raise ValueError("Nome de login inválido. Use 3 a 32 caracteres (letras, números, . _ -).")
+            outro = conn.execute(
+                "SELECT id FROM alunos WHERE login=? COLLATE NOCASE AND id!=?",
+                (login, aid)).fetchone()
+            if outro:
+                raise ValueError("Nome de login já está em uso: %s" % login)
+            conn.execute("UPDATE alunos SET login=? WHERE id=?", (login, aid))
+        else:
+            conn.execute("UPDATE alunos SET login=NULL WHERE id=?", (aid,))
+    senha = a.get("senha")
+    if senha is None or senha == "":
+        return
+    if not isinstance(senha, str) or len(senha) < SENHA_ALUNO_MIN:
+        raise ValueError("A senha padrão deve ter ao menos %d caracteres." % SENHA_ALUNO_MIN)
+    conn.execute(
+        "UPDATE alunos SET senha_hash=?, deve_trocar_senha=1 WHERE id=?",
+        (_hash_senha(senha), aid))
+
+
+def login_aluno(login, senha):
+    """Autentica o aluno pelo nome de login. Não revela se o login existe."""
+    login = _normalizar_login(login)
+    if not login or not senha:
+        return None
+    conn = _conn()
+    try:
+        row = conn.execute(
+            "SELECT nome, senha_hash, deve_trocar_senha FROM alunos "
+            "WHERE login=? COLLATE NOCASE", (login,)).fetchone()
+        if row is None or not row["senha_hash"]:
+            return None
+        if not _verificar_senha(senha, row["senha_hash"]):
+            return None
+        return {
+            "status": "ok",
+            "nome": row["nome"],
+            "login": login,
+            "deve_trocar_senha": bool(row["deve_trocar_senha"]),
+        }
+    finally:
+        conn.close()
+
+
+def trocar_senha_aluno(login, senha_atual, senha_nova):
+    """Troca a senha no primeiro acesso (ou depois, com a senha atual)."""
+    login = _normalizar_login(login)
+    if not login or not senha_atual or not isinstance(senha_nova, str):
+        return "dados"
+    if len(senha_nova) < SENHA_ALUNO_MIN:
+        return "curta"
+    if senha_nova == senha_atual:
+        return "igual"
+    conn = _conn()
+    try:
+        row = conn.execute(
+            "SELECT id, senha_hash FROM alunos WHERE login=? COLLATE NOCASE",
+            (login,)).fetchone()
+        if row is None or not row["senha_hash"]:
+            return "invalido"
+        if not _verificar_senha(senha_atual, row["senha_hash"]):
+            return "invalido"
+        conn.execute(
+            "UPDATE alunos SET senha_hash=?, deve_trocar_senha=0 WHERE id=?",
+            (_hash_senha(senha_nova), row["id"]))
+        conn.commit()
+        return "ok"
+    finally:
+        conn.close()
 
 
 def _inserir_aluno(conn, nome, turma=""):
@@ -373,6 +507,7 @@ def _upsert_aluno(conn, a):
     elif not (atual.startswith(base + "-") and atual[len(base) + 1:].isdigit()):
         conn.execute("UPDATE alunos SET matricula=? WHERE id=?",
                      (_gerar_matricula(conn, turma), aid))
+    _aplicar_credenciais(conn, aid, a)
     conn.execute("DELETE FROM notas WHERE aluno_id=?", (aid,))
     conn.execute("DELETE FROM presencas WHERE aluno_id=?", (aid,))
     conn.execute("DELETE FROM atividades WHERE aluno_id=?", (aid,))
@@ -412,6 +547,9 @@ def _aluno_dict(conn, aid):
         "matricula": r["matricula"] or "",
         "foto": r["foto"] or "",
         "quiosque": bool(r["quiosque"]),
+        "login": r["login"] or "",
+        "tem_senha": bool(r["senha_hash"]),
+        "deve_trocar_senha": bool(r["deve_trocar_senha"]),
         "criadoEm": r["criado_em"] or datetime.now().isoformat(),
         "presencas": {},
         "notas": {"participacao": None, "exercicios": None, "montagem": None, "diagnostico": None},
@@ -1144,6 +1282,43 @@ class Handler(BaseHTTPRequestHandler):
                     a.setdefault("historico", [])
                 salvar_db(dados)
                 self._json(200, {"status": "ok", "total": len(dados["alunos"])})
+            except ValueError as e:
+                self._json(400, {"erro": str(e)})
+            except sqlite3.IntegrityError:
+                self._json(400, {"erro": "Nome de login já está em uso"})
+            except Exception as e:
+                self._json(500, {"erro": str(e)})
+            return
+
+        # --- API: login do aluno (nome de login + senha) ---
+        if path == "/api/login-aluno":
+            try:
+                body = json.loads(self._read_body().decode("utf-8") or "{}")
+                dados = login_aluno(body.get("login") or "", body.get("senha") or "")
+                if dados:
+                    self._json(200, dados)
+                else:
+                    self._json(401, {"erro": "Login ou senha incorretos"})
+            except Exception as e:
+                self._json(500, {"erro": str(e)})
+            return
+
+        # --- API: aluno troca a senha (obrigatório no 1º acesso) ---
+        if path == "/api/aluno-trocar-senha":
+            try:
+                body = json.loads(self._read_body().decode("utf-8") or "{}")
+                resultado = trocar_senha_aluno(
+                    body.get("login") or "",
+                    body.get("senha_atual") or "",
+                    body.get("senha_nova") or "")
+                if resultado == "ok":
+                    self._json(200, {"status": "ok"})
+                elif resultado == "curta":
+                    self._json(400, {"erro": "A nova senha deve ter ao menos %d caracteres." % SENHA_ALUNO_MIN})
+                elif resultado == "igual":
+                    self._json(400, {"erro": "Escolha uma senha diferente da senha padrão."})
+                else:
+                    self._json(401, {"erro": "Login ou senha atual incorretos"})
             except Exception as e:
                 self._json(500, {"erro": str(e)})
             return
