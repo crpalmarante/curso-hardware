@@ -460,6 +460,26 @@ def trocar_senha_aluno(login, senha_atual, senha_nova):
         conn.close()
 
 
+def listar_alunos_login():
+    """Lista pública para o aluno escolher o nome na tela de login.
+    Só identificação (nome, login, turma, matrícula) — sem foto, notas ou hash."""
+    conn = _conn()
+    try:
+        rows = conn.execute(
+            "SELECT nome, turma, matricula, login, senha_hash, deve_trocar_senha "
+            "FROM alunos ORDER BY nome COLLATE NOCASE").fetchall()
+        return {"alunos": [{
+            "nome": r["nome"],
+            "turma": r["turma"] or "",
+            "matricula": r["matricula"] or "",
+            "login": r["login"] or "",
+            "tem_senha": bool(r["senha_hash"]),
+            "deve_trocar_senha": bool(r["deve_trocar_senha"]),
+        } for r in rows]}
+    finally:
+        conn.close()
+
+
 def _inserir_aluno(conn, nome, turma=""):
     """Insere um aluno novo e retorna o id (gerando a matrícula da turma)."""
     cur = conn.execute(
@@ -1112,6 +1132,11 @@ class Handler(BaseHTTPRequestHandler):
         # --- API: papel da sessão (instrutor/secretario) para o frontend ---
         if path == "/api/me":
             self._json(200, {"papel": _sess_papel(self._sess_cookie())})
+            return
+
+        # --- API: lista para o aluno escolher o nome no login (pública, sem senha/foto) ---
+        if path == "/api/alunos-login":
+            self._json(200, listar_alunos_login())
             return
 
         # --- API: lista de alunos ---

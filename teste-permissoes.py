@@ -368,6 +368,15 @@ def main():
                and maria.get("tem_senha") is True
                and "senha" not in maria and "senha_hash" not in maria,
                "%s" % {k: maria.get(k) for k in ("login", "deve_trocar_senha", "tem_senha", "senha", "senha_hash")})
+        st, _, j = anon.get("/api/alunos-login")
+        lista = j.get("alunos") or []
+        maria_l = next((a for a in lista if a.get("nome") == "Maria da Silva"), {})
+        checar("Aluno vê a lista de nomes sem login (GET /api/alunos-login) = 200",
+               st == 200 and bool(maria_l), "HTTP %d %s" % (st, j))
+        checar("Lista pública traz login sugerido, sem senha/hash/foto",
+               maria_l.get("login") == "maria.silva" and maria_l.get("deve_trocar_senha") is True
+               and "senha" not in maria_l and "senha_hash" not in maria_l and not maria_l.get("foto"),
+               "%s" % maria_l)
         st, j = anon.post("/api/login-aluno", {"login": "maria.silva", "senha": "errada"})
         checar("Login do aluno com senha errada = 401", st == 401, "HTTP %d" % st)
         st, j = anon.post("/api/login-aluno", {"login": "MARIA.SILVA", "senha": "aluno123"})

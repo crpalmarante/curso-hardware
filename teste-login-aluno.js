@@ -22,11 +22,15 @@ ok('loginValido aceita maria.silva', loginValido('maria.silva') === true);
 ok('loginValido rejeita curto', loginValido('ab') === false);
 
 const login = fs.readFileSync('login-aluno.html', 'utf-8');
+ok('tela começa pela lista de nomes', login.includes('id="lista-alunos"') && login.includes('id="passo-lista"'));
+ok('carrega GET /api/alunos-login', login.includes('api/alunos-login'));
+ok('escolha do nome preenche o login sugerido', login.includes('function escolherAluno') && login.includes('function sugerirLogin'));
 ok('login do aluno pede nome de login e senha', login.includes('id="login"') && login.includes('id="senha"'));
 ok('form de troca de senha no primeiro acesso', login.includes('id="troca-form"') && login.includes('id="senha-nova"'));
 ok('chama POST /api/login-aluno', login.includes('api/login-aluno'));
 ok('chama POST /api/aluno-trocar-senha', login.includes('api/aluno-trocar-senha'));
 ok('bloqueia reutilizar a senha padrão', /senha diferente da senha padrão/i.test(login));
+ok('selo de 1º acesso na lista', login.includes('1º acesso'));
 
 const secretaria = fs.readFileSync('secretaria.html', 'utf-8');
 ok('secretaria mostra o login do aluno', secretaria.includes('id="p-acesso"'));

@@ -15,11 +15,14 @@
 #    5. Roda o teste de permissões localmente (antes do envio).
 #
 #  Requisitos:
-#    - ssh/scp com chave configurada para o servidor;
-#    - sudo SEM senha (NOPASSWD) para o usuário do servidor
-#      (usado no tar/chown/restart);
+#    - ssh/scp (com chave, ou senha — a sessão é reutilizada, então
+#      a senha do SSH pede só uma vez por deploy);
+#    - sudo no servidor para tar/chown/restart (NOPASSWD evita um
+#      segundo pedido; senão a senha do sudo pede uma vez, na extração);
 #    - repositório com as mudanças commitadas (o pacote usa os
 #      arquivos versionados — o script avisa se houver pendências).
+#  Para não digitar senha de SSH nunca mais:
+#    ssh-copy-id palmarante@177.190.69.20
 #  Se o serviço se chamar diferente, ajuste NOME_SERVICO abaixo.
 # ============================================================
 set -euo pipefail
@@ -60,20 +63,33 @@ rm -f "$PACOTE"
 git ls-files | grep -v '^\.github/' | tar -czf "$PACOTE" -T -
 echo "    $(tar -tzf "$PACOTE" | wc -l) arquivos, $(du -h "$PACOTE" | cut -f1)"
 
+# Uma conexão SSH (ControlMaster): senha de login pede uma vez, não 4–5.
+CTRL_DIR="$(mktemp -d)"
+CTRL="$CTRL_DIR/ssh.sock"
+SSH_OPTS=(-o ControlMaster=auto -o ControlPath="$CTRL" -o ControlPersist=30)
+cleanup() {
+  ssh -o ControlPath="$CTRL" -O exit "$ALVO" >/dev/null 2>&1 || true
+  rm -rf "$CTRL_DIR"
+}
+trap cleanup EXIT
+
+echo "==> Abrindo sessão SSH (a senha, se pedir, é só agora)..."
+ssh "${SSH_OPTS[@]}" "$ALVO" true
+
 echo "==> [3/5] Backup do banco de produção..."
-if ssh "$ALVO" "test -f $DESTINO_REMOTO/dados/curso.db"; then
-  ssh "$ALVO" "cp $DESTINO_REMOTO/dados/curso.db ~/backup-$(date +%Y%m%d-%H%M%S).db" \
+if ssh "${SSH_OPTS[@]}" "$ALVO" "test -f $DESTINO_REMOTO/dados/curso.db"; then
+  ssh "${SSH_OPTS[@]}" "$ALVO" "cp $DESTINO_REMOTO/dados/curso.db ~/backup-$(date +%Y%m%d-%H%M%S).db" \
     && echo "    backup em ~/backup-*.db no servidor"
 else
   echo "    (sem banco ainda — primeira instalação)"
 fi
 
 echo "==> [4/5] Enviando e extraindo..."
-scp "$PACOTE" "$ALVO:/tmp/"
-ssh "$ALVO" "cd $DESTINO_REMOTO && sudo tar -xzf /tmp/$PACOTE && sudo chown -R www-data:www-data $DESTINO_REMOTO && rm /tmp/$PACOTE"
+scp "${SSH_OPTS[@]}" "$PACOTE" "$ALVO:/tmp/"
 
-echo "==> [5/5] Reiniciando o serviço (porta 8081)..."
-ssh "$ALVO" "(sudo systemctl restart $NOME_SERVICO 2>/dev/null || sudo systemctl enable --now $NOME_SERVICO) && sleep 2 && curl -fsS http://localhost:8081/api/config && echo && echo 'Deploy concluído!'"
+echo "==> [5/5] Extraindo, ajustando dono e reiniciando o serviço (porta 8081)..."
+# um único ssh: tar + chown + restart — sudo pede senha no máximo uma vez
+ssh -t "${SSH_OPTS[@]}" "$ALVO" "cd $DESTINO_REMOTO && sudo tar -xzf /tmp/$PACOTE && sudo chown -R www-data:www-data $DESTINO_REMOTO && rm -f /tmp/$PACOTE && (sudo systemctl restart $NOME_SERVICO 2>/dev/null || sudo systemctl enable --now $NOME_SERVICO) && sleep 2 && curl -fsS http://localhost:8081/api/config && echo && echo 'Deploy concluído!'"
 
 echo
 echo "Pronto! Acesse: http://curso.palmarante.com.br"

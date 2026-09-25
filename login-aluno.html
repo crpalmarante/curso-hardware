@@ -73,21 +73,54 @@ p.sub{text-align:center;color:var(--text-secondary);font-size:13px;margin-bottom
 .link-alt:hover{color:var(--text)}
 .footer{text-align:center;margin-top:22px;font-size:11.5px;color:var(--text-muted)}
 .hidden{display:none}
+.login-card{max-width:440px}
+.busca{margin-bottom:12px}
+.lista-alunos{
+  max-height:280px;overflow-y:auto;border:1px solid var(--border);
+  border-radius:var(--radius-md);background:var(--surface);
+}
+.item-aluno{
+  display:block;width:100%;text-align:left;padding:12px 14px;cursor:pointer;
+  background:transparent;border:0;border-bottom:1px solid var(--border);
+  color:var(--text);font-family:inherit;font-size:14px;
+}
+.item-aluno:last-child{border-bottom:0}
+.item-aluno:hover{background:var(--surface-hover)}
+.item-aluno b{display:block;font-size:14px}
+.item-aluno small{display:block;margin-top:3px;color:var(--text-muted);font-size:12px}
+.lista-vazia{padding:18px;text-align:center;color:var(--text-muted);font-size:13px}
+.login-sugerido{
+  margin-bottom:12px;padding:10px 12px;border-radius:var(--radius-md);
+  background:rgba(20,184,166,.12);border:1px solid var(--primary);font-size:13px;line-height:1.45
+}
+.login-sugerido code{font-weight:700;color:var(--primary)}
 </style>
 </head>
 <body>
 
 <div class="login-card">
   <div class="login-icon">👨‍🎓</div>
-  <h1 id="titulo">Bem-vindo ao curso</h1>
-  <p class="sub" id="subtitulo">Entre com o login e a senha que o instrutor passou.</p>
+  <h1 id="titulo">Quem é você?</h1>
+  <p class="sub" id="subtitulo">Escolha o seu nome na lista para entrar no curso.</p>
 
   <div class="aviso" id="aviso-troca">Este é o seu primeiro acesso. Escolha uma senha nova para continuar.</div>
 
-  <form id="login-form" autocomplete="off">
+  <div id="passo-lista">
+    <div class="field busca">
+      <label>Buscar na lista</label>
+      <input type="search" id="busca-aluno" placeholder="Digite parte do nome..." autocomplete="off" autofocus>
+    </div>
+    <div class="lista-alunos" id="lista-alunos">
+      <div class="lista-vazia">Carregando alunos...</div>
+    </div>
+    <div class="erro" id="erro-lista"></div>
+  </div>
+
+  <form id="login-form" class="hidden" autocomplete="off">
+    <div class="login-sugerido" id="login-sugerido"></div>
     <div class="field">
       <label>Nome de login</label>
-      <input type="text" id="login" placeholder="Ex.: maria.silva" autocomplete="username" spellcheck="false" autofocus>
+      <input type="text" id="login" placeholder="Ex.: maria.silva" autocomplete="username" spellcheck="false">
     </div>
     <div class="field">
       <label>Senha</label>
@@ -95,6 +128,7 @@ p.sub{text-align:center;color:var(--text-secondary);font-size:13px;margin-bottom
     </div>
     <button class="btn" type="submit" id="btn-entrar">Entrar no curso</button>
     <div class="erro" id="erro"></div>
+    <button type="button" class="link-alt" id="btn-voltar-lista">◀ Voltar à lista de nomes</button>
   </form>
 
   <form id="troca-form" class="hidden" autocomplete="off">
@@ -110,16 +144,6 @@ p.sub{text-align:center;color:var(--text-secondary);font-size:13px;margin-bottom
     <div class="erro" id="erro-troca"></div>
   </form>
 
-  <form id="nome-form" class="hidden" autocomplete="off">
-    <div class="field">
-      <label>Seu nome completo</label>
-      <input type="text" id="nome" placeholder="Ex.: Maria da Silva" autocomplete="name">
-    </div>
-    <button class="btn" type="submit">Entrar só com o nome</button>
-    <div class="erro" id="erro-nome">Digite seu nome para continuar.</div>
-  </form>
-
-  <button type="button" class="link-alt" id="btn-alt">Ainda não tenho login? Entrar com o nome</button>
   <a class="link-voltar" href="index.html">◀ Voltar ao curso</a>
 </div>
 
@@ -130,28 +154,118 @@ p.sub{text-align:center;color:var(--text-secondary);font-size:13px;margin-bottom
 <script>
 const SENHA_ALUNO_MIN = 6;
 let pendente = null; // { login, senha, nome }
+let listaAlunos = [];
 
+function sugerirLogin(nome){
+  const mapa = {á:'a',à:'a',ã:'a',â:'a',ä:'a',é:'e',è:'e',ê:'e',ë:'e',í:'i',ì:'i',î:'i',ï:'i',ó:'o',ò:'o',õ:'o',ô:'o',ö:'o',ú:'u',ù:'u',û:'u',ü:'u',ç:'c',ñ:'n'};
+  const n = String(nome||"").toLowerCase().split("").map(c => mapa[c] || c).join("");
+  const parts = n.replace(/[^a-z0-9\s._-]/g," ").split(/\s+/).filter(p => p && ["da","de","do","das","dos","e"].indexOf(p) < 0);
+  if (!parts.length) return "";
+  if (parts.length === 1) return parts[0].slice(0, 32);
+  return (parts[0] + "." + parts[parts.length - 1]).slice(0, 32);
+}
+function esc(s){
+  return String(s||"").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
 function mostrarErro(id, msg){
   const el = document.getElementById(id);
   el.textContent = msg;
   el.classList.toggle("visible", !!msg);
 }
-
 function entrarNoCurso(nome){
   window.location.href = "index.html?aluno=" + encodeURIComponent(nome);
+}
+function loginDoAluno(a){
+  return (a && a.login) ? a.login : sugerirLogin(a && a.nome);
+}
+
+function renderLista(){
+  const q = (document.getElementById("busca-aluno").value || "").trim().toLowerCase();
+  const el = document.getElementById("lista-alunos");
+  const filtrada = listaAlunos.filter(a => {
+    const blob = ((a.nome||"") + " " + (a.login||"") + " " + (a.turma||"") + " " + (a.matricula||"")).toLowerCase();
+    return !q || blob.includes(q);
+  });
+  if (!listaAlunos.length){
+    el.innerHTML = '<div class="lista-vazia">Nenhum aluno cadastrado ainda. Fale com o instrutor.</div>';
+    return;
+  }
+  if (!filtrada.length){
+    el.innerHTML = '<div class="lista-vazia">Nenhum nome corresponde à busca.</div>';
+    return;
+  }
+  el.innerHTML = filtrada.map((a, i) => {
+    const login = loginDoAluno(a);
+    const extra = [a.matricula, a.turma].filter(Boolean).join(" · ");
+    const selo = a.deve_trocar_senha || !a.tem_senha ? " · 1º acesso" : "";
+    return `<button type="button" class="item-aluno" data-idx="${listaAlunos.indexOf(a)}">
+      <b>${esc(a.nome)}</b>
+      <small>Login: ${esc(login)}${extra?" · "+esc(extra):""}${selo}</small>
+    </button>`;
+  }).join("");
+  el.querySelectorAll(".item-aluno").forEach(btn => {
+    btn.addEventListener("click", () => escolherAluno(listaAlunos[Number(btn.dataset.idx)]));
+  });
+}
+
+function escolherAluno(a){
+  if (!a) return;
+  if (!a.tem_senha){
+    mostrarErro("erro-lista", "O instrutor ainda não definiu a senha padrão deste aluno. Peça o acesso no painel.");
+    return;
+  }
+  const login = loginDoAluno(a);
+  document.getElementById("login").value = login;
+  document.getElementById("senha").value = "";
+  document.getElementById("login-sugerido").innerHTML =
+    "Olá, <b>" + esc(a.nome) + "</b>. Seu login sugerido é <code>" + esc(login) + "</code>."
+    + (a.deve_trocar_senha ? " No primeiro acesso use a senha padrão e o sistema pede para trocá-la." : "");
+  document.getElementById("passo-lista").classList.add("hidden");
+  document.getElementById("login-form").classList.remove("hidden");
+  document.getElementById("titulo").textContent = "Entrar no curso";
+  document.getElementById("subtitulo").textContent = a.deve_trocar_senha
+    ? "Primeiro acesso: senha padrão do instrutor, depois você troca."
+    : "Use a senha que você definiu.";
+  mostrarErro("erro", "");
+  document.getElementById("senha").focus();
+}
+
+function voltarLista(){
+  document.getElementById("login-form").classList.add("hidden");
+  document.getElementById("troca-form").classList.add("hidden");
+  document.getElementById("aviso-troca").classList.remove("visible");
+  document.getElementById("passo-lista").classList.remove("hidden");
+  document.getElementById("titulo").textContent = "Quem é você?";
+  document.getElementById("subtitulo").textContent = "Escolha o seu nome na lista para entrar no curso.";
+  document.getElementById("busca-aluno").focus();
 }
 
 function mostrarTroca(dados, senhaAtual){
   pendente = { login: dados.login, senha: senhaAtual, nome: dados.nome };
   document.getElementById("login-form").classList.add("hidden");
-  document.getElementById("nome-form").classList.add("hidden");
-  document.getElementById("btn-alt").classList.add("hidden");
+  document.getElementById("passo-lista").classList.add("hidden");
   document.getElementById("troca-form").classList.remove("hidden");
   document.getElementById("titulo").textContent = "Troque sua senha";
   document.getElementById("subtitulo").textContent = "Olá, " + dados.nome + ". Defina uma senha pessoal.";
   document.getElementById("aviso-troca").classList.add("visible");
   document.getElementById("senha-nova").focus();
 }
+
+async function carregarLista(){
+  try {
+    const r = await fetch("api/alunos-login");
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j.erro || "falha");
+    listaAlunos = Array.isArray(j.alunos) ? j.alunos : [];
+    renderLista();
+  } catch (err) {
+    document.getElementById("lista-alunos").innerHTML =
+      '<div class="lista-vazia">Não foi possível carregar a lista. Confira se o servidor está no ar.</div>';
+  }
+}
+
+document.getElementById("busca-aluno").addEventListener("input", renderLista);
+document.getElementById("btn-voltar-lista").addEventListener("click", voltarLista);
 
 document.getElementById("login-form").addEventListener("submit", async function(e){
   e.preventDefault();
@@ -238,40 +352,7 @@ document.getElementById("troca-form").addEventListener("submit", async function(
   }
 });
 
-document.getElementById("nome-form").addEventListener("submit", function(e){
-  e.preventDefault();
-  const nome = document.getElementById("nome").value.trim();
-  const erro = document.getElementById("erro-nome");
-  erro.classList.remove("visible");
-  if (!nome) {
-    erro.textContent = "Digite seu nome para continuar.";
-    erro.classList.add("visible");
-    document.getElementById("nome").focus();
-    return;
-  }
-  entrarNoCurso(nome);
-});
-
-document.getElementById("btn-alt").addEventListener("click", function(){
-  const nomeForm = document.getElementById("nome-form");
-  const loginForm = document.getElementById("login-form");
-  const mostrandoNome = !nomeForm.classList.contains("hidden");
-  if (mostrandoNome) {
-    nomeForm.classList.add("hidden");
-    loginForm.classList.remove("hidden");
-    document.getElementById("titulo").textContent = "Bem-vindo ao curso";
-    document.getElementById("subtitulo").textContent = "Entre com o login e a senha que o instrutor passou.";
-    this.textContent = "Ainda não tenho login? Entrar com o nome";
-    document.getElementById("login").focus();
-  } else {
-    loginForm.classList.add("hidden");
-    nomeForm.classList.remove("hidden");
-    document.getElementById("titulo").textContent = "Entrar com o nome";
-    document.getElementById("subtitulo").textContent = "Para alunos ainda sem login e senha.";
-    this.textContent = "◀ Voltar ao login com senha";
-    document.getElementById("nome").focus();
-  }
-});
+carregarLista();
 </script>
 </body>
 </html>

@@ -48,7 +48,7 @@ curso-hardware/
 ├── index.html            # Site do curso (aluno): aulas, progresso, exercícios, provas
 ├── gerar-slides.py       # Gera APRESENTACAO-CURSO.pdf (requer reportlab)
 ├── apresentacao.html     # Página de divulgação/apresentação do curso (landing page)
-├── login-aluno.html      # Login do aluno (login + senha; troca obrigatória no 1º acesso)
+├── login-aluno.html      # Login do aluno (escolhe o nome na lista → login sugerido → troca senha no 1º acesso)
 ├── alunos.html           # Registro do instrutor (painel protegido por senha)
 ├── login-alunos.html     # Login do instrutor (senha)
 ├── secretaria.html       # Painel da Secretaria Pedagógica (monitoramento + atendimento aos pais)
@@ -84,11 +84,12 @@ curso-hardware/
 ### Aluno
 
 1. Abre o curso e clica em **👤 Aluno** (ou entra em `login-aluno.html`).
-2. Digita o **nome de login** e a **senha padrão** que o instrutor cadastrou. No **primeiro acesso** o sistema pede para trocar a senha.
-3. Depois do login, vai para `index.html?aluno=Nome` (a matrícula do aluno aparece em um chip "🎫 Matrícula: …" no topo — veja [Matrícula automática](#matrícula-automática)).
-4. Acessa as aulas: cada aula marcada como concluída libera os **exercícios** da aula e a **próxima aula** (progressão por ordem global de 43 aulas).
-5. Ao concluir todas as aulas de um módulo, a **prova do módulo** é liberada.
-6. Ao entrar, a **presença é registrada automaticamente** na semana atual do curso (definida pelo instrutor).
+2. Escolhe o **nome na lista**. O sistema preenche o **nome de login** sugerido (ex.: Maria da Silva → `maria.silva`).
+3. No **primeiro acesso** usa a senha padrão do instrutor; o sistema pede para **trocar a senha**.
+4. Depois do login, vai para `index.html?aluno=Nome` (a matrícula do aluno aparece em um chip "🎫 Matrícula: …" no topo — veja [Matrícula automática](#matrícula-automática)).
+5. Acessa as aulas: cada aula marcada como concluída libera os **exercícios** da aula e a **próxima aula** (progressão por ordem global de 43 aulas).
+6. Ao concluir todas as aulas de um módulo, a **prova do módulo** é liberada.
+7. Ao entrar, a **presença é registrada automaticamente** na semana atual do curso (definida pelo instrutor).
 
 Os dados do aluno (progresso, respostas, provas) são guardados no navegador e sincronizados com o servidor central.
 
@@ -281,7 +282,7 @@ python3 servidor.py 8000 --publico  # aceita acesso externo (sem o flag, apenas 
 
 | Método | Rota | Protegida | Descrição |
 |---|---|---|---|
-| GET | `/api/alunos` | sim | Lista completa de alunos (banco) |
+| GET | `/api/alunos-login` | — | Lista pública (nome, login, turma) para o aluno escolher quem é — **sem senha/foto** |
 | GET | `/api/alunos.json` | sim | Dados brutos em JSON (backup) |
 | GET | `/api/progresso?aluno=Nome` | — | Andamento das aulas + **matrícula/turma** do aluno (usado pelo site do curso) |
 | GET | `/api/exercicios?aluno=Nome` | — | Respostas do caderno e dos apêndices (`AP|…`) + resumo (nota sugerida; médias de objetivas e dissertativas **separadas caderno × apêndices**) |
