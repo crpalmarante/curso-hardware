@@ -53,6 +53,10 @@ body{
 }
 .brand small{display:block;font-weight:500;color:var(--text-muted);font-size:11px}
 .topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.topbar.modo-aluno .menu-staff{display:none !important}
+.topbar.modo-aluno .menu-apresentacao{order:1}
+.topbar.modo-aluno .menu-tema{order:2}
+.topbar.modo-aluno #btn-login-aluno{order:3}
 .icon-btn{
   padding:8px 12px;border-radius:var(--radius-md);cursor:pointer;
   color:var(--text-secondary);font-size:13px;
@@ -401,14 +405,14 @@ body{
     </div>
   </div>
   <div class="topbar-right">
-    <a class="icon-btn" href="apresentacao.html" title="Página de apresentação/divulgação do curso">📣 Apresentação</a>
+    <a class="icon-btn menu-apresentacao" href="apresentacao.html" title="Página de apresentação/divulgação do curso">📣 Apresentação</a>
     <a class="icon-btn" href="login-aluno.html" title="Entrar como aluno" id="btn-login-aluno">👤 Aluno</a>
-    <a class="icon-btn" href="alunos.html" title="Área do instrutor">👨‍🏫 Instrutor</a>
-    <a class="icon-btn" href="login-secretaria.html" title="Acesso da secretaria pedagógica">🗂️ Secretaria</a>
-    <a class="icon-btn" href="verificar-certificado.html" title="Verificar autenticidade de um certificado">🔎 Certificado</a>
-    <a class="icon-btn" href="apendice-exercicios.html" title="Exercícios de fixação dos apêndices A e B (Diskpart e GParted/Fdisk)">📝 Apêndices</a>
-    <button class="icon-btn" onclick="toggleTheme()" title="Alternar tema">◐ Tema</button>
-    <button class="icon-btn" id="btn-guard" onclick="guardToggle()" title="Ativar modo blindado" style="border-color:var(--primary);color:var(--primary)">🔒 Modo blindado</button>
+    <a class="icon-btn menu-staff" href="alunos.html" title="Área do instrutor">👨‍🏫 Instrutor</a>
+    <a class="icon-btn menu-staff" href="login-secretaria.html" title="Acesso da secretaria pedagógica">🗂️ Secretaria</a>
+    <a class="icon-btn menu-staff" href="verificar-certificado.html" title="Verificar autenticidade de um certificado">🔎 Certificado</a>
+    <a class="icon-btn menu-staff" href="apendice-exercicios.html" title="Exercícios de fixação dos apêndices A e B (Diskpart e GParted/Fdisk)">📝 Apêndices</a>
+    <button class="icon-btn menu-tema" onclick="toggleTheme()" title="Alternar tema">◐ Tema</button>
+    <button class="icon-btn menu-staff" id="btn-guard" onclick="guardToggle()" title="Ativar modo blindado" style="border-color:var(--primary);color:var(--primary)">🔒 Modo blindado</button>
   </div>
 </div>
 
@@ -719,11 +723,12 @@ let alunoNome = null;
     alunoNome = (params.get("aluno")||"").trim();
   } catch(e){}
   if (alunoNome){
+    document.querySelector(".topbar").classList.add("modo-aluno");
     document.getElementById("btn-guard").textContent = "🔒 " + alunoNome;
     document.getElementById("btn-guard").title = "Modo blindado — aluno " + alunoNome;
     const btnAluno = document.getElementById("btn-login-aluno");
     btnAluno.textContent = "👤 " + alunoNome;
-    btnAluno.title = "Trocar de aluno";
+    btnAluno.title = "Sair / trocar de aluno";
     const linkAp = document.querySelector('a[href="apendice-exercicios.html"]');
     if (linkAp) linkAp.href = "apendice-exercicios.html?aluno=" + encodeURIComponent(alunoNome);
     btnAluno.href = "login-aluno.html";

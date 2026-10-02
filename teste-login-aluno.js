@@ -35,6 +35,17 @@ ok('selo de 1º acesso na lista', login.includes('1º acesso'));
 const secretaria = fs.readFileSync('secretaria.html', 'utf-8');
 ok('secretaria mostra o login do aluno', secretaria.includes('id="p-acesso"'));
 
+const curso = fs.readFileSync('index.html', 'utf-8');
+ok('menu do aluno esconde itens de staff', curso.includes('topbar.modo-aluno .menu-staff') && curso.includes('classList.add("modo-aluno")'));
+ok('Instrutor/Secretaria/Certificado/Apêndices/quiosque são menu-staff',
+  /menu-staff[\s\S]*Instrutor/.test(curso) &&
+  /menu-staff[\s\S]*Secretaria/.test(curso) &&
+  /menu-staff[\s\S]*Certificado/.test(curso) &&
+  /menu-staff[\s\S]*Apêndices/.test(curso) &&
+  /menu-staff[\s\S]*btn-guard/.test(curso));
+ok('aluno logado vê Apresentação, Tema e o nome',
+  curso.includes('menu-apresentacao') && curso.includes('menu-tema') && /btnAluno\.textContent = "👤 " \+ alunoNome/.test(curso));
+
 console.log();
 if (falhas) {
   console.log('RESULTADO: ' + falhas + ' FALHA(S)');
