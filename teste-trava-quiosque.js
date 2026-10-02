@@ -36,6 +36,8 @@ globalThis.__aplicar = aplicarQuiosqueObrigatorio;
 globalThis.__desativar = guardDesativar;
 globalThis.__ativar = guardAtivar;
 globalThis.__guardObrig = () => quiosqueObrigatorio;
+globalThis.__onKey = guardOnKey;
+globalThis.__logout = alunoLogout;
 `;
 
 // --- stubs de DOM/browser ---
@@ -62,12 +64,14 @@ global.document = {
   fullscreenElement: null, hidden: false,
   body: { style: {} },
 };
-global.window = { addEventListener() {}, removeEventListener() {} };
+const loc = { href: "index.html" };
+global.location = loc;
+global.window = { addEventListener() {}, removeEventListener() {}, location: loc };
 global.localStorage = { getItem: () => null, setItem() {}, removeItem() {} };
 global.sessionStorage = { getItem: () => null, setItem() {}, removeItem() {} };
 
 // --- roda o código real no escopo de um Function para capturar let/const ---
-const fn = new Function(codigo + '\nreturn { guard: __guard, setGuard: __setGuard, aplicar: __aplicar, desativar: __desativar, ativar: __ativar, obrig: __guardObrig };');
+const fn = new Function(codigo + '\nreturn { guard: __guard, setGuard: __setGuard, aplicar: __aplicar, desativar: __desativar, ativar: __ativar, obrig: __guardObrig, onKey: __onKey, logout: __logout };');
 let api;
 try {
   api = fn();
@@ -106,6 +110,38 @@ console.log('  [debug] guard antes de desativar:', api.guard());
 api.desativar();
 console.log('  [debug] guard depois de desativar:', api.guard());
 checar('após liberar, guardDesativar() funciona (guard=false)', api.guard() === false);
+
+checar('ESC é interceptado na captura (keydown/keyup)',
+  html.includes('("keydown", guardOnKey, true)') && html.includes('("keyup", guardOnKey, true)'));
+checar('ESC do quiosque chama alunoLogout', html.includes('alunoLogout("esc")'));
+
+api.aplicar(true);
+loc.href = "index.html";
+const evEsc = {
+  key: "Escape", cancelable: true, ctrlKey: false,
+  preventDefault(){ this.pd = true; },
+  stopPropagation(){ this.sp = true; },
+  stopImmediatePropagation(){ this.sip = true; }
+};
+api.onKey(evEsc);
+checar('ESC impede o comportamento padrão do navegador', evEsc.pd === true && evEsc.sip === true);
+checar('ESC com aluno identificado vai para o login', loc.href.indexOf("login-aluno.html") >= 0);
+checar('após logout por ESC o guard solta (próximo aluno entra limpo)', api.guard() === false);
+
+loc.href = "index.html";
+api.aplicar(true);
+const confirmOrig = global.confirm;
+global.confirm = () => false;
+const evEscNao = {
+  key: "Escape", cancelable: true, ctrlKey: false,
+  preventDefault(){ this.pd = true; },
+  stopPropagation(){},
+  stopImmediatePropagation(){}
+};
+api.onKey(evEscNao);
+checar('ESC cancelado permanece no curso', loc.href === "index.html");
+checar('ESC cancelado mantém o quiosque ativo', api.guard() === true);
+global.confirm = confirmOrig;
 
 console.log();
 console.log(falhas ? ('RESULTADO: ' + falhas + ' FALHA(S)') : 'RESULTADO: trava do quiosque OK ✅');

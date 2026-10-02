@@ -389,7 +389,7 @@ body{
 <!-- AVISO DO MODO QUIOSQUE (modo blindado ativo) -->
 <div class="guard-aviso" id="guard-aviso" role="status">
   <span class="dot"></span>
-  <span>🔒 Modo monitorado ativo — suas ações neste curso estão sendo registradas.</span>
+  <span>🔒 Modo monitorado ativo — suas ações neste curso estão sendo registradas. ESC encerra a sessão.</span>
 </div>
 
 <div class="topbar">
@@ -728,19 +728,13 @@ let alunoNome = null;
     if (linkAp) linkAp.href = "apendice-exercicios.html?aluno=" + encodeURIComponent(alunoNome);
     btnAluno.href = "login-aluno.html";
     btnAluno.onclick = function(e){
+      e.preventDefault();
       if (quiosqueObrigatorio){
-        alert("O modo quiosque é OBRIGATÓRIO para você. Não é possível trocar de aluno — fale com o instrutor.");
-        e.preventDefault();
+        alert("O modo quiosque é OBRIGATÓRIO para você. Use ESC para encerrar a sessão e voltar ao login.");
         return false;
       }
-      if (!confirm("Sair de " + alunoNome + " e trocar de aluno?")) {
-        e.preventDefault();
-        return false;
-      }
-      // Ao trocar de aluno com o modo blindado ativo, desativa-o antes de
-      // navegar para não registrar falsa violação (visibilitychange no unload).
-      try { if (typeof guardDesativar === "function" && guard) guardDesativar(); } catch(err) {}
-      window.location.href = "login-aluno.html";
+      alunoLogout("botao");
+      return false;
     };
     try { done = JSON.parse(localStorage.getItem(storageKey()) || "{}"); } catch(e) {}
     try { exState = JSON.parse(localStorage.getItem(exStorageKey()) || "{}"); } catch(e) {}
@@ -785,7 +779,7 @@ function aplicarQuiosqueObrigatorio(obrigatorio){
     if (aviso){
       const txt = aviso.querySelector("span:last-child");
       if (txt && !txt.dataset.orig) txt.dataset.orig = txt.textContent;
-      if (txt) txt.textContent = "🔒 Modo monitorado OBRIGATÓRIO — você não pode desativar este modo.";
+      if (txt) txt.textContent = "🔒 Modo monitorado OBRIGATÓRIO — ESC encerra a sessão e volta ao login."
     }
   } else {
     // liberado: restaura título/estilo padrão do botão e o texto do aviso
@@ -1449,6 +1443,8 @@ let guard = false;
 let guardViolations = 0;
 let guardLocked = false;
 let guardStart = null;
+let guardLogoutEmAndamento = false;
+let guardEscAgora = false;
 
 function guardLoad(){
   try {
@@ -1506,7 +1502,7 @@ function guardAtivar(silencioso){
     }
   } catch(e) {}
   if (!silencioso){
-    alert("Modo blindado ATIVADO.\n\n- Tela cheia ativada.\n- Se você trocar de aba ou minimizar, o curso será bloqueado e a ocorrência registrada.\n- Use ESC somente com autorização do instrutor.");
+    alert("Modo blindado ATIVADO.\n\n- Tela cheia ativada.\n- Se você trocar de aba ou minimizar, o curso será bloqueado e a ocorrência registrada.\n- ESC interceptado: encerra a sessão do aluno e volta ao login (o quiosque continua para o próximo).");
   }
 }
 function guardDesativar(){
@@ -1549,30 +1545,73 @@ function attachGuardListeners(on){
   window[on?"addEventListener":"removeEventListener"]("blur", guardOnBlur);
   document[on?"addEventListener":"removeEventListener"]("visibilitychange", guardOnVisibility);
   document[on?"addEventListener":"removeEventListener"]("fullscreenchange", guardOnFullscreen);
-  window[on?"addEventListener":"removeEventListener"]("keydown", guardOnKey);
+  document[on?"addEventListener":"removeEventListener"]("keydown", guardOnKey, true);
+  document[on?"addEventListener":"removeEventListener"]("keyup", guardOnKey, true);
   document[on?"addEventListener":"removeEventListener"]("contextmenu", guardOnContext);
   document[on?"addEventListener":"removeEventListener"]("copy", guardOnCopy);
   document[on?"addEventListener":"removeEventListener"]("cut", guardOnCut);
 }
 
 function guardOnBlur(){
-  if (!guard || guardLocked) return;
+  if (!guard || guardLocked || guardLogoutEmAndamento || guardEscAgora) return;
   guardLocked = true;
   guardLog("Perda de foco (troca de aba / Alt+Tab / minimizou)");
   showGuardOverlay();
 }
 function guardOnVisibility(){
-  if (!guard || guardLocked) return;
+  if (!guard || guardLocked || guardLogoutEmAndamento || guardEscAgora) return;
   if (document.hidden) {
     guardLocked = true;
     guardLog("Abas ocultadas / troca de aba");
     showGuardOverlay();
   }
 }
+function guardTeclaEsc(e){
+  return e.key === "Escape" || e.key === "Esc" || e.keyCode === 27;
+}
+function guardTravarEsc(e){
+  if (e.cancelable) e.preventDefault();
+  if (typeof e.stopPropagation === "function") e.stopPropagation();
+  if (typeof e.stopImmediatePropagation === "function") e.stopImmediatePropagation();
+}
+function alunoLogout(origem){
+  if (!alunoNome) return false;
+  const viaEsc = origem === "esc";
+  const msg = viaEsc
+    ? "Encerrar a sessão de " + alunoNome + " e voltar ao login?\nO modo quiosque permanece para o próximo aluno."
+    : "Sair de " + alunoNome + " e trocar de aluno?";
+  guardEscAgora = true;
+  guardLogoutEmAndamento = true;
+  if (!confirm(msg)) {
+    guardLogoutEmAndamento = false;
+    guardEscAgora = false;
+    return false;
+  }
+  registrarNoAluno({
+    tipo: "disciplina",
+    texto: viaEsc
+      ? "Sessão encerrada com ESC — voltou ao login."
+      : "Saiu do curso (troca de aluno)."
+  });
+  try {
+    attachGuardListeners(false);
+    hideGuardOverlay();
+    guardAviso(false);
+    guard = false;
+    guardLocked = false;
+  } catch (err) {}
+  window.location.href = "login-aluno.html";
+  return true;
+}
 function guardOnFullscreen(){
+  if (guardLogoutEmAndamento) return;
   if (!guard || guardLocked) return;
   const fs = document.fullscreenElement || document.webkitFullscreenElement;
   if (!fs) {
+    if (guardEscAgora) {
+      guardEnter();
+      return;
+    }
     guardLocked = true;
     guardLog("Tentativa de sair da tela cheia (ESC/F11)");
     showGuardOverlay();
@@ -1581,13 +1620,23 @@ function guardOnFullscreen(){
 }
 function guardOnKey(e){
   if (!guard) return;
-  if (e.key === "Escape") {
+  if (guardTeclaEsc(e)) {
+    guardEscAgora = true;
+    guardTravarEsc(e);
+    if (alunoNome) {
+      const saiu = alunoLogout("esc");
+      if (!saiu) guardEnter();
+      setTimeout(function(){ guardEscAgora = false; }, 500);
+      return;
+    }
     if (!guardLocked) {
       guardLocked = true;
       guardLog("Tecla ESC pressionada");
       showGuardOverlay();
     }
-    e.preventDefault();
+    guardEnter();
+    setTimeout(function(){ guardEscAgora = false; }, 500);
+    return;
   }
   if (e.ctrlKey && e.key === "t") { e.preventDefault(); }
   if (e.ctrlKey && e.key === "n") { e.preventDefault(); }

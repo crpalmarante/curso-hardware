@@ -36,6 +36,7 @@ if not defined BROWSER if exist "%EDGE64%" set "BROWSER=%EDGE64%"
 echo ==============================================
 echo   Modo quiosque do Curso de Informatica
 echo   Abrindo: %URL%
+echo   ESC:       encerra a sessao do aluno (volta ao login)
 echo   Para SAIR: Alt+F4
 echo ==============================================
 

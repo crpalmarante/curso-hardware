@@ -38,7 +38,8 @@ echo "=============================================="
 echo "  Modo quiosque do Curso de Informática"
 echo "  Navegador: $CHOOSEN"
 echo "  Abrindo:   $URL"
-echo "  Para SAIR: Alt+F4 (ou digite no terminal)"
+  echo "  ESC:       encerra a sessão do aluno (volta ao login)"
+  echo "  Para SAIR: Alt+F4 (fecha o quiosque)"
 echo "=============================================="
 
 case "$CHOOSEN" in
