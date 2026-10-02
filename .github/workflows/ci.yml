@@ -79,3 +79,6 @@ jobs:
 
       - name: Envio do caderno de exercícios (objeto de respostas → POST /api/exercicios)
         run: node teste-exercicios-sync.js
+
+      - name: Aula permanece aberta ao responder exercício
+        run: node teste-aula-aberta.js

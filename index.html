@@ -403,7 +403,7 @@ body{
   <div class="topbar-right">
     <a class="icon-btn" href="apresentacao.html" title="Página de apresentação/divulgação do curso">📣 Apresentação</a>
     <a class="icon-btn" href="login-aluno.html" title="Entrar como aluno" id="btn-login-aluno">👤 Aluno</a>
-    <a class="icon-btn" href="alunos.html" title="Registro de alunos">👨‍🎓 Alunos</a>
+    <a class="icon-btn" href="alunos.html" title="Área do instrutor">👨‍🏫 Instrutor</a>
     <a class="icon-btn" href="login-secretaria.html" title="Acesso da secretaria pedagógica">🗂️ Secretaria</a>
     <a class="icon-btn" href="verificar-certificado.html" title="Verificar autenticidade de um certificado">🔎 Certificado</a>
     <a class="icon-btn" href="apendice-exercicios.html" title="Exercícios de fixação dos apêndices A e B (Diskpart e GParted/Fdisk)">📝 Apêndices</a>
@@ -590,7 +590,49 @@ let filter = "all";
 let query = "";
 let semanaGlobal = 0;
 
-function render(){
+function uiAulaSnapshot(){
+  const aulas = [];
+  document.querySelectorAll(".lesson.open").forEach(el => { if (el.id) aulas.push(el.id); });
+  const modulos = [];
+  document.querySelectorAll(".module.open").forEach(el => {
+    const n = el.getAttribute("data-module");
+    if (n) modulos.push(n);
+  });
+  const campos = {};
+  document.querySelectorAll(".lesson.open textarea, .lesson.open input[type='text']").forEach(el => {
+    if (el.id && !el.disabled) campos[el.id] = el.value;
+  });
+  return {
+    aulas, modulos, campos,
+    y: (typeof window !== "undefined" && window.scrollY) || 0,
+    haviaAulas: document.querySelectorAll(".lesson").length > 0
+  };
+}
+function uiAulaRestore(snap, forcarAulaId){
+  if (snap && snap.haviaAulas){
+    document.querySelectorAll(".module").forEach(m => {
+      const n = m.getAttribute("data-module");
+      if (snap.modulos.indexOf(n) >= 0) m.classList.add("open");
+      else m.classList.remove("open");
+    });
+    snap.aulas.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.classList.add("open");
+    });
+    Object.keys(snap.campos || {}).forEach(id => {
+      const el = document.getElementById(id);
+      if (el && !el.disabled) el.value = snap.campos[id];
+    });
+    if (typeof window !== "undefined" && window.scrollTo) window.scrollTo(0, snap.y);
+  }
+  if (forcarAulaId){
+    const el = document.getElementById(forcarAulaId);
+    if (el) el.classList.add("open");
+  }
+}
+
+function render(forcarAulaId){
+  const snap = uiAulaSnapshot();
   const root = document.getElementById("course-root");
   semanaGlobal = 0;
   root.innerHTML = CURSO.map(m => {
@@ -645,6 +687,7 @@ function render(){
   }).join("");
 
   updateStats();
+  uiAulaRestore(snap, forcarAulaId);
 }
 
 function toggleModule(head){
@@ -658,7 +701,7 @@ function toggleLesson(id, ev){
   done[id] = !done[id];
   save();
   registrarAula(id, done[id]);
-  render();
+  render(id);
   renderProvas();
 }
 
@@ -949,7 +992,7 @@ function renderExercicios(m, a){
                 if (oi === q.correta) cls += " certa";
                 else if (oi === resp.escolha) cls += " errada";
               }
-              return `<div class="${cls}" ${resp && resp.respondido ? "" : `onclick="exResponder('${escAttr(id)}', ${qi}, ${oi})"`}>
+              return `<div class="${cls}" ${resp && resp.respondido ? "" : `onclick="exResponder('${escAttr(id)}', ${qi}, ${oi});event.stopPropagation()"`}>
                 <span class="letra">${letras[oi]}</span><span>${op}</span>
               </div>`;
             }).join("")}
@@ -1091,7 +1134,7 @@ function exResponder(id, qi, escolha){
   exSaveLocal();
   registrarNoAluno({ tipo: "atividade", texto: `Exercício da aula resolvido — ${acertou ? "acertou" : "errou"} a questão ${qi+1} (${id}).` });
   try { exSincronizar(id); } catch(e){ console.warn("[exercicios] sync:", e); }
-  render();
+  render(id);
 }
 
 function exEnviarDisc(id, qi){
@@ -1103,7 +1146,7 @@ function exEnviarDisc(id, qi){
   exSaveLocal();
   registrarNoAluno({ tipo: "atividade", texto: `Resposta dissertativa entregue — questão ${qi+1} (${id}).` });
   try { exSincronizar(id); } catch(e){ console.warn("[exercicios] sync:", e); }
-  render();
+  render(id);
 }
 
 let EX_SYNC_TIMER = null;
