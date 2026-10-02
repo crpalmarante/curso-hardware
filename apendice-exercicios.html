@@ -319,7 +319,7 @@ function renderApendice(ap){
       <div class="exer-q exer-disc">
         <div class="enunciado">${qi+1}. ${q.q}</div>
         <textarea id="ap-disc-${apId}-${qi}" ${resp && resp.entregue ? "disabled" : ""} placeholder="Escreva sua resposta aqui...">${resp && resp.resposta ? esc(resp.resposta) : ""}</textarea>
-        <button class="exer-enviar" onclick="apEnviarDisc('${ap}', ${qi})" ${resp && resp.entregue ? "disabled" : ""}>${resp && resp.entregue ? "✓ Entregue" : "Entregar resposta"}</button>
+        <button type="button" class="exer-enviar" onclick="apEnviarDisc('${ap}', ${qi})" ${resp && resp.entregue ? "disabled" : ""}>${resp && resp.entregue ? "✓ Entregue" : "Entregar resposta"}</button>
         <div class="exer-entrega ${resp && resp.entregue ? "show" : ""}" id="ap-entrega-${apId}-${qi}">📨 Resposta entregue — ${AP_ALUNO ? "enviada ao instrutor" : "salva neste navegador"}.</div>
         ${resp && resp.entregue ? `<p class="dica">💡 Compare com o gabarito no Apêndice do livro (seção 7.2).</p>` : ""}
       </div>`;

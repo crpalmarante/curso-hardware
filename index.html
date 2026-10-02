@@ -933,7 +933,7 @@ function renderExercicios(m, a){
           <div class="exer-q exer-disc">
             <div class="enunciado">${qi+1}. ${q.q}</div>
             <textarea id="ex-disc-${cssId(id)}-${qi}" ${resp && resp.entregue ? "disabled" : ""} placeholder="Escreva sua resposta aqui...">${resp && resp.resposta ? esc(resp.resposta) : ""}</textarea>
-            <button class="exer-enviar" onclick="exEnviarDisc('${escAttr(id)}', ${qi})" ${resp && resp.entregue ? "disabled" : ""}>${resp && resp.entregue ? "✓ Entregue" : "Entregar resposta"}</button>
+            <button type="button" class="exer-enviar" onclick="exEnviarDisc('${escAttr(id)}', ${qi})" ${resp && resp.entregue ? "disabled" : ""}>${resp && resp.entregue ? "✓ Entregue" : "Entregar resposta"}</button>
             <div class="exer-entrega ${resp && resp.entregue ? "show" : ""}" id="ex-entrega-${cssId(id)}-${qi}">📨 Resposta entregue — fica registrada para o instrutor.</div>
           </div>`;
         }
@@ -1023,7 +1023,7 @@ function renderCheckout(m, a){
     </div>
     ${entregue
       ? `<div class="ck-resumo ok">📨 Checkout entregue — fica registrado para o instrutor. ${d.nota!=null?`Nota: <b>${d.nota}</b>/10`:"aguardando avaliação."}</div>`
-      : `<button class="exer-enviar" style="margin-top:14px" onclick="ckEnviar('${escAttr(id)}')">Entregar checkout</button>`}
+      : `<button type="button" class="exer-enviar" style="margin-top:14px" onclick="ckEnviar('${escAttr(id)}')">Entregar checkout</button>`}
   </div>`;
 }
 
@@ -1090,35 +1090,50 @@ function exResponder(id, qi, escolha){
   exState[id][qi] = { respondido: true, escolha, acertou, em: new Date().toISOString() };
   exSaveLocal();
   registrarNoAluno({ tipo: "atividade", texto: `Exercício da aula resolvido — ${acertou ? "acertou" : "errou"} a questão ${qi+1} (${id}).` });
-  exSincronizar(id, qi);
+  try { exSincronizar(id); } catch(e){ console.warn("[exercicios] sync:", e); }
   render();
 }
 
 function exEnviarDisc(id, qi){
   const ta = document.getElementById("ex-disc-" + cssId(id) + "-" + qi);
-  const texto = (ta.value || "").trim();
+  const texto = (ta && ta.value || "").trim();
   if (!texto){ alert("Escreva sua resposta antes de entregar."); return; }
   if (!exState[id]) exState[id] = {};
   exState[id][qi] = { respondido: true, entregue: true, resposta: texto, em: new Date().toISOString() };
   exSaveLocal();
   registrarNoAluno({ tipo: "atividade", texto: `Resposta dissertativa entregue — questão ${qi+1} (${id}).` });
-  exSincronizar(id, qi);
+  try { exSincronizar(id); } catch(e){ console.warn("[exercicios] sync:", e); }
   render();
 }
 
 let EX_SYNC_TIMER = null;
-function exSincronizar(aulaId, qi){
-  if (!alunoNome) return;
-  const id = aulaId;
-  const qs = (EXERCICIOS || {})[id] || [];
+function exRespostasParaSync(aulaId){
+  const qs = (EXERCICIOS || {})[aulaId] || [];
+  const st = exState[aulaId] || {};
   const respostas = [];
-  (exState[id] || {}).forEach((r, i)=>{
-    respostas.push({
-      aula_id: id, q: i, tipo: qs[i] && qs[i].tipo === "disc" ? "disc" : "obj",
-      resposta: r.tipo === "disc" ? (r.resposta||"") : String(r.escolha),
-      correta: r.acertou === true
-    });
+  Object.keys(st).forEach(k => {
+    const i = Number(k);
+    if (!Number.isFinite(i)) return;
+    const r = st[k];
+    const q = qs[i];
+    if (!r || !q) return;
+    const disc = q.tipo === "disc";
+    if (disc) {
+      if (!r.entregue) return;
+      respostas.push({ aula_id: aulaId, q: i, tipo: "disc", resposta: r.resposta || "" });
+    } else if (r.respondido) {
+      respostas.push({
+        aula_id: aulaId, q: i, tipo: "obj",
+        resposta: String(r.escolha),
+        correta: r.acertou === true
+      });
+    }
   });
+  return respostas;
+}
+function exSincronizar(aulaId){
+  if (!alunoNome) return;
+  const respostas = exRespostasParaSync(aulaId);
   if (!respostas.length) return;
   if (EX_SYNC_TIMER) clearTimeout(EX_SYNC_TIMER);
   EX_SYNC_TIMER = setTimeout(()=>{
