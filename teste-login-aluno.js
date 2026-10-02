@@ -35,7 +35,20 @@ ok('selo de 1º acesso na lista', login.includes('1º acesso'));
 const secretaria = fs.readFileSync('secretaria.html', 'utf-8');
 ok('secretaria mostra o login do aluno', secretaria.includes('id="p-acesso"'));
 
+ok('depois do login abre a apostila', login.includes('livro.html?aluno='));
+
+const livro = fs.readFileSync('livro.html', 'utf-8');
+ok('apostila tem CTA para exercícios do módulo', livro.includes('function ctaExercicios') && livro.includes('index.html?modulo='));
+ok('capítulos da apostila começam fechados', livro.includes('class="chapter${query ? " open" : ""}"') && !livro.includes('class="chapter open"'));
+ok('volumes da apostila começam fechados', livro.includes('class="volume" id="volume-') && !livro.includes('class="volume open"'));
+ok('estado inicial fecha capítulos no render', livro.includes('function aplicarEstadoInicial'));
+ok('aluno expande o capítulo no clique', livro.includes('function toggleChapter'));
+ok('menu do aluno na apostila esconde itens de staff', livro.includes('topbar.modo-aluno .menu-staff') && livro.includes('classList.add("modo-aluno")'));
+ok('apêndices têm CTA para série de exercícios', livro.includes('apendice-exercicios.html'));
+
 const curso = fs.readFileSync('index.html', 'utf-8');
+ok('curso filtra a série de exercícios por ?modulo=', curso.includes('moduloFiltro') && curso.includes('banner-modulo'));
+ok('exercícios do módulo voltam à apostila', curso.includes('Voltar à apostila'));
 ok('menu do aluno esconde itens de staff', curso.includes('topbar.modo-aluno .menu-staff') && curso.includes('classList.add("modo-aluno")'));
 ok('Instrutor/Secretaria/Certificado/Apêndices/quiosque são menu-staff',
   /menu-staff[\s\S]*Instrutor/.test(curso) &&

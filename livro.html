@@ -136,8 +136,8 @@ body{
 .chapter-head h4{font-size:14px;flex:1;min-width:0}
 .chapter-head .cap-chevron{color:var(--text-muted);transition:transform .3s;font-size:14px}
 .chapter.open .cap-chevron{transform:rotate(90deg)}
-.chapter-body{display:none;border-top:1px solid var(--border);padding:14px 16px}
-.chapter.open .chapter-body{display:block}
+.chapter-body{display:none !important;border-top:1px solid var(--border);padding:14px 16px}
+.chapter.open .chapter-body{display:block !important}
 .chapter-body p{color:var(--text-secondary);font-size:13.5px;margin-bottom:10px}
 .chapter-body ul{color:var(--text-secondary);font-size:13.5px;padding-left:18px;list-style:disc}
 .chapter-body ul li{margin-bottom:3px}
@@ -188,6 +188,21 @@ body{
 .mat-list li .mk{color:var(--success);flex-shrink:0}
 .mat-list li .ex{color:var(--text-muted);font-size:12px}
 
+.cta-exer{
+  margin-top:16px;padding:16px 18px;border-radius:var(--radius-md);
+  background:var(--glass);border:1px dashed var(--primary);
+  display:flex;flex-direction:column;gap:6px;
+}
+.cta-exer a{
+  color:var(--text);font-weight:700;font-size:14.5px;text-decoration:none;
+}
+.cta-exer a:hover{color:var(--primary)}
+.cta-exer small{color:var(--text-muted);font-size:12.5px}
+.topbar.modo-aluno .menu-staff{display:none !important}
+.topbar.modo-aluno .menu-apresentacao{order:1}
+.topbar.modo-aluno .menu-tema{order:2}
+.topbar.modo-aluno #btn-nome-aluno{order:3}
+
 /* RODAPÉ */
 .footer{
   text-align:center;color:var(--text-muted);font-size:13px;
@@ -211,9 +226,11 @@ body{
     </div>
   </div>
   <div class="topbar-right">
-    <a class="icon-btn" href="index.html" title="Ir para o curso">▶ Curso</a>
-    <a class="icon-btn" href="apendice-exercicios.html" title="Exercícios de fixação dos apêndices A e B">📝 Exercícios dos apêndices</a>
-    <button class="icon-btn" onclick="toggleTheme()" title="Alternar tema">◐ Tema</button>
+    <a class="icon-btn menu-apresentacao" href="apresentacao.html" title="Página de apresentação/divulgação do curso">📣 Apresentação</a>
+    <a class="icon-btn menu-staff" href="index.html" title="Ir para o curso">▶ Curso</a>
+    <a class="icon-btn menu-staff" href="apendice-exercicios.html" title="Exercícios de fixação dos apêndices A e B">📝 Exercícios dos apêndices</a>
+    <button class="icon-btn menu-tema" onclick="toggleTheme()" title="Alternar tema">◐ Tema</button>
+    <a class="icon-btn" href="login-aluno.html" title="Aluno" id="btn-nome-aluno" style="display:none">👤 Aluno</a>
   </div>
 </div>
 
@@ -225,6 +242,7 @@ body{
       Livro completo, totalmente em português, com aproximadamente <strong>350 a 500 páginas</strong>.
       Dividido em 8 volumes + 2 apêndices que acompanham o curso: dos fundamentos da informática ao atendimento, incluindo expansão de discos no Windows e no Linux
       técnico, com centenas de fotografias, diagramas, tabelas e exercícios.
+      <strong>Leia cada volume até o fim</strong> e use o link de exercícios do módulo para praticar no caderno.
     </p>
     <div class="chips">
       <span class="chip"><b id="chip-volumes">8</b> volumes + <b id="chip-apendices">2</b> apêndices</span>
@@ -307,65 +325,425 @@ body{
   </div>
 </div>
 
+<script src="curso.js"></script>
 <script>
 const LIVRO = [
   {
     num:"1", titulo:"Fundamentos da Informática", desc:"Introdução ao mundo da computação, da história aos conceitos essenciais.", 
     capitulos:[
-      {t:"História da computação"},
-      {t:"Como funciona um computador"},
-      {t:"Sistema binário"},
-      {t:"Hardware × Software"},
-      {t:"Arquitetura de Von Neumann"},
-      {t:"CPU, memória e barramentos"},
-      {t:"Periféricos"},
-      {t:"Exercícios", tipo:"exercicio"}
+      {t:"História da computação",
+       subt:"A necessidade de calcular acompanha a humanidade desde o ábaco. As gerações dos computadores eletrônicos são marcadas pela tecnologia dos componentes — não por versões de software.",
+       itens:[
+         "Antes dos computadores: ábaco (~3.000 a.C.), osso de Ishango e réguas de cálculo",
+         "Máquinas mecânicas: Pascalina (1642), Leibniz (1673), tear de Jacquard (1801) com cartões perfurados",
+         "Charles Babbage projetou a Máquina Analítica (1833); Ada Lovelace escreveu os primeiros algoritmos (1843)",
+         "Hollerith (1890) usou cartões perfurados no censo dos EUA — origem da IBM",
+         "1ª geração (1940–1956): válvulas — ENIAC (~17 mil válvulas, 27 t, 5.000 operações/s)",
+         "2ª geração (1956–1963): transistores; linguagens COBOL e FORTRAN",
+         "3ª geração (1964–1971): circuitos integrados e multiprogramação",
+         "4ª geração (1971–hoje): microprocessador; Apple II (1977), IBM PC (1981), Macintosh (1984)",
+         "Erro comum: confundir geração de computador com versão do Windows"
+       ]},
+      {t:"Como funciona um computador",
+       subt:"Um computador recebe dados (entrada), processa, produz um resultado (saída) e pode armazenar informações para uso futuro.",
+       itens:[
+         "Ciclo: ENTRADA → PROCESSAMENTO → SAÍDA, com ARMAZENAMENTO no meio",
+         "Entrada: teclado, mouse, microfone, câmera, leitores",
+         "Processamento: a CPU calcula e decide seguindo instruções",
+         "Saída: monitor, impressora, caixas de som",
+         "Armazenamento: HD, SSD, pendrive, nuvem — persiste mesmo desligado",
+         "Dado = matéria-prima (o número 5); informação = dado com significado (32 °C)",
+         "Instrução = ordem à máquina; programa = sequência ordenada de instruções",
+         "Execução: o SO carrega o programa na memória; a CPU busca, interpreta e executa cada instrução"
+       ]},
+      {t:"Sistema binário",
+       subt:"O computador é um circuito com dois estados elétricos (tensão alta = 1, baixa = 0). Por isso usa a base 2. Tudo — texto, imagem, som — vira sequência de bits.",
+       itens:[
+         "Bit: menor unidade (0 ou 1). Byte: 8 bits — 2⁸ = 256 valores (00000000 a 11111111)",
+         "Binário → decimal: cada posição é potência de 2 (direita → esquerda). Ex.: 1011₂ = 11₁₀",
+         "Decimal → binário: dividir por 2 e ler os restos de baixo para cima. Ex.: 13₁₀ = 1101₂",
+         "Hexadecimal (base 16): cada 4 bits viram 1 dígito (0–9, A–F). Ex.: 1011 1110 = BE",
+         "Unidades: 1 KB = 1.024 B · 1 MB = 1.024 KB · 1 GB = 1.024 MB · 1 TB = 1.024 GB",
+         "Erro comum: 1 MB ≠ 1 Mb. Byte tem 8 bits — internet de 100 Mb/s baixa no máximo ~12,5 MB/s"
+       ]},
+      {t:"Hardware × Software",
+       subt:"Hardware é tudo que se toca. Software é a parte lógica: programas e instruções. Firmware é software gravado no próprio componente (ex.: BIOS/UEFI).",
+       itens:[
+         "Hardware: gabinete, placa-mãe, CPU, RAM, HD/SSD, monitor, teclado, fonte, GPU",
+         "Software de sistema: Windows, Linux, macOS e drivers — controlam o hardware",
+         "Software aplicativo: Word, Chrome, Photoshop, jogos — tarefas do usuário",
+         "Firmware: BIOS/UEFI, software do roteador, microprograma do HD",
+         "O sistema operacional gerencia CPU, memória, discos, arquivos, usuários e segurança",
+         "Camadas: Usuário → aplicativos → sistema operacional → hardware",
+         "Sem SO, o computador é só um conjunto de peças sem utilidade prática"
+       ]},
+      {t:"Arquitetura de Von Neumann",
+       subt:"Proposta por John von Neumann em 1945, descreve como um computador deve ser organizado. Quase todos os PCs modernos seguem esse modelo.",
+       itens:[
+         "Unidade de Controle (UC): busca instruções e comanda os demais blocos",
+         "Unidade Lógica e Aritmética (ULA): cálculos e comparações — CPU = UC + ULA",
+         "Memória: armazena dados e programas no mesmo espaço",
+         "Dispositivos de entrada e saída: ligam a máquina ao mundo externo",
+         "Ciclo de instrução: buscar → decodificar → executar (milhões de vezes por segundo)",
+         "Gargalo de Von Neumann: o mesmo barramento serve a dados e instruções — daí o cache"
+       ]},
+      {t:"CPU, memória e barramentos",
+       subt:"A CPU executa as instruções. As memórias se organizam em uma hierarquia (rápido/caro → lento/barato). Barramentos são as vias que ligam tudo.",
+       itens:[
+         "Clock (GHz), núcleos, threads, cache, registradores e TDP (calor a dissipar, em W)",
+         "Erro comum: clock maior não significa processador melhor — arquitetura e cache também pesam",
+         "Hierarquia: registradores → cache L1/L2/L3 → RAM → SSD/HD",
+         "RAM é volátil (apaga ao desligar); HD/SSD/pendrive são persistentes",
+         "Por isso se perde o que não foi salvo: o documento aberto mora na RAM",
+         "Barramento de dados: transporta informações (bidirecional)",
+         "Barramento de endereço: indica onde ler ou escrever",
+         "Barramento de controle: sinais de comando (ler, escrever, clock)"
+       ]},
+      {t:"Periféricos",
+       subt:"Periféricos são os dispositivos ligados ao computador para entrada, saída e armazenamento. A maioria hoje é Plug and Play.",
+       itens:[
+         "Entrada: teclado, mouse, microfone, scanner, webcam",
+         "Saída: monitor, impressora, caixa de som",
+         "Entrada/saída: tela touch, multifuncional, unidade de DVD",
+         "Armazenamento: HD externo, pendrive, cartão de memória",
+         "USB 2.0 (~480 Mb/s); USB 3.0/3.1 (5–10 Gb/s); USB-C até 40 Gb/s (Thunderbolt)",
+         "HDMI / DisplayPort: vídeo e áudio; Bluetooth e Wi-Fi: sem fio",
+         "USB azul costuma ser 3.0; portas pretas/brancas, em geral, USB 2.0",
+         "Plug and Play: o sistema reconhece o dispositivo ao conectar, sem configuração manual"
+       ]},
+      {t:"Exercícios", tipo:"exercicio",
+       subt:"Questões de múltipla escolha, dissertativas, conversões binário/decimal/hexadecimal e uma linha do tempo prática — com gabarito no material impresso.",
+       itens:[
+         "Gerações, bit/byte, 1100₂ em decimal, ULA, RAM volátil, firmware, 1 TB ≈ 1.024 GB",
+         "Ciclo buscar → decodificar → executar",
+         "Conversões: 10101₂, 255₁₀, 110110₂, 64₁₀, 1000 0000₂, 2F₁₆ (gabarito: 21 · 11111111 · 54 · 1000000 · 80 · 47)"
+       ]}
     ]
   },
   {
     num:"2", titulo:"Hardware", desc:"Cada componente possui um capítulo completo, com diagramas, fotos e exercícios.", 
     capitulos:[
       {t:"Placa-mãe", destaque:true,
-       subt:"Um capítulo inteiro, em torno de 40 páginas, sobre a placa-mãe.",
-       itens:["O que é","Evolução","Formatos (AT, ATX, MicroATX, MiniITX...)","Chipsets","VRM","Barramentos","Slots PCIe","SATA","NVMe","M.2","BIOS","UEFI","CMOS","Bateria","Diagramas","Fotos","Exercícios"]},
-      {t:"Processadores"},
-      {t:"Memórias"},
-      {t:"Fontes"},
-      {t:"SSD"},
-      {t:"HD"},
-      {t:"Placas de vídeo"},
-      {t:"Coolers"},
-      {t:"Gabinetes"}
+       subt:"A placa-mãe (motherboard) é a placa principal: interliga CPU, memória, vídeo, discos e periféricos, distribui energia e permite a comunicação entre tudo. Capítulo de destaque (~40 páginas no impresso).",
+       itens:[
+         "Evolução: IBM PC (ISA) → PCI/AGP → PCIe → UEFI, M.2 e USB 3.0; hoje áudio, rede e Wi-Fi já vêm na placa",
+         "Formatos: AT (obsoleto) · ATX 305×244 mm (padrão) · MicroATX 244×244 · Mini-ITX 170×170 · E-ATX (workstation)",
+         "Erro comum: placa ATX não cabe em gabinete mATX — confira formato da placa e do gabinete",
+         "Chipset: PCH cuida de SATA/USB/LAN; RAM e PCIe da GPU ligam-se direto à CPU (o northbridge antigo foi para a CPU)",
+         "VRM: converte 12 V da fonte em ~1,0–1,4 V estáveis para a CPU; VRM fraco + CPU forte = travamento sob carga",
+         "Slots: PCIe x16 (vídeo) · PCIe x1 · M.2 (SSD/Wi-Fi). PCIe 3.0 x16 ≈ 16 GB/s; 4.0 ≈ 32 GB/s; 5.0 ≈ 63 GB/s",
+         "Armazenamento: SATA III 6 Gb/s (HD/SSD/DVD); M.2 chave M = NVMe PCIe x4; chave B = SATA ou PCIe x2",
+         "Erro comum: SSD M.2 NVMe em placa que só aceita M.2 SATA — confira chave e especificação",
+         "BIOS (antigo) × UEFI (gráfica, GPT, Secure Boot); CMOS guarda o setup; bateria CR2032 mantém data/hora",
+         "Sintoma clássico: PC perde data/hora ao desligar → trocar a CR2032",
+         "Identifique na placa real: socket, RAM, PCIe x16, M.2, SATA, 24 pinos ATX, 8 pinos CPU e bateria"
+       ]},
+      {t:"Processadores",
+       subt:"A CPU é o cérebro: executa instruções, calcula e coordena os demais componentes. Intel usa socket LGA (pinos na placa); AMD AM4/AM5 usa PGA (pinos na CPU).",
+       itens:[
+         "Intel: Core i3/i5/i7/i9 e Core Ultra (LGA). AMD: Ryzen 3/5/7/9 e Threadripper (AM4/AM5)",
+         "Clock (GHz), Turbo/Boost, núcleos, threads (SMT), cache L1/L2/L3, TDP (W), processo em nm, iGPU",
+         "Erro comum: clock maior ≠ processador melhor — arquitetura, núcleos e cache também pesam",
+         "LGA: não encoste nos contatos dourados da placa. PGA: não dobre os pinos da CPU",
+         "Refrigeração: cooler box (uso comum), tower (carga alta), AIO líquido (CPUs potentes)",
+         "Pasta térmica: uma gota do tamanho de um grão de arroz no centro; excesso ou falta superaquece",
+         "Compatibilidade: socket idêntico + chipset (B650, Z790…) + BIOS atualizada para CPU nova + cooler no TDP"
+       ]},
+      {t:"Memórias",
+       subt:"A RAM guarda temporariamente programas e dados em uso. Quanto mais RAM, mais programas rodam sem travar. DDR4 não encaixa em slot DDR5 — forçar danifica a placa.",
+       itens:[
+         "DDR3 (~1,5 V, PCs até ~2015) · DDR4 (1,2 V, 2.133–3.600+ MT/s) · DDR5 (1,1 V, 4.800+ MT/s)",
+         "Capacidade típica: 8, 16, 32 GB; frequência em MT/s (ex.: DDR4-3200); latência CL (menor = melhor)",
+         "Dual channel: dois pentes iguais nos slots do manual (em geral A2/B2) dobram a largura de banda",
+         "ECC: correção de erros — comum em servidores",
+         "Instalação: alinhar a chave, empurrar até as travas; não misturar frequências sem necessidade",
+         "8 GB + muitos programas abertos → lentidão por falta de RAM (o sistema usa o disco como memória virtual)"
+       ]},
+      {t:"Fontes",
+       subt:"A PSU converte 110/220 V CA nas tensões contínuas do PC: 12 V, 5 V e 3,3 V. Fontes genéricas são uma das maiores causas de queima de componentes.",
+       itens:[
+         "Conectores: 24 pinos ATX (placa) · 8 pinos EPS (CPU) · 6+2 PCIe (GPU) · SATA · Molex (antigo)",
+         "Potência em watts: CPU + GPU + ~50–100 W de periféricos + 20% de folga",
+         "Exemplo: CPU 125 W + GPU 350 W + resto 75 W = 550 W → fonte de 650–700 W",
+         "80 Plus (White, Bronze, Silver, Gold, Platinum, Titanium): ≥80% de eficiência — Gold não dá mais watts, desperdiça menos em calor",
+         "Nunca abra a fonte ligada (carga perigosa); confira seletor 110/220 V quando existir",
+         "CPU 65 W + GPU 200 W + resto 50 W = 315 W + 20% → mínima ~400 W (prefira 450–500 W de marca boa)"
+       ]},
+      {t:"SSD",
+       subt:"SSD (Solid State Drive) armazena em memória flash NAND, sem partes móveis — bem mais rápido que o HD. NVMe usa PCIe; SATA é a interface de 6 Gb/s.",
+       itens:[
+         "SATA III: ~550 MB/s (upgrade de HD) · NVMe M.2: 2.000–7.000+ MB/s · U.2: servidores",
+         "NVMe é protocolo sobre PCIe; um NVMe chega a ~10× a velocidade de um SSD SATA",
+         "TBW (Terabytes Written): durabilidade de gravação; 150–600 TBW basta no uso doméstico",
+         "Não desfragmente SSD (desgasta células e não ajuda); TRIM costuma ser automático no Windows/Linux",
+         "Mantenha o firmware atualizado"
+       ]},
+      {t:"HD",
+       subt:"O HD (Hard Disk Drive) usa pratos magnéticos girando (5.400–7.200 RPM) e cabeçotes que flutuam a nanômetros da superfície. Barato por GB; lento e sensível a choque.",
+       itens:[
+         "Dados em trilhas, setores e cilindros",
+         "HD: barato, grande capacidade (até 20 TB+), ruído/calor, frágil a impacto — ideal para backup e arquivo",
+         "SSD: rápido, silencioso, resistente a choque — ideal para sistema e programas",
+         "Não movimente o HD em operação (risco de head crash); longe de ímãs fortes",
+         "Monitore a saúde via SMART (Volume 6)"
+       ]},
+      {t:"Placas de vídeo",
+       subt:"A GPU processa imagens, vídeos, jogos e edição. Integrada (iGPU) vem na CPU; dedicada tem VRAM própria e vai no slot PCIe x16.",
+       itens:[
+         "iGPU: uso comum (escritório, vídeo). Dedicada: jogos, edição, 3D",
+         "Peças: chip GPU, VRAM, energia 6/8 pinos, HDMI/DisplayPort/DVI, fans e dissipador",
+         "VRAM 4–16 GB: mais memória para resoluções altas e texturas",
+         "Erro comum: GPU potente + fonte fraca → desligamentos; confira o requisito mínimo da fonte",
+         "Pode exigir 6, 8 ou 8+8 pinos da PSU (ex.: 650 W recomendado pelo fabricante)"
+       ]},
+      {t:"Coolers",
+       subt:"Todo componente gera calor. Acima do limite o PC trava, reinicia ou danifica peças. Refrigerar é estabilidade e vida útil.",
+       itens:[
+         "Passiva (só dissipador) · ativa (fan) · heatpipe (tower) · líquida AIO (CPU/GPU fortes)",
+         "Pasta térmica preenche microespaços de ar entre IHS e cooler — o ar conduz calor mal",
+         "Gota central do tamanho de um grão de arroz; troque sempre que remover o cooler",
+         "Fluxo do gabinete: frente puxa ar frio (intake); traseira/topo expulsa o quente (exhaust)",
+         "Erro comum: esquecer a pasta ou aplicar em excesso"
+       ]},
+      {t:"Gabinetes",
+       subt:"O gabinete (case) abriga e protege as peças e direciona o fluxo de ar. Confira medidas antes de comprar — GPU longa ou cooler alto não cabem em case minúsculo.",
+       itens:[
+         "Full Tower: E-ATX a ITX · Mid Tower: ATX/mATX/ITX (o mais comum) · Mini/SFF: mATX ou ITX · HTPC: ITX",
+         "Conferir: formato da placa, comprimento da GPU (mm), altura do cooler da CPU",
+         "Baías de HD/SSD, fonte ATX vs SFX, posições de fans e filtros de poeira",
+         "Bom fluxo de ar + filtros = temperatura baixa e menos poeira na placa"
+       ]}
     ]
   },
   {
     num:"3", titulo:"Montagem", desc:"Passo a passo completo, com mais de 100 fotografias.",
     capitulos:[
-      {t:"Passo a passo da montagem", itens:["Mais de 100 fotografias","Cada parafuso","Cada cabo","Cada conector","Cada erro comum"]},
-      {t:"Checklist completo de montagem", tipo:"checklist"}
+      {t:"Preparação: ferramentas, bancada e segurança",
+       subt:"Antes de parafusar qualquer peça, organize a bancada e proteja os componentes da descarga eletrostática (ESD). Um parafuso perdido ou uma CPU tocada sem pulseira custa mais caro do que cinco minutos de preparação.",
+       itens:[
+         "Ferramentas: Philips nº 1 e nº 2, Phillips pequena magnetizada (M.2), alicate de ponta, espátula de plástico, pulseira ESD, bandejas para parafusos, lanterna, pano de microfibra",
+         "Erro comum: chave magnética forte perto de HD antigo pode apagar dados — com SSD não há esse risco; prefira ponta magnetizada fraca",
+         "ESD: pulseira no chassi aterrado; toque a carcaça da fonte (desligada) antes de pegar peças; segure placas pelas bordas",
+         "Evite roupas sintéticas e carpete; guarde peças nas embalagens antiestáticas",
+         "Bancada: mesa limpa, seca e iluminada; parafusos separados (gabinete, placa-mãe, M.2, PSU); este guia ao lado"
+       ]},
+      {t:"Checklist de componentes",
+       subt:"Confira se está tudo na mesa antes de abrir o gabinete. Faltar um cabo SATA ou a pasta térmica no meio da montagem interrompe o fluxo e aumenta o risco de erro.",
+       itens:[
+         "Gabinete, fonte (PSU), placa-mãe, processador, cooler + pasta térmica (se não vier na box)",
+         "RAM, SSD/HD, GPU (se for dedicada), cabo de vídeo HDMI/DP, monitor, teclado e mouse",
+         "Cabo de energia do PC e do monitor, parafusos e abraçadeiras",
+         "Dica: teste de bancada (bench test) — placa fora do gabinete com CPU + 1 RAM + vídeo integrado. Se ligar, as peças estão boas; o que falhar depois é montagem"
+       ]},
+      {t:"Instalação da fonte de alimentação",
+       subt:"A fonte vai primeiro: depois que a placa-mãe está parafusada, passar os cabos fica apertado. Confira 110/220 V (ou bivolt automático) antes de qualquer parafuso.",
+       itens:[
+         "Posição: parte superior ou inferior traseira, conforme o gabinete; 4 parafusos; ventoinha virada para fora do case",
+         "Passe os cabos pelo gabinete antes de fixar a placa-mãe",
+         "Conectores: 24 pinos ATX (placa) · 8 pinos CPU 4+4 (perto do socket) · SATA power (disco) · 6+2 PCIe (GPU) · Molex (raro)",
+         "Erro comum: 8 pinos PCIe não é o 8 pinos CPU — formatos diferentes, não troque. CPU costuma dizer “CPU” (4+4); GPU diz “PCIe/GPU” (6+2)"
+       ]},
+      {t:"Instalação da placa-mãe",
+       subt:"Os espaçadores (standoffs) isolam a placa do chassi. Um espaçador no furo errado encosta numa trilha e pode causar curto — o PC simplesmente não liga.",
+       itens:[
+         "Instale só os espaçadores nos furos do formato da placa (ATX / mATX / ITX)",
+         "Encaixe a placa de I/O (espelho traseiro) no gabinete antes da placa-mãe",
+         "Abaixe a placa alinhando as portas ao I/O; parafuse em todos os pontos, sem apertar demais (risco de rachar)",
+         "Erro comum: furo extra com espaçador = curto no chassi. Conte os furos da sua placa, não os do gabinete"
+       ]},
+      {t:"Instalação do processador e do cooler",
+       subt:"A CPU assenta sozinha se estiver alinhada. Forçar é a causa nº 1 de pinos entortados. Intel é LGA (pinos na placa); AMD AM4/AM5 é PGA (pinos na CPU).",
+       itens:[
+         "Intel (LGA): abra a alavanca e a capa; alinhe os entalhes e a seta do canto; baixe sem forçar; feche capa e alavanca",
+         "AMD (PGA): abra a alavanca; alinhe o triângulo da CPU ao do socket; assente; feche a alavanca",
+         "Pasta térmica: uma gota do tamanho de um grão de arroz no centro do IHS; excesso ou falta superaquece",
+         "Fixe o cooler com pressão uniforme; se for parafuso, aperte em cruz (um, o oposto, outro, o oposto)",
+         "Conecte o fan no conector CPU_FAN da placa-mãe — sem isso o processador esquenta em segundos"
+       ]},
+      {t:"Instalação das memórias RAM",
+       subt:"O pente tem uma chave (entalhe) que só entra de um lado. Dual channel usa os slots do manual — em geral A2 e B2, não os dois primeiros lado a lado.",
+       itens:[
+         "Abra as travas, alinhe a chave, empurre até as travas fecharem e o pente ficar nivelado",
+         "Dois pentes iguais nos slots recomendados = dual channel (mais largura de banda)",
+         "Erro comum: pente pela metade — PC não liga ou apita. Confirme as duas travas e o nível do módulo"
+       ]},
+      {t:"Instalação do armazenamento",
+       subt:"HD/SSD de 2,5\" ou 3,5\" usam SATA de dados + SATA de energia. O M.2 NVMe entra no slot da placa, em ângulo, com um parafuso minúsculo.",
+       itens:[
+         "2,5\"/3,5\": fixe na baia, cabo SATA de dados na placa e SATA power da fonte",
+         "M.2: encaixe a ~30°, pressione a ponta e parafuse (parafuso vem com a placa-mãe)",
+         "Erro comum: parafuso M.2 se perde fácil — guarde o reserva da caixa da placa; confira se o slot é NVMe ou só SATA (Volume 2)"
+       ]},
+      {t:"Instalação da placa de vídeo",
+       subt:"A GPU vai no slot PCIe x16 (o mais longo, perto da CPU). O cabo de vídeo do monitor deve ir na GPU, não nas saídas da placa-mãe.",
+       itens:[
+         "Remova as tampas de slot na traseira do gabinete na altura do PCIe x16; baixe a trava do slot se houver",
+         "Encaixe até travar, parafuse na carcaça, ligue os 6/8 pinos PCIe da fonte",
+         "HDMI/DisplayPort na GPU dedicada — na placa-mãe o monitor fica sem imagem se a iGPU estiver desligada",
+         "Erro comum: GPU potente + fonte sem conector PCIe ou com wattagem baixa → desliga sob carga"
+       ]},
+      {t:"Cabeamento e gerenciamento",
+       subt:"Cabo no lugar certo e caminho de ar livre. O painel frontal (power, reset, LEDs, USB, áudio) é o trecho que mais gera “não liga” por pino invertido ou solto.",
+       itens:[
+         "Passe os cabos pelo painel traseiro do gabinete (se houver) e prenda com abraçadeiras",
+         "Painel frontal: PWR_SW (ligar) · RESET_SW · PWR_LED · HDD_LED · HD_AUDIO · USB 2.0/3.0 — siga o manual da placa",
+         "Deixe ventoinhas livres: frente puxa ar frio, traseira/topo expulsa o quente",
+         "Erro comum: LED invertido só não acende; power switch no conector errado pode ser grave — leia a etiqueta"
+       ]},
+      {t:"Primeira inicialização (POST e BIOS/UEFI)",
+       subt:"POST (Power-On Self-Test) é o autoteste ao ligar. Se ventoinhas giram, LEDs acendem e a tela mostra o logotipo, o hardware básico respondeu.",
+       itens:[
+         "Antes: 24 pinos, 8 pinos CPU e GPU encaixados; interruptor da fonte em I; monitor, teclado e mouse",
+         "Ao ligar: power → fans e LEDs → logotipo → Del ou F2 para a UEFI (varia por fabricante)",
+         "Na BIOS: CPU, RAM e disco visíveis; data/hora; ordem de boot (sistema no Volume 4); F10 Save & Exit",
+         "Bipes (varia): 1 curto ≈ OK · contínuos ≈ RAM · longos e curtos ≈ vídeo · silêncio total ≈ CPU/fonte/placa",
+         "Dica: anote a marca da BIOS (AMI, Award…) ou use um POST card — detalhes no Volume 6"
+       ]},
+      {t:"Erros comuns de montagem",
+       subt:"Quase todo “não liga” na primeira montagem é conector, RAM pela metade, espaçador errado ou cabo de vídeo na saída errada — não peça queimada.",
+       itens:[
+         "CPU forçada / não assentada → não liga, pinos tortos — alinhe, nunca force",
+         "Pasta térmica esquecida → superaquecimento — aplique antes do cooler",
+         "8 pinos PCIe no soquete da CPU → pode não ligar — leia CPU vs PCIe/GPU",
+         "RAM pela metade → apito — empurre até travar",
+         "Standoff no furo errado → curto, não liga — só furos da placa",
+         "Vídeo na placa-mãe com GPU dedicada → tela preta — mude o cabo para a GPU",
+         "Seletor 110/220 errado → não liga ou queima — confira antes",
+         "Esquecer o 8 pinos da CPU → placa sem energia do processador"
+       ]},
+      {t:"Checklist completo de montagem", tipo:"checklist",
+       subt:"Use esta lista em toda montagem, antes de declarar o equipamento pronto. Marque item a item — o que não estiver conferido não foi montado.",
+       itens:[
+         "Energia: fonte em I, cabo na parede, 24 pinos ATX, 8 pinos CPU, PCIe da GPU",
+         "CPU: alinhada, trava fechada, pasta aplicada, cooler em cruz, fan em CPU_FAN",
+         "RAM: slots do dual channel, travas fechadas",
+         "Disco: SATA dados + SATA power, ou M.2 parafusado",
+         "Painel: PWR_SW, reset/LEDs, USB e áudio frontal",
+         "Periféricos: monitor na saída certa, teclado e mouse",
+         "Boot: POST ok, BIOS mostra CPU/RAM/disco, data/hora, ordem de boot"
+       ]}
     ]
   },
   {
     num:"4", titulo:"Instalação", desc:"Instalação de sistemas operacionais e configuração de firmware.",
     capitulos:[
-      {t:"Windows"},
-      {t:"Linux"},
-      {t:"Drivers"},
-      {t:"UEFI"},
-      {t:"Secure Boot"},
-      {t:"GPT"},
-      {t:"MBR"},
-      {t:"Backup"}
+      {t:"Preparação de mídias de instalação",
+       subt:"O pendrive de instalação apaga tudo o que estiver nele. Use ISO do site oficial e um gravador confiável — Rufus no Windows, Ventoy para vários ISOs, balenaEtcher em qualquer sistema.",
+       itens:[
+         "Pendrive de 8 GB ou mais; ISO oficial; Rufus, Ventoy ou balenaEtcher",
+         "Rufus: dispositivo → ISO → esquema GPT (UEFI) ou MBR (BIOS legado) → Iniciar",
+         "Erro comum: gravar sem conferir o pendrive — a operação apaga todos os arquivos",
+         "Boot: F12, F11 ou Esc no menu de boot; se o pendrive não aparecer, mude a ordem na UEFI"
+       ]},
+      {t:"UEFI, Secure Boot, GPT e MBR",
+       subt:"UEFI substituiu a BIOS: tela gráfica, boot mais rápido e Secure Boot. GPT é a tabela de partições moderna; MBR é o esquema antigo, limitado a 2 TB e 4 partições primárias.",
+       itens:[
+         "BIOS: texto, MBR, sem Secure Boot. UEFI: gráfica, GPT (e MBR), Secure Boot, discos grandes",
+         "MBR: até 4 primárias e 2 TB. GPT: muitas partições e discos > 2 TB (Windows 10/11 em UEFI usa GPT)",
+         "Secure Boot impede sistemas não assinados (rootkits); Linux antigo ou Windows 7 podem exigir desligá-lo",
+         "Erro comum: “Secure Boot Violation” ou pendrive invisível — mídia no esquema errado (GPT×MBR) ou Secure Boot incompatível"
+       ]},
+      {t:"Instalação do Windows",
+       subt:"Backup primeiro, depois a mídia. Na partição, “Personalizado” é o caminho profissional — “Atualizar” mistura o sistema antigo com o novo.",
+       itens:[
+         "Antes: backup (Cap. 6), pendrive bootável, chave em mãos (ou “não tenho chave” e ativar depois)",
+         "Idioma → Instalar agora → edição Home/Pro → termos → Personalizado (avançado)",
+         "Disco vazio: Novo — o Windows cria a EFI sozinho. Disco com sistema antigo: apague só as partições certas",
+         "Erro comum: apagar o disco/partição errada — confirme o PC e o backup antes de Continuar",
+         "Depois: internet, Windows Update, drivers (Cap. 5), ativação"
+       ]},
+      {t:"Instalação do Linux",
+       subt:"Ubuntu e Mint são os mais didáticos no laboratório. Em dual boot, instale o Windows primeiro: o Linux detecta o Windows e monta o GRUB; o Windows instalado por último costuma ignorar o Linux.",
+       itens:[
+         "Ubuntu (iniciante) · Mint (parecido com Windows) · Fedora (dev) · Debian (estável) · Arch (avançado)",
+         "Ubuntu: Experimentar ou Instalar → idioma → apagar disco, junto com Windows, ou particionamento manual",
+         "Dual boot: Windows primeiro, depois Linux “instalar junto”; o GRUB escolhe o sistema no boot",
+         "Pós-instalação: sudo apt update && sudo apt upgrade; drivers de GPU se o sistema sugerir; aplicativos do aluno"
+       ]},
+      {t:"Instalação de drivers",
+       subt:"Driver é o software que faz o sistema falar com o hardware. Baixe só do Windows Update ou do site do fabricante — “pacote universal” de site duvidoso é risco de vírus.",
+       itens:[
+         "Windows: Update puxa a maioria; GPU no site NVIDIA/AMD/Intel; “!” amarelo no Gerenciador de Dispositivos = driver faltando",
+         "Linux: boa parte já está no kernel; proprietários (GPU) pela tela de drivers do sistema",
+         "Ordem: 1) chipset da placa-mãe  2) vídeo  3) áudio e rede  4) demais periféricos",
+         "Sintomas: áudio mudo, resolução baixa, “!” no Gerenciador, reinício ao instalar — driver errado ou conflitante (modo seguro para remover)",
+         "Erro comum: atalho ou “driver pack” de site não oficial"
+       ]},
+      {t:"Backup e restauração de dados",
+       subt:"Disco, software e usuário falham. Backup é a única garantia. Antes de formatar o PC do cliente, copie os dados e faça o cliente validar — registre na ordem de serviço (Volume 8).",
+       itens:[
+         "Regra 3-2-1: 3 cópias, 2 mídias diferentes (ex.: HD + nuvem), 1 fora do local",
+         "Completo (tudo) · incremental (o que mudou desde o último) · diferencial (o que mudou desde o último completo)",
+         "Windows: Histórico de arquivos e imagem do sistema. Linux: Timeshift. Disco inteiro: Clonezilla. Off-site: Drive/OneDrive",
+         "Restaurar arquivos no destino; imagem de sistema: boot na mídia de recuperação e apply da imagem"
+       ]},
+      {t:"Exercícios", tipo:"exercicio",
+       subt:"Fixe UEFI/GPT, Secure Boot, dual boot, drivers e a regra 3-2-1 antes de ir para a manutenção preventiva.",
+       itens:[
+         "Windows 11 em UEFI usa GPT, não MBR",
+         "Secure Boot impede sistemas não assinados — não acelera o boot nem criptografa o disco",
+         "Dual boot: Windows primeiro, Linux depois",
+         "Regra 3-2-1: 3 cópias, 2 mídias, 1 fora do local",
+         "Dissertativas: MBR×GPT; por que Windows antes do Linux; ordem dos drivers; pendrive bootável; cuidados antes de formatar o notebook do cliente"
+       ]}
     ]
   },
   {
     num:"5", titulo:"Manutenção", desc:"Rotinas preventivas que prolongam a vida útil do equipamento.",
     capitulos:[
-      {t:"Limpeza"},
-      {t:"Troca de pasta térmica"},
-      {t:"Atualizações"},
-      {t:"Organização"},
-      {t:"Ferramentas"}
+      {t:"O que é manutenção preventiva",
+       subt:"Preventiva é o que se faz antes da falha: ações programadas para o equipamento durar mais. Corretiva (Volume 6) é reagir quando já quebrou. O técnico profissional vende o plano, não só o conserto.",
+       itens:[
+         "Menos emergência, máquina mais estável, peças duram mais, cliente fidelizado",
+         "Mensal: limpeza externa, ventoinhas, backup. Trimestral: interna, cabos, pasta. Semestral: profunda, updates, disco. Anual: CMOS, revisão, teste de estresse",
+         "Registre cada manutenção na ficha/OS (Volume 8) — histórico ajuda o próximo diagnóstico e demonstra profissionalismo"
+       ]},
+      {t:"Limpeza e conservação",
+       subt:"Poeira isola o calor e mata ventoinhas. Desligue, tire o cabo e aperte o power alguns segundos (descarga) antes de abrir o gabinete.",
+       itens:[
+         "Materiais: ar comprimido, escova antiestática, microfibra, álcool isopropílico 90%+ (não use álcool comum), aspirador só por fora",
+         "Sopre do centro para fora; limpe fans, filtros e, se preciso, contatos de RAM/GPU com isopropílico",
+         "Erro comum: aspirador doméstico dentro do gabinete gera ESD; álcool com água deixa resíduo e corrosão",
+         "Tela: microfibra seca ou levemente úmida. Teclado: vire, bata, ar entre as teclas, cotonete com isopropílico"
+       ]},
+      {t:"Troca de pasta térmica",
+       subt:"Troque quando o cooler sair, a cada 2–3 anos, ou se a CPU esquentar mesmo com o cooler limpo. Uma gota do tamanho de um grão de arroz no centro basta.",
+       itens:[
+         "Desligue, remova o cooler, limpe pasta antiga na CPU e na base com isopropílico, deixe secar",
+         "Aplique a gota, fixe o cooler em cruz, reconecte o fan em CPU_FAN",
+         "Excesso espalha e isola; não misture marcas; pasta média (6–8 W/m·K) já resolve no uso comum"
+       ]},
+      {t:"Atualizações de software e firmware",
+       subt:"Atualizar corrige segurança, bugs e compatibilidade. BIOS/UEFI é o caso delicado: falha no meio pode matar a placa-mãe.",
+       itens:[
+         "Windows: Configurações → Update. Linux: sudo apt update && sudo apt upgrade (ou a tela da distro)",
+         "Drivers só do fabricante ou do Update; navegador e antivírus em dia",
+         "BIOS: versão atual → ISO/arquivo só no site da placa → energia estável (no-break) → procedimento do fabricante",
+         "Erro comum: atualizar BIOS “porque saiu versão nova”. Só se houver correção importante, CPU nova ou bug conhecido — se não está quebrado, não conserte"
+       ]},
+      {t:"Organização da oficina",
+       subt:"Bancada iluminada, tapete antiestático, uma OS por mesa. Fotografe antes de desmontar notebook — parafuso e cabo fora do lugar na remontagem custam horas.",
+       itens:[
+         "Ferramentas à mão; parafusos e peças em bandejas etiquetadas; cabos pendurados",
+         "Separe peças boas das defeituosas; estoque: pasta, parafusos, abraçadeiras, CR2032; embalagem antiestática",
+         "Etiquete o que saiu do equipamento; devolva ao cliente cabos, tampas e parafusos sobressalentes"
+       ]},
+      {t:"Ferramentas do técnico",
+       subt:"O kit básico cobre PC e notebook de bancada. Ferramenta suja ou cabo ressecado vira o próximo defeito do cliente.",
+       itens:[
+         "Phillips (PC), Torx (notebook/HD), fenda, pinça/espátula de plástico, pulseira ESD, headlamp",
+         "Multímetro (tensão e fonte), POST card (códigos de boot), testador de cabo de rede",
+         "Guarde limpo e seco; ponta magnética fraca longe de HD antigo; lubrique e calibre o que for aparelho"
+       ]},
+      {t:"Exercícios", tipo:"exercicio",
+       subt:"Firme o hábito da preventiva: intervalo da pasta, isopropílico, BIOS só com necessidade e energia estável, cabo fora da tomada antes de abrir.",
+       itens:[
+         "Pasta: a cada 2–3 anos ou quando o cooler sair — não todos os dias nem “nunca”",
+         "Contatos de RAM: álcool isopropílico 90%+, não álcool comum nem limpa-vidros",
+         "BIOS: só quando necessário e com energia estável",
+         "Antes de desmontar: desligar e tirar o cabo de energia",
+         "Dissertativas: preventiva × corretiva; plano trimestral de escritório; passo a passo da pasta; por que isopropílico; kit essencial"
+       ]}
     ]
   },
   {
@@ -447,8 +825,8 @@ function render(){
     if (caps.length === 0) return "";
 
     return `
-    <section class="volume open" data-volume="${v.num}">
-      <div class="volume-head" onclick="toggleVolume(this)">
+    <section class="volume" id="volume-${v.num}" data-volume="${v.num}">
+      <div class="volume-head" onclick="toggleVolume(this)" role="button" aria-expanded="false" title="Clique para expandir ou recolher o volume">
         <div class="volume-num">${v.tipo==='apendice'?'AP':v.num}</div>
         <div class="volume-info">
           <h3>${v.tipo==='apendice'?`Apêndice ${v.num} — ${v.titulo}`:`Volume ${v.num} — ${v.titulo}`}</h3>
@@ -458,8 +836,8 @@ function render(){
       </div>
       <div class="volume-body">
         ${caps.map((c, i) => `
-          <div class="chapter open">
-            <div class="chapter-head" onclick="toggleChapter(this)">
+          <div class="chapter${query ? " open" : ""}">
+            <div class="chapter-head" onclick="toggleChapter(this)" role="button" aria-expanded="${query ? "true" : "false"}" title="Clique para expandir ou recolher o assunto">
               <div class="chapter-idx">${i+1}</div>
               <h4>${c.t}${c.destaque?' <span style="color:var(--primary);font-size:12px">★ destaque</span>':''}</h4>
               <span class="cap-chevron">▶</span>
@@ -482,36 +860,110 @@ function render(){
               ${c.exemplo ? `<p style="margin-top:10px">🔎 Exemplo real de entrada do guia de bancada — cada sintoma do volume seguirá este mesmo modelo.</p>` : ""}
             </div>
           </div>`).join("")}
+        ${ctaExercicios(v)}
       </div>
     </section>`;
   }).join("");
 
   if (!root.innerHTML.trim()) {
     root.innerHTML = '<div class="hero" style="text-align:center">Nenhum capítulo encontrado para a busca.</div>';
+    return;
   }
+  aplicarEstadoInicial();
+  const chip = document.getElementById("chip-cap");
+  if (chip) chip.textContent = LIVRO.reduce((n, v) => n + v.capitulos.length, 0);
 }
 
-function toggleVolume(head){ head.closest(".volume").classList.toggle("open"); }
-function toggleChapter(head){ head.closest(".chapter").classList.toggle("open"); }
+function aplicarEstadoInicial(){
+  const buscando = !!query;
+  document.querySelectorAll(".chapter").forEach(cap => {
+    cap.classList.toggle("open", buscando);
+    const head = cap.querySelector(".chapter-head");
+    if (head) head.setAttribute("aria-expanded", buscando ? "true" : "false");
+  });
+  const hash = (location.hash || "").replace("#", "");
+  document.querySelectorAll(".volume").forEach(vol => {
+    const desteHash = hash && vol.id === hash;
+    vol.classList.toggle("open", buscando || desteHash);
+    const head = vol.querySelector(".volume-head");
+    if (head) head.setAttribute("aria-expanded", vol.classList.contains("open") ? "true" : "false");
+  });
+}
+
+function toggleVolume(head){
+  const vol = head.closest(".volume");
+  vol.classList.toggle("open");
+  head.setAttribute("aria-expanded", vol.classList.contains("open") ? "true" : "false");
+}
+function toggleChapter(head){
+  const cap = head.closest(".chapter");
+  cap.classList.toggle("open");
+  head.setAttribute("aria-expanded", cap.classList.contains("open") ? "true" : "false");
+}
 function toggleTheme(){
   const html = document.documentElement;
   html.setAttribute("data-theme", html.getAttribute("data-theme")==="dark" ? "light" : "dark");
 }
 
+function qsAluno(){
+  return alunoLivro ? encodeURIComponent(alunoLivro) : "";
+}
+
+function ctaExercicios(v){
+  if (v.tipo === "apendice"){
+    const href = "apendice-exercicios.html" + (alunoLivro ? "?aluno=" + qsAluno() : "");
+    return `<div class="cta-exer">
+      <a href="${href}">📝 Exercícios deste apêndice</a>
+      <small>Depois de ler, pratique Diskpart ou GParted/Fdisk na série de exercícios.</small>
+    </div>`;
+  }
+  const mod = String(v.num).padStart(2, "0");
+  const cursoMod = (typeof CURSO !== "undefined") ? CURSO.find(m => m.num === mod) : null;
+  const titulo = cursoMod ? cursoMod.titulo : ("Módulo " + v.num);
+  const href = "index.html?modulo=" + mod + (alunoLivro ? "&aluno=" + qsAluno() : "");
+  return `<div class="cta-exer">
+    <a href="${href}">📝 Exercícios do Módulo ${v.num} — ${titulo}</a>
+    <small>Leia o volume até o fim e, em seguida, pratique nas aulas e no caderno deste módulo.</small>
+  </div>`;
+}
+
 document.getElementById("search").addEventListener("input", e => { query = e.target.value.trim().toLowerCase(); render(); });
 
-// Propaga o aluno identificado (?aluno=) para os exercícios dos apêndices
+let alunoLivro = null;
 (function(){
   try {
-    const ap = new URLSearchParams(window.location.search).get("aluno");
-    if (ap){
-      const link = document.querySelector('a[href="apendice-exercicios.html"]');
-      if (link) link.href = "apendice-exercicios.html?aluno=" + encodeURIComponent(ap);
-    }
+    alunoLivro = (new URLSearchParams(window.location.search).get("aluno") || "").trim();
   } catch(e){}
+  if (alunoLivro){
+    document.querySelector(".topbar").classList.add("modo-aluno");
+    const btn = document.getElementById("btn-nome-aluno");
+    if (btn){
+      btn.style.display = "";
+      btn.textContent = "👤 " + alunoLivro;
+      btn.title = "Sair / trocar de aluno";
+      btn.href = "login-aluno.html";
+      btn.onclick = function(e){
+        e.preventDefault();
+        if (confirm("Sair de " + alunoLivro + " e voltar ao login?")) location.href = "login-aluno.html";
+        return false;
+      };
+    }
+    const ap = document.querySelector('a.menu-staff[href^="apendice-exercicios.html"]');
+    if (ap) ap.href = "apendice-exercicios.html?aluno=" + qsAluno();
+  }
+  document.addEventListener("keydown", function(e){
+    if (e.key !== "Escape" || !alunoLivro) return;
+    e.preventDefault();
+    e.stopPropagation();
+    if (confirm("Encerrar a sessão de " + alunoLivro + " e voltar ao login?")) location.href = "login-aluno.html";
+  }, true);
 })();
 
 render();
+try {
+  const alvo = location.hash && document.querySelector(location.hash);
+  if (alvo) alvo.scrollIntoView();
+} catch(e){}
 </script>
 </body>
 </html>

@@ -9,9 +9,9 @@ setlocal enabledelayedexpansion
 
 REM Pasta onde está o script (funciona de qualquer lugar)
 set "DIR=%~dp0"
-set "URL=file://%DIR%index.html"
+set "URL=file://%DIR%livro.html"
 
-REM Se um nome foi passado, anexa à URL (ex.: index.html?aluno=Fulano)
+REM Se um nome foi passado, anexa à URL (ex.: livro.html?aluno=Fulano)
 if not "%~1"=="" (
   set "URL=%URL%?aluno=%~1"
 )

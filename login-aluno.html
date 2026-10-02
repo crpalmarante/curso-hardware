@@ -173,7 +173,7 @@ function mostrarErro(id, msg){
   el.classList.toggle("visible", !!msg);
 }
 function entrarNoCurso(nome){
-  window.location.href = "index.html?aluno=" + encodeURIComponent(nome);
+  window.location.href = "livro.html?aluno=" + encodeURIComponent(nome);
 }
 function loginDoAluno(a){
   return (a && a.login) ? a.login : sugerirLogin(a && a.nome);

@@ -10,9 +10,9 @@ set -e
 
 # Localização desta pasta (funciona chamando de qualquer lugar)
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-URL="file://$DIR/index.html"
+URL="file://$DIR/livro.html"
 
-# Se um nome foi passado, anexa à URL (ex.: index.html?aluno=Fulano)
+# Se um nome foi passado, anexa à URL (ex.: livro.html?aluno=Fulano)
 if [ -n "$1" ]; then
   URL="$URL?aluno=$(echo "$1" | sed 's/ /%20/g')"
 fi

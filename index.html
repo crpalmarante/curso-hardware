@@ -57,6 +57,14 @@ body{
 .topbar.modo-aluno .menu-apresentacao{order:1}
 .topbar.modo-aluno .menu-tema{order:2}
 .topbar.modo-aluno #btn-login-aluno{order:3}
+.banner-modulo{
+  margin-bottom:20px;padding:16px 18px;border-radius:var(--radius-md);
+  background:var(--glass);border:1px dashed var(--primary);
+  display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;
+}
+.banner-modulo[hidden]{display:none}
+.banner-modulo p{margin:0;font-size:14px;color:var(--text-secondary);flex:1 1 240px}
+.banner-modulo a{font-weight:700;color:var(--primary);text-decoration:none;white-space:nowrap}
 .icon-btn{
   padding:8px 12px;border-radius:var(--radius-md);cursor:pointer;
   color:var(--text-secondary);font-size:13px;
@@ -436,6 +444,8 @@ body{
     </div>
   </section>
 
+  <div class="banner-modulo" id="banner-modulo" hidden></div>
+
   <section class="progress-card">
     <div class="progress-head">
       <h3>Seu progresso no curso</h3>
@@ -640,6 +650,10 @@ function render(forcarAulaId){
   const root = document.getElementById("course-root");
   semanaGlobal = 0;
   root.innerHTML = CURSO.map(m => {
+    if (moduloFiltro && m.num !== moduloFiltro) {
+      semanaGlobal += m.aulas.length;
+      return "";
+    }
     const aulas = m.aulas.filter(a => {
       if (filter !== "all" && a.tipo !== filter) return false;
       if (query && !(a.t+" "+a.objetivo+" "+a.conteudo.join(" ")).toLowerCase().includes(query)) return false;
@@ -716,12 +730,27 @@ function toggleLesson(id, ev){
    ============================================================ */
 const ALUNOS_KEY = "curso-hardware-alunos";
 let alunoNome = null;
+let moduloFiltro = null;
 
 (function(){
   try {
     const params = new URLSearchParams(window.location.search);
     alunoNome = (params.get("aluno")||"").trim();
+    moduloFiltro = (params.get("modulo")||"").trim();
+    if (moduloFiltro) moduloFiltro = moduloFiltro.padStart(2, "0");
   } catch(e){}
+  const banner = document.getElementById("banner-modulo");
+  if (moduloFiltro && banner){
+    const m = CURSO.find(x => x.num === moduloFiltro);
+    const titulo = m ? ("Módulo " + m.num + " — " + m.titulo) : ("Módulo " + moduloFiltro);
+    const vol = String(parseInt(moduloFiltro, 10) || moduloFiltro);
+    const livroHref = "livro.html" + (alunoNome ? "?aluno=" + encodeURIComponent(alunoNome) : "") + "#volume-" + vol;
+    banner.hidden = false;
+    banner.innerHTML = "<p>Série de exercícios do <strong>" + titulo + "</strong>. A teoria está na apostila; pratique aqui no caderno das aulas.</p>"
+      + "<a href=\"" + livroHref + "\">← Voltar à apostila</a>";
+    const info = document.querySelector(".info-grid");
+    if (info) info.style.display = "none";
+  }
   if (alunoNome){
     document.querySelector(".topbar").classList.add("modo-aluno");
     document.getElementById("btn-guard").textContent = "🔒 " + alunoNome;
