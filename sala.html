@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sala ao vivo — Instrutor</title>
+<style>
+:root{
+  --primary:#14b8a6; --text:#fff; --text-muted:rgba(255,255,255,.55);
+  --border:rgba(255,255,255,.14); --surface:rgba(255,255,255,.06); --glass:rgba(255,255,255,.08);
+  --radius-md:10px; --radius-lg:16px;
+  --font-family:"Inter","Segoe UI",Arial,sans-serif;
+}
+[data-theme="light"]{
+  --text:#1a202c; --text-muted:rgba(0,0,0,.5);
+  --border:rgba(0,0,0,.12); --surface:rgba(255,255,255,.7); --glass:rgba(255,255,255,.85);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-family);background:linear-gradient(135deg,#06101f,#101b35);color:var(--text);min-height:100vh}
+.topbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:14px 22px;background:var(--glass);border-bottom:1px solid var(--border)}
+.topbar a,.topbar button{padding:8px 12px;border-radius:var(--radius-md);color:inherit;text-decoration:none;border:1px solid var(--border);background:var(--surface);font-size:13px;cursor:pointer}
+.container{max-width:1200px;margin:0 auto;padding:24px 18px 60px}
+h1{font-size:22px;margin-bottom:8px}
+.sub{color:var(--text-muted);font-size:14px;margin-bottom:18px}
+.acoes{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px}
+.acoes button{padding:8px 12px;border-radius:var(--radius-md);border:1px solid var(--border);background:var(--surface);color:inherit;cursor:pointer;font-size:13px}
+.acoes button:hover{border-color:var(--primary)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+.card{background:var(--glass);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden}
+.card img,.card .off{width:100%;aspect-ratio:16/9;object-fit:cover;background:#0b1220;display:block}
+.card .off{display:grid;place-items:center;color:var(--text-muted);font-size:12px;padding:12px;text-align:center}
+.card .meta{padding:10px 12px}
+.card h3{font-size:14px;margin-bottom:4px}
+.card p{font-size:12px;color:var(--text-muted)}
+.vazio{padding:28px;text-align:center;color:var(--text-muted);border:1px dashed var(--border);border-radius:var(--radius-lg)}
+.foco{margin-bottom:16px;padding:12px 14px;border:1px dashed var(--primary);border-radius:var(--radius-md);font-size:13.5px}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <strong>📡 Sala ao vivo</strong>
+  <a href="alunos.html">👨‍🎓 Alunos</a>
+  <a href="livro.html">📕 Apostila</a>
+  <a href="index.html">▶ Curso</a>
+</div>
+<div class="container">
+  <h1>Sala ao vivo</h1>
+  <p class="sub">Os alunos logados enviam a página em que estão. A miniatura da aba só aparece se o aluno autorizar neste computador. Use os botões para levar a turma ao mesmo ponto da apostila.</p>
+  <div class="foco" id="foco">Nenhum ponto enviado à turma ainda.</div>
+  <div class="acoes" id="acoes"></div>
+  <div id="grid" class="grid"></div>
+</div>
+<script>
+const VOLS = [
+  ["1","Fundamentos"],["2","Hardware"],["3","Montagem"],["4","Instalação"],
+  ["5","Manutenção"],["6","Diagnóstico"],["7","Laboratório"],["8","Atendimento"]
+];
+(function(){
+  const acoes = document.getElementById("acoes");
+  VOLS.forEach(([n,t]) => {
+    const b = document.createElement("button");
+    b.textContent = "Volume " + n + " — " + t;
+    b.onclick = () => levar("livro.html#volume-" + n, "Volume " + n + " — " + t);
+    acoes.appendChild(b);
+  });
+  const ex = document.createElement("button");
+  ex.textContent = "Exercícios (caderno)";
+  ex.onclick = () => levar("index.html", "Caderno de exercícios");
+  acoes.appendChild(ex);
+})();
+
+async function levar(url, titulo){
+  const r = await fetch("api/sala-foco", {
+    method:"POST", headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({ url:url, titulo:titulo })
+  });
+  if (r.status === 401 || r.status === 403){ location.href = "login-alunos.html"; return; }
+  atualizar();
+}
+
+async function atualizar(){
+  const r = await fetch("api/sala");
+  if (r.status === 401 || r.status === 403){ location.href = "login-alunos.html"; return; }
+  const j = await r.json();
+  const foco = j.foco || {};
+  document.getElementById("foco").textContent = foco.titulo
+    ? ("Turma chamada para: " + foco.titulo)
+    : "Nenhum ponto enviado à turma ainda.";
+  const grid = document.getElementById("grid");
+  const alunos = j.alunos || [];
+  if (!alunos.length){
+    grid.className = "";
+    grid.innerHTML = '<div class="vazio">Nenhum aluno com a apostila ou o caderno aberto neste momento.</div>';
+    return;
+  }
+  grid.className = "grid";
+  grid.innerHTML = alunos.map(a => {
+    const vis = a.jpeg
+      ? '<img alt="" src="'+a.jpeg+'">'
+      : '<div class="off">Sem miniatura da aba — o aluno ainda não autorizou. Página: '+(a.titulo||a.url)+'</div>';
+    return '<article class="card">'+vis+'<div class="meta"><h3>'+esc(a.nome)+'</h3><p>'+esc(a.titulo||a.url)+'</p></div></article>';
+  }).join("");
+}
+function esc(s){ return String(s||"").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c])); }
+atualizar();
+setInterval(atualizar, 3000);
+</script>
+</body>
+</html>

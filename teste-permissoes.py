@@ -103,7 +103,7 @@ def main():
         # copia o servidor e as páginas que serão acessadas nos testes
         for arquivo in ("servidor.py", "alunos.html", "secretaria.html",
                         "login-alunos.html", "login-secretaria.html",
-                        "relatorio-apendices.html"):
+                        "relatorio-apendices.html", "sala.html"):
             shutil.copy(os.path.join(BASE_DIR, arquivo), tmp)
         env = dict(os.environ)
         env["INSTRUTOR_SENHA"] = SENHA_INSTRUTOR
@@ -197,6 +197,27 @@ def main():
         st, loc, _ = anon.get("/alunos.html")
         checar("Sem sessão acessa alunos.html = 302 (login instrutor)", st == 302 and "login-alunos" in loc,
                "HTTP %d → %s" % (st, loc))
+
+        st, loc, _ = anon.get("/sala.html")
+        checar("Sem sessão acessa sala.html = 302", st == 302, "HTTP %d → %s" % (st, loc))
+        st, loc, _ = sec.get("/sala.html")
+        checar("Secretaria acessa sala.html = 302 (para secretaria)", st == 302 and "secretaria.html" in loc,
+               "HTTP %d → %s" % (st, loc))
+        st, loc, _ = inst.get("/sala.html")
+        checar("Instrutor acessa sala.html = 200", st == 200, "HTTP %d" % st)
+        st, _, j = inst.get("/api/sala")
+        checar("Instrutor lê /api/sala = 200", st == 200 and "alunos" in j, "HTTP %d %s" % (st, j))
+        st, _, j = sec.get("/api/sala")
+        checar("Secretaria lê /api/sala = 403", st == 403, "HTTP %d %s" % (st, j))
+        st, j = anon.post("/api/sala-presenca", {"nome": "Aluno Sala", "url": "livro.html#volume-1", "titulo": "Volume 1"})
+        checar("Aluno envia presença da sala = 200", st == 200 and j.get("status") == "ok", "HTTP %d %s" % (st, j))
+        st, _, j = anon.get("/api/sala-foco")
+        checar("Foco da sala é público (aluno segue) = 200", st == 200 and "url" in j, "HTTP %d %s" % (st, j))
+        st, j = inst.post("/api/sala-foco", {"url": "livro.html#volume-3", "titulo": "Volume 3"})
+        checar("Instrutor define foco da turma = 200", st == 200 and (j.get("foco") or {}).get("url", "").endswith("volume-3"),
+               "HTTP %d %s" % (st, j))
+        st, j = sec.post("/api/sala-foco", {"url": "livro.html#volume-1", "titulo": "x"})
+        checar("Secretaria define foco = 403", st == 403, "HTTP %d %s" % (st, j))
 
         # ---- 4. Secretaria continua podendo editar dados (decisão de projeto) ----
         st, j = sec.post("/api/alunos", {"alunos": [{"id": "a1", "nome": "Aluno Edicao"}]})

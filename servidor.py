@@ -27,7 +27,7 @@ import threading
 import time
 import unicodedata
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from datetime import datetime
+from datetime import datetime, timedelta
 from urllib.parse import parse_qs, urlparse
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -145,6 +145,19 @@ CREATE TABLE IF NOT EXISTS certificados(
     emitido_por TEXT,
     FOREIGN KEY(aluno_id) REFERENCES alunos(id) ON DELETE CASCADE
 );
+CREATE TABLE IF NOT EXISTS sala_presenca(
+    nome TEXT PRIMARY KEY COLLATE NOCASE,
+    url TEXT NOT NULL DEFAULT '',
+    titulo TEXT NOT NULL DEFAULT '',
+    jpeg TEXT,
+    ts TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS sala_foco(
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    url TEXT NOT NULL DEFAULT '',
+    titulo TEXT NOT NULL DEFAULT '',
+    ts TEXT NOT NULL
+);
 """
 
 DEFAULT_PORT = 8080
@@ -240,7 +253,8 @@ def _sess_papel(token):
 # rotas que exigem autenticação (instrutor ou secretaria)
 ROTAS_PROTEGIDAS = ("/alunos.html", "/api/alunos", "/api/alunos.json",
                     "/secretaria.html", "/plano-de-aulas.html",
-                    "/relatorio-apendices.html", "/api/me")
+                    "/relatorio-apendices.html", "/api/me",
+                    "/sala.html", "/api/sala")
 
 
 
@@ -973,6 +987,81 @@ def set_config(chave, valor):
         conn.close()
 
 
+JPEG_MAX = 100000  # caracteres do data URL (miniatura da aba do curso)
+SALA_TTL_SEG = 45
+
+
+def upsert_sala_presenca(nome, url, titulo, jpeg=""):
+    """Última página do aluno na sala ao vivo (sobrescreve)."""
+    jpeg = jpeg or ""
+    if jpeg and (not jpeg.startswith("data:image/") or len(jpeg) > JPEG_MAX):
+        jpeg = ""
+    url = (url or "")[:400]
+    titulo = (titulo or "")[:180]
+    conn = _conn()
+    try:
+        conn.execute(
+            "INSERT INTO sala_presenca(nome, url, titulo, jpeg, ts) VALUES(?,?,?,?,?) "
+            "ON CONFLICT(nome) DO UPDATE SET url=excluded.url, titulo=excluded.titulo, "
+            "jpeg=excluded.jpeg, ts=excluded.ts",
+            (nome, url, titulo, jpeg or None, datetime.now().isoformat()))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def listar_sala():
+    """Alunos com heartbeat recente + foco atual do instrutor."""
+    limite = (datetime.now() - timedelta(seconds=SALA_TTL_SEG)).isoformat()
+    conn = _conn()
+    try:
+        rows = conn.execute(
+            "SELECT nome, url, titulo, jpeg, ts FROM sala_presenca WHERE ts>=? ORDER BY nome",
+            (limite,)).fetchall()
+        foco = conn.execute("SELECT url, titulo, ts FROM sala_foco WHERE id=1").fetchone()
+    finally:
+        conn.close()
+    alunos = [{
+        "nome": r["nome"], "url": r["url"] or "", "titulo": r["titulo"] or "",
+        "jpeg": r["jpeg"] or "", "ts": r["ts"]
+    } for r in rows]
+    return {
+        "alunos": alunos,
+        "foco": {
+            "url": (foco["url"] if foco else "") or "",
+            "titulo": (foco["titulo"] if foco else "") or "",
+            "ts": (foco["ts"] if foco else "") or ""
+        }
+    }
+
+
+def get_sala_foco():
+    conn = _conn()
+    try:
+        foco = conn.execute("SELECT url, titulo, ts FROM sala_foco WHERE id=1").fetchone()
+    finally:
+        conn.close()
+    if not foco:
+        return {"url": "", "titulo": "", "ts": ""}
+    return {"url": foco["url"] or "", "titulo": foco["titulo"] or "", "ts": foco["ts"] or ""}
+
+
+def set_sala_foco(url, titulo):
+    url = (url or "")[:400]
+    titulo = (titulo or "")[:180]
+    ts = datetime.now().isoformat()
+    conn = _conn()
+    try:
+        conn.execute(
+            "INSERT INTO sala_foco(id, url, titulo, ts) VALUES(1,?,?,?) "
+            "ON CONFLICT(id) DO UPDATE SET url=excluded.url, titulo=excluded.titulo, ts=excluded.ts",
+            (url, titulo, ts))
+        conn.commit()
+    finally:
+        conn.close()
+    return {"url": url, "titulo": titulo, "ts": ts}
+
+
 def marcar_presenca_automatica(nome, semana):
     """Marca presença do aluno na semana, sem sobrescrever marcação manual."""
     conn = _conn()
@@ -1127,6 +1216,21 @@ class Handler(BaseHTTPRequestHandler):
         # --- painel do instrutor (alunos.html) é exclusivo do instrutor ---
         if path == "/alunos.html" and _sess_papel(self._sess_cookie()) != "instrutor":
             self._negar_acesso(json_=False, destino="/secretaria.html")
+            return
+
+        if path == "/sala.html" and _sess_papel(self._sess_cookie()) != "instrutor":
+            self._negar_acesso(json_=False, destino="/secretaria.html")
+            return
+
+        if path == "/api/sala":
+            if _sess_papel(self._sess_cookie()) != "instrutor":
+                self._json(403, {"erro": "Sala ao vivo exclusiva do instrutor"})
+                return
+            self._json(200, listar_sala())
+            return
+
+        if path == "/api/sala-foco":
+            self._json(200, get_sala_foco())
             return
 
         # --- API: papel da sessão (instrutor/secretario) para o frontend ---
@@ -1536,6 +1640,32 @@ class Handler(BaseHTTPRequestHandler):
                     return
                 registrar_evento(nome, ev.get("tipo", "sistema"), ev.get("texto", ""))
                 self._json(200, {"status": "ok"})
+            except Exception as e:
+                self._json(500, {"erro": str(e)})
+            return
+
+        if path == "/api/sala-presenca":
+            try:
+                body = json.loads(self._read_body().decode("utf-8") or "{}")
+                nome = (body.get("nome") or "").strip()
+                if not nome:
+                    self._json(400, {"erro": "Nome do aluno obrigatorio"})
+                    return
+                upsert_sala_presenca(nome, body.get("url") or "", body.get("titulo") or "",
+                                     body.get("jpeg") or "")
+                self._json(200, {"status": "ok", "foco": get_sala_foco()})
+            except Exception as e:
+                self._json(500, {"erro": str(e)})
+            return
+
+        if path == "/api/sala-foco":
+            if _sess_papel(self._sess_cookie()) != "instrutor":
+                self._json(403, {"erro": "Sala ao vivo exclusiva do instrutor"})
+                return
+            try:
+                body = json.loads(self._read_body().decode("utf-8") or "{}")
+                foco = set_sala_foco(body.get("url") or "", body.get("titulo") or "")
+                self._json(200, {"status": "ok", "foco": foco})
             except Exception as e:
                 self._json(500, {"erro": str(e)})
             return
